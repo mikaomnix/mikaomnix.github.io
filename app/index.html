@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-12';
+const APP_VER='2026-10-10-13';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -4111,6 +4111,16 @@ function promo(k){const p=PROMOS[k];if(!p)return;let el=$('promo');
  el.innerHTML='<div class="pc"><div class="hero"><div class="ic">'+p.ic+'</div><h2>'+p.t+'</h2><p>'+p.s+'</p></div><ul>'+p.li.map(x=>'<li><span>✅</span><span>'+x+'</span></li>').join('')+'</ul><a class="wa" target="_blank" rel="noopener" href="'+waLink(txt)+'">'+wa+'كلّمنا على واتساب ونجهّزهولك</a><button type="button" class="x">مش دلوقتي</button></div>';
  el.classList.add('show')}
 window.mkPromo=promo;
+/* ميزات لسه مش متوصلة على سيرفر المشتركين: مخفية لحد ما تشتغل (اقلبها true لما تتركب)
+   scan = قراية فاتورة المورد بالكاميرا (دالة parse-invoice + مفتاح Gemini)
+   wa   = طلبات الواتساب (WhatsApp Cloud API: wa-webhook / wa-connect) */
+const FEAT={scan:false,wa:false};
+(function(){let c='';
+ if(!FEAT.scan)c+='#ivBtn,#scPage,#ivQ{display:none!important}';
+ if(!FEAT.wa)c+='[data-page="waorders"],#waBanner,#waorders,#waCount{display:none!important}';
+ if(c)document.head.insertAdjacentHTML('beforeend','<style id="featOff">'+c+'</style>')})();
+window.mkFeat=FEAT;
+
 /* 🚪 تسجيل الخروج + 🗑️ حذف الحساب: في آخر القايمة (في كل النسخ، ومنها نسخة جوجل بلاي) */
 const DEL_MAIL='apdoma773mod@gmail.com';
 function delAccount(){document.body.classList.remove('navon');let el=$('promo');

@@ -78,7 +78,16 @@ function render(){const c=k=>ALL.filter(s=>s.st===k).length;
    ${s.paid_until?`<button class="btn s w" onclick="act('${s.owner}',0)">إلغاء التفعيل</button>`:''}
    <button class="btn s w" onclick="note('${s.owner}')">📝 ملاحظة</button>
    ${s.phone?`<a class="btn s wa" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${waNum(s.phone)}">واتساب</a>`:''}
+   <button class="btn s r" style="margin-inline-start:auto" onclick="delAcc('${s.owner}')">🗑️ حذف الحساب</button>
   </div></div>`}).join(''):'<div class="empty">مفيش مشتركين هنا</div>'}
+/* حذف حساب نهائياً (لطلبات «حذف الحساب» اللي بتوصل على الإيميل) — لازم تكتب إيميل الحساب للتأكيد */
+async function delAcc(id){const s=ALL.find(x=>x.owner===id);if(!s)return;
+ const typed=prompt(`⚠️ حذف نهائي لحساب «${s.shop||s.email}» وكل بياناته (${s.products||0} صنف، ${s.sales||0} فاتورة بيع، والموظفين).\nمينفعش ترجع فيه.\n\nللتأكيد اكتب إيميل الحساب:\n${s.email}`,'');
+ if(typed==null)return;
+ if(typed.trim().toLowerCase()!==String(s.email||'').toLowerCase()){alert('الإيميل مش مطابق — ماتمسحش حاجة');return}
+ const r=await sb.rpc('app_admin_delete',{p_owner:id,p_confirm:typed.trim()});
+ if(r.error){alert('مشكلة: '+r.error.message);return}
+ alert(`✅ اتمسح حساب ${r.data.email} وكل بياناته (${r.data.users} مستخدم).\nرد على إيميل الطلب إن الحذف اتنفّذ.`);load()}
 async function act(id,days,blocked){const s=ALL.find(x=>x.owner===id);
  const msg=days>0?`تفعيل «${s.shop||s.email}» ${days===30?'شهر':days===90?'3 شهور':'سنة'}؟`:days===0?'إلغاء التفعيل؟ (هيرجع للتجربة لو لسه فيها، أو يتقفل)':blocked?'إيقاف الحساب؟ هيتقفل عنده فوراً':'تشغيل الحساب تاني؟';
  if(!confirm(msg))return;
