@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-8';
+const APP_VER='2026-10-10-9';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -3876,6 +3876,75 @@ function btn(){const row=document.querySelector('#contacts .title-row');if(!row)
  b.style.display=isAdmin()?'':'none';const n=load().length,c=document.getElementById('ciCnt');if(c){c.textContent=n;c.style.display=n?'':'none'}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',btn);else btn();
 setTimeout(btn,1500);setInterval(btn,4000);
+})();
+</script>
+
+<style>
+#waBody .wa-learn{display:inline-block;margin-top:4px;font-size:12px;font-weight:700;color:#1f6b3d;background:#dff3e6;border-radius:8px;padding:1px 8px}
+#waBody .wa-who{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:var(--tint2,#eef6f7);font-size:14px}
+#waBody .wa-who b{color:var(--blue,#087f8c)}
+#waBody tr.wa-name td{opacity:.55}
+</style>
+<script>
+/* =====================================================================
+   Mika Omnix — طلبات الواتساب أذكى:
+   • السيستم بيتعلّم: الصنف اللي تختاره لكلمة معيّنة بيتحفظ، والمرة الجاية بيتطابق لوحده
+   • اسم العميل: من الرسالة («باسم …» / «الاسم: …») ← أو من رقمه المتسجل ← أو اسم الواتساب
+   ===================================================================== */
+(function(){
+const KEY='wa_aliases';
+let AL=null,saving=false;
+const lsG=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const isAdmin=()=>!window.MK_T||!!(window.mkT_user&&window.mkT_user.role==='admin');
+/* مفتاح الكلمة: من غير أرقام ولا كلمات زي «طلب/عايز» */
+const STOPW=new Set(['طلب','طلبيه','عايز','عاوز','محتاج','محتاجه','عايزه','من','فضلك','لو','سمحت','عدد','في','يا','باشا','لي','ليا','هات','هاتلي','ابعت','ابعتلي','و','x','×','قطعه','قطع','حته','حتت','عدد']);
+function akey(raw){let t=String(raw||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\d+(\.\d+)?/g,' ');
+ return VN(t).split(' ').filter(w=>w&&!STOPW.has(w)).join(' ')}
+async function loadAL(){if(AL)return AL;AL=lsG('mk_wa_aliases')||{};
+ try{const c=window.mkSB;if(c){const r=await c.from('mk_settings').select('value').eq('key',KEY).maybeSingle();if(r&&r.data&&r.data.value)AL=Object.assign({},AL,r.data.value)}}catch(e){}
+ lsS('mk_wa_aliases',AL);return AL}
+async function saveAL(add){await loadAL();let changed=false;Object.entries(add).forEach(([k,v])=>{if(k&&v&&AL[k]!==v){AL[k]=v;changed=true}});if(!changed)return;
+ lsS('mk_wa_aliases',AL);if(!isAdmin()||saving)return;saving=true;
+ try{const c=window.mkSB;if(c)await c.from('mk_settings').upsert([{key:KEY,value:AL}],{onConflict:'org,key'})}catch(e){console.warn('wa aliases',e)}finally{saving=false}}
+
+/* ---------- اسم العميل ---------- */
+const NAME_RE=/(?:^|[\s\n،,.])(?:باسم|بإسم|بأسم|الاسم|الإسم|اسم العميل|اسمي|العميل)\s*[:：\-–]?\s*([^\n،,.0-9٠-٩:]{2,40})/;
+const stripName=raw=>String(raw||'').replace(NAME_RE,' ');
+function nameInMsg(body){const m=String(body||'').match(NAME_RE);if(!m)return '';let n=m[1].replace(/\s+/g,' ').trim();
+ n=n.split(' ').filter(w=>!/^(طلب|عايز|عاوز|محتاج)$/.test(w)).slice(0,4).join(' ');return n.length>=2?n:''}
+const tail=p=>String(p||'').replace(/\D/g,'').slice(-9);
+function contactByPhone(ph){const t=tail(ph);if(t.length<9)return null;return (db.contacts||[]).find(c=>c.type==='عميل'&&tail(c.phone)===t)||null}
+function whoFor(o){const m=nameInMsg(o.body);if(m)return {name:m,src:'msg'};const c=contactByPhone(o.phone);if(c)return {name:c.name,src:'contact'};
+ return {name:o.customer_name||'',src:'wa'}}
+window.mkWaWho=whoFor;
+
+/* ---------- الشاشة: طابق من المحفوظ + خانة بحث في كل الأصناف ---------- */
+function ensureOpt(sel,p){if(![...sel.options].some(op=>op.value===p.id))sel.insertAdjacentHTML('beforeend',`<option value="${p.id}">${esc(p.name)}${p.qty!=null?` (مخزن ${esc(p.qty)})`:''}</option>`);sel.value=p.id}
+async function decorate(){const body=document.getElementById('waBody');if(!body)return;const cards=body.querySelectorAll('[data-wa]');if(!cards.length)return;await loadAL();
+ cards.forEach(card=>{const id=card.dataset.wa,o=(window.WA&&WA.list||[]).find(x=>x.id===id);if(!o||o.status!=='new')return;
+  if(!card.querySelector('.wa-who')){const w=whoFor(o),lbl={msg:'من الرسالة',contact:'متسجل عندك بالرقم ده',wa:'اسمه على الواتساب'}[w.src];
+   const tbl=card.querySelector('.table-wrap');if(tbl)tbl.insertAdjacentHTML('beforebegin',`<div class="wa-who">🧾 الفاتورة هتتعمل باسم: <b>${esc(w.name||'(من غير اسم)')}</b> <small style="color:var(--muted)">— ${lbl}</small></div>`)}
+  card.querySelectorAll('tbody tr[data-i]').forEach(tr=>{if(tr.dataset.smart)return;tr.dataset.smart='1';
+   const raw=(tr.querySelector('td')||{}).textContent||'',sel=tr.querySelector('.wap');if(!sel)return;
+   // سطر الاسم («باسم محمد») مش صنف
+   const hasName=NAME_RE.test(' '+raw),item=hasName?stripName(' '+raw):raw;
+   if(hasName&&!akey(item)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;return}
+   const k=akey(item),pid=AL[k],p=pid&&(db.products||[]).find(x=>x.id===pid);
+   if(p){ensureOpt(sel,p);sel.insertAdjacentHTML('afterend','<span class="wa-learn">✔ متطابق من قبل</span>')}
+   tr.dataset.k=k;
+   // الكتابة في خانة «اكتب الصنف»: لو الاسم مطابق لصنف، اختاره في القايمة
+   const bind=()=>{const inp=tr.querySelector('.wan');if(!inp||inp.dataset.b)return;inp.dataset.b='1';
+    inp.addEventListener('change',()=>{const v=VN(inp.value);const q=(db.products||[]).find(x=>VN(x.name)===v)||(db.products||[]).filter(x=>VN(x.name).includes(v)).sort((a,b)=>a.name.length-b.name.length)[0];
+     if(q&&v.length>=2){ensureOpt(sel,q);inp.value='';const s=tr.querySelector('.wa-learn');if(s)s.remove();sel.insertAdjacentHTML('afterend','<span class="wa-learn">✔ هيتحفظ للمرة الجاية</span>')}})};
+   bind();setTimeout(bind,300)})})}
+new MutationObserver(()=>{clearTimeout(decorate._t);decorate._t=setTimeout(decorate,150)}).observe(document.body,{childList:true,subtree:true});
+
+/* ---------- افتح الفاتورة: احفظ اللي اخترته + اسم العميل الصح ---------- */
+const prev=window.waInvoice;
+window.waInvoice=function(id){const o=(window.WA&&WA.list||[]).find(x=>x.id===id);const card=document.querySelector(`[data-wa="${id}"]`);
+ if(card){const add={};card.querySelectorAll('tbody tr[data-i]').forEach(tr=>{const sel=tr.querySelector('.wap'),k=tr.dataset.k;if(sel&&sel.value&&k)add[k]=sel.value});saveAL(add)}
+ prev.apply(this,arguments);
+ if(o){const w=whoFor(o),p=document.getElementById('txPerson');if(p&&w.name){p.value=w.name;p.dispatchEvent(new Event('input',{bubbles:true}));p.dispatchEvent(new Event('change',{bubbles:true}))}}};
 })();
 </script>
 
