@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-10';
+const APP_VER='2026-10-10-11';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -3922,10 +3922,25 @@ function asName(ln){let t=String(ln||'').replace(/^\s*(طلب|طلبيه|طلب�
 function nameLine(body){const lines=String(body||'').split(/[\n\r،,]+/).map(s=>s.trim()).filter(l=>l&&l.replace(/^\s*(طلب|طلبيه|طلبية)\s*/,'').trim());
  if(!lines.length)return '';
  return asName(lines[0])||(lines.length>1?asName(lines[lines.length-1]):'')}   // أول سطر أو آخر سطر
-const tail=p=>String(p||'').replace(/\D/g,'').slice(-9);
+const tail=p=>String(p||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g,'').slice(-9);
 function contactByPhone(ph){const t=tail(ph);if(t.length<9)return null;return (db.contacts||[]).find(c=>c.type==='عميل'&&tail(c.phone)===t)||null}
-function whoFor(o){const m=nameInMsg(o.body)||nameLine(o.body);if(m)return {name:m,src:'msg'};const c=contactByPhone(o.phone);if(c)return {name:c.name,src:'contact'};
- return {name:o.customer_name||'',src:'wa'}}
+/* أرقام المديرين: الطلب اللي جاي منهم مش باسمهم — العميل هو اللي اسمه/رقمه مكتوب في الرسالة */
+const MGR={};   // بآخر ٩ أرقام
+const isMgr=ph=>MGR[tail(ph)]||'';
+const ND=s=>String(s||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const PH_SRC='(?:\\+?20|0)?1[0125][\\s\\-]?\\d{4}[\\s\\-]?\\d{4}(?!\\d)';
+const PH_RE={test:s=>new RegExp(PH_SRC).test(ND(s))};
+const noPhone=s=>ND(s).replace(new RegExp('(?:(?:رقم|تليفون|تلفون|موبايل)(?:ه| العميل)?\\s*[:：\\-]?\\s*)?'+PH_SRC,'g'),' ');
+function phoneInMsg(body){const all=ND(body).match(new RegExp(PH_SRC,'g'))||[];
+ for(const x of all){const t=x.replace(/\D/g,'').slice(-10);if(t.length===10&&!isMgr(t))return '0'+t}return ''}
+function contactByName(n){const v=VN(n);if(!v)return null;const C=(db.contacts||[]).filter(c=>c.type==='عميل');
+ return C.find(c=>VN(c.name)===v)||C.find(c=>{const x=VN(c.name);return x.startsWith(v+' ')||v.startsWith(x+' ')})||null}
+function whoFor(o){const mg=isMgr(o.phone),b=mg?noPhone(o.body):o.body,m=nameInMsg(b)||nameLine(b);
+ if(mg){const ph=phoneInMsg(o.body),byPh=ph&&contactByPhone(ph),byNm=m&&contactByName(m);
+  const name=m||(byPh&&byPh.name)||'',phone=ph||(byNm&&byNm.phone)||'';
+  return {name,phone,src:'mgr',mgr:mg,known:!!(byPh||byNm)}}
+ if(m)return {name:m,phone:o.phone,src:'msg'};const c=contactByPhone(o.phone);if(c)return {name:c.name,phone:o.phone,src:'contact'};
+ return {name:o.customer_name||'',phone:o.phone,src:'wa'}}
 window.mkWaWho=whoFor;
 
 /* ---------- الشاشة: طابق من المحفوظ + خانة بحث في كل الأصناف ---------- */
@@ -3933,13 +3948,20 @@ function ensureOpt(sel,p){if(![...sel.options].some(op=>op.value===p.id))sel.ins
 async function decorate(){const body=document.getElementById('waBody');if(!body)return;const cards=body.querySelectorAll('[data-wa]');if(!cards.length)return;await loadAL();
  cards.forEach(card=>{const id=card.dataset.wa,o=(window.WA&&WA.list||[]).find(x=>x.id===id);if(!o||o.status!=='new')return;
   if(!card.querySelector('.wa-who')){const w=whoFor(o),lbl={msg:'من الرسالة',contact:'متسجل عندك بالرقم ده',wa:'اسمه على الواتساب'}[w.src];
-   const tbl=card.querySelector('.table-wrap');if(tbl)tbl.insertAdjacentHTML('beforebegin',`<div class="wa-who">🧾 الفاتورة هتتعمل باسم: <b>${esc(w.name||'(من غير اسم)')}</b> <small style="color:var(--muted)">— ${lbl}</small></div>`)}
+   const tbl=card.querySelector('.table-wrap');
+   const html=w.src==='mgr'
+    ?`<div class="wa-who">👔 الطلب ده مبعوت من رقم <b>${esc(w.mgr)}</b> (مدير) — مش هيتسجل باسمه<br>🧾 العميل: <b>${esc(w.name||'اكتب اسم العميل في الرسالة')}</b>${w.phone?` — رقمه <b dir="ltr">${esc(w.phone)}</b>`:' — <small style="color:var(--muted)">مفيش رقم (اكتبه في الرسالة أو سجّل العميل في جهات الاتصال)</small>'}${w.name&&!w.known?' <small style="color:var(--muted)">(عميل جديد)</small>':''}</div>`
+    :`<div class="wa-who">🧾 الفاتورة هتتعمل باسم: <b>${esc(w.name||'(من غير اسم)')}</b> <small style="color:var(--muted)">— ${lbl}</small></div>`;
+   if(tbl)tbl.insertAdjacentHTML('beforebegin',html)}
   card.querySelectorAll('tbody tr[data-i]').forEach(tr=>{if(tr.dataset.smart)return;tr.dataset.smart='1';
    const raw=(tr.querySelector('td')||{}).textContent||'',sel=tr.querySelector('.wap');if(!sel)return;
    // سطر الاسم («باسم محمد») مش صنف
    const hasName=NAME_RE.test(' '+raw),item=hasName?stripName(' '+raw):raw;
    if(hasName&&!akey(item)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;return}
-   const nl=nameLine(o.body);if(nl&&VN(raw.replace(/^\s*(طلب|طلبيه|طلبية)\s*/,''))===VN(nl)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;
+   // سطر فيه رقم موبايل العميل بس (المدير كاتبه) — مش صنف
+   if(PH_RE.test(raw)&&!akey(noPhone(raw).replace(/رقمه|رقم|تليفون|تلفون|موبايل|العميل/g,' '))){tr.classList.add('wa-name');sel.value='';sel.disabled=true;
+    const td=tr.querySelector('td');if(td&&!td.querySelector('small'))td.insertAdjacentHTML('beforeend',' <small style="color:var(--blue)">(رقم العميل)</small>');return}
+   const mgB=isMgr(o.phone),nl=nameLine(mgB?noPhone(o.body):o.body);if(nl&&VN((mgB?noPhone(raw):raw).replace(/^\s*(طلب|طلبيه|طلبية)\s*/,''))===VN(nl)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;
     const td=tr.querySelector('td');if(td&&!td.querySelector('small'))td.insertAdjacentHTML('beforeend',' <small style="color:var(--blue)">(اسم العميل)</small>');return}
    const k=akey(item),pid=AL[k],p=pid&&(db.products||[]).find(x=>x.id===pid);
    if(p){ensureOpt(sel,p);sel.insertAdjacentHTML('afterend','<span class="wa-learn">✔ متطابق من قبل</span>')}
@@ -3956,7 +3978,11 @@ const prev=window.waInvoice;
 window.waInvoice=function(id){const o=(window.WA&&WA.list||[]).find(x=>x.id===id);const card=document.querySelector(`[data-wa="${id}"]`);
  if(card){const add={};card.querySelectorAll('tbody tr[data-i]').forEach(tr=>{const sel=tr.querySelector('.wap'),k=tr.dataset.k;if(sel&&sel.value&&k)add[k]=sel.value});saveAL(add)}
  prev.apply(this,arguments);
- if(o){const w=whoFor(o),p=document.getElementById('txPerson');if(p&&w.name){p.value=w.name;p.dispatchEvent(new Event('input',{bubbles:true}));p.dispatchEvent(new Event('change',{bubbles:true}))}}};
+ if(o){const w=whoFor(o),p=document.getElementById('txPerson'),ph=document.getElementById('txPhone');
+  if(p&&(w.name||w.src==='mgr')){p.value=w.name||'';p.dispatchEvent(new Event('input',{bubbles:true}));p.dispatchEvent(new Event('change',{bubbles:true}))}
+  // رقم المدير عمره ما يتحط كرقم العميل
+  if(ph){if(w.src==='mgr'||w.phone!==ph.value){setTimeout(()=>{ph.value=w.phone||'';ph.dispatchEvent(new Event('input',{bubbles:true}))},0)}}
+  if(w.src==='mgr'&&!w.name)toast('الطلب من رقم مدير ومفيش اسم عميل في الرسالة — اكتب اسم العميل')}};
 })();
 </script>
 
@@ -4085,17 +4111,32 @@ function promo(k){const p=PROMOS[k];if(!p)return;let el=$('promo');
  el.innerHTML='<div class="pc"><div class="hero"><div class="ic">'+p.ic+'</div><h2>'+p.t+'</h2><p>'+p.s+'</p></div><ul>'+p.li.map(x=>'<li><span>✅</span><span>'+x+'</span></li>').join('')+'</ul><a class="wa" target="_blank" rel="noopener" href="'+waLink(txt)+'">'+wa+'كلّمنا على واتساب ونجهّزهولك</a><button type="button" class="x">مش دلوقتي</button></div>';
  el.classList.add('show')}
 window.mkPromo=promo;
-function promoNav(){const nav=document.querySelector('aside nav');if(!nav||nav.querySelector('.promo'))return;
+/* 🚪 تسجيل الخروج + 🗑️ حذف الحساب: في آخر القايمة (في كل النسخ، ومنها نسخة جوجل بلاي) */
+const DEL_MAIL='apdoma773mod@gmail.com';
+function delAccount(){document.body.classList.remove('navon');let el=$('promo');
+ if(!el){document.body.insertAdjacentHTML('beforeend','<div id="promo"></div>');el=$('promo');el.onclick=e=>{if(e.target===el||e.target.closest('.x'))el.classList.remove('show')}}
+ const em=(SUB&&SUB.email)||'',shop=shopName()||'';
+ const body='أرجو حذف حسابي في '+APP+' وكل بياناته نهائياً.\nPlease permanently delete my '+APP+' account and all its data.\n\nالإيميل / Email: '+em+'\nالمحل / Shop: '+shop;
+ const href='mailto:'+DEL_MAIL+'?subject='+encodeURIComponent('Delete account - '+APP)+'&body='+encodeURIComponent(body);
+ el.innerHTML='<div class="pc"><div class="hero"><div class="ic">🗑️</div><h2>حذف الحساب</h2><p>هيتمسح حسابك وكل بياناته نهائياً: الأصناف والفواتير والعملاء والموردين والموظفين. الخطوة دي مينفعش ترجع فيها.</p></div><ul>'+
+  '<li><span>📧</span><span>دوس الزرار تحت، وهيتفتح إيميل طلب الحذف جاهز. ابعته من غير ما تغيّر فيه.</span></li>'+
+  '<li><span>⏱️</span><span>بننفّذ الطلب خلال <b>7 أيام</b>، والنسخ الاحتياطية بتتمسح خلال 30 يوم.</span></li>'+
+  '<li><span>✉️</span><span>أو ابعت إيميل بنفسك لـ <b dir="ltr">'+DEL_MAIL+'</b> من إيميل الحساب.</span></li></ul>'+
+  '<a class="wa" style="background:#c0392b" href="'+href+'">🗑️ ابعت طلب حذف الحساب</a><button type="button" class="x">رجوع</button></div>';
+ el.classList.add('show')}
+window.mkDelAccount=delAccount;
+function accountBtns(){const as=document.querySelector('aside');if(!as||$('outBtn'))return;const navs=as.querySelectorAll('nav'),last=navs[navs.length-1];
+ (last||as).insertAdjacentHTML('beforeend','<button type="button" class="own" id="outBtn" style="color:#c0392b"><span style="width:1.15em;text-align:center">🚪</span> <span>تسجيل الخروج</span></button>'+
+  ((SUB&&SUB.owner===false)?'':'<button type="button" class="own" id="delAccBtn" style="color:#8a9aa2;font-size:.92em"><span style="width:1.15em;text-align:center">🗑️</span> <span>حذف الحساب</span></button>'));
+ $('outBtn').onclick=e=>{e.stopPropagation();document.body.classList.remove('navon');if(window.mkT_out)mkT_out();else $('subOut').click()};
+ const d=$('delAccBtn');if(d)d.onclick=e=>{e.stopPropagation();delAccount()}}
+function promoNav(){const nav=document.querySelector('aside nav');if(!nav)return;accountBtns();if(nav.querySelector('.promo'))return;
  if(PLAY){nav.querySelectorAll('[data-page="weborders"]').forEach(b=>b.style.display='none');return}
  const btn=(k)=>'<button type="button" class="own promo" data-promo="'+k+'"><span style="width:1.15em;text-align:center">'+PROMOS[k].ic+'</span> <span>'+PROMOS[k].nav+'</span><span class="pv">✨ جديد</span></button>';
  let wo=nav.querySelector('[data-page="weborders"]');
  if(wo){wo.removeAttribute('onclick');wo.removeAttribute('data-page');wo.classList.add('own','promo');wo.dataset.promo='weborders';wo.insertAdjacentHTML('beforeend','<span class="pv">✨ جديد</span>')}
  else{const s=nav.querySelector('[data-page="sales"]');if(s){s.insertAdjacentHTML('afterend',btn('weborders'));wo=nav.querySelector('[data-promo="weborders"]')}}
  if(wo)wo.insertAdjacentHTML('afterend',btn('site'));
- /* 🚪 تسجيل الخروج: واضح في آخر القايمة */
- const as=document.querySelector('aside');if(as&&!$('outBtn')){const navs=as.querySelectorAll('nav'),last=navs[navs.length-1];
-  (last||as).insertAdjacentHTML('beforeend','<button type="button" class="own" id="outBtn" style="color:#c0392b"><span style="width:1.15em;text-align:center">🚪</span> <span>تسجيل الخروج</span></button>');
-  $('outBtn').onclick=e=>{e.stopPropagation();document.body.classList.remove('navon');if(window.mkT_out)mkT_out();else $('subOut').click()}}
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-promo]');if(b){e.preventDefault();e.stopPropagation();promo(b.dataset.promo)}},true)}
 /* البانر الأخضر بتاع طلبات الموقع في الرئيسية: مالوش لازمة هنا */
 function hideWebBits(){document.querySelectorAll('[data-page="weborders"]').forEach(b=>{if(!b.closest('aside nav'))b.style.display='none'})}
