@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mika Omnix | سيستم المخزون والمبيعات لمحلك</title>
+<meta name="description" content="Mika Omnix: سيستم مخزون ومبيعات وفواتير لمحلك من الموبايل والكمبيوتر. يومية المحل، الجرد، الشحن، الديون، الموظفين، وطلبات الواتساب. جرّبه مجاناً 7 أيام.">
+<meta name="theme-color" content="#087f8c">
+<meta property="og:title" content="Mika Omnix — سيستم محلك في جيبك">
+<meta property="og:description" content="فواتير، مخزون، يومية، جرد، شحن، ديون وموظفين — من الموبايل. جرّبه مجاناً 7 أيام.">
+<meta property="og:image" content="https://apdoma773mod-spec.github.io/mekanezm/app/icon-512.png">
+<link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-512.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Poppins:wght@600;800&display=swap">
+<style>
+/* layout: hero with a live «receipt» mock beside the pitch → feature ledger → 3 start steps → footer */
+:root{
+ --bg:#f3f8f8; --surface:#ffffff; --ink:#12343a; --muted:#5d7477; --line:#d9e6e7;
+ --teal:#087f8c; --teal-deep:#06535e; --gold:#c9971f; --gold-soft:#fbf1d6;
+ --f-body:Cairo,Tahoma,"Segoe UI",sans-serif; --f-brand:Poppins,Cairo,sans-serif;
+ color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1f22;--surface:#152b2f;--ink:#e6f1f2;--muted:#9db6b9;--line:#24413f;--teal:#2bb3c0;--teal-deep:#7fd6de;--gold:#e0b34a;--gold-soft:#2c2a1c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1f22;--surface:#152b2f;--ink:#e6f1f2;--muted:#9db6b9;--line:#24413f;--teal:#2bb3c0;--teal-deep:#7fd6de;--gold:#e0b34a;--gold-soft:#2c2a1c;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.8}
+a{color:var(--teal)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px}
+.brand{white-space:nowrap;display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:var(--f-brand);font-weight:800;font-size:22px}
+header .btn{padding:9px 14px;font-size:14px}.brand img{width:40px;height:40px;border-radius:11px}
+.brand b{color:var(--gold);font-weight:800}
+.btn{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:14px;font-weight:800;text-decoration:none;font-size:16px;border:2px solid transparent}
+.btn.pri{background:var(--teal);color:#fff}
+.btn.pri:hover{background:var(--teal-deep);color:var(--bg)}
+.btn.ghost{border-color:var(--line);color:var(--ink);background:var(--surface)}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center;padding-block:28px 56px}
+.hero h1{font-size:clamp(30px,5vw,48px);line-height:1.35;margin:0 0 14px;font-weight:800;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--teal)}
+.hero p.lead{font-size:18px;color:var(--muted);margin:0 0 24px;max-width:34em}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.trial{display:inline-block;background:var(--gold-soft);color:var(--ink);border-radius:999px;padding:4px 14px;font-weight:700;font-size:14px;margin-bottom:16px}
+/* the receipt: a real-looking sale invoice, the thing shop owners print every day */
+.receipt{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 20px 16px;box-shadow:0 18px 40px #0b3b4122;font-variant-numeric:tabular-nums;transform:rotate(-1.5deg)}
+.receipt .rh{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.receipt .rh b{font-size:17px}.receipt .rh small{color:var(--muted)}
+.receipt table{width:100%;border-collapse:collapse;font-size:14.5px}
+.receipt td{padding:5px 0}.receipt td:last-child{text-align:left;white-space:nowrap}
+.receipt td small{color:var(--muted)}
+.receipt .tot{border-top:2px dashed var(--line);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-weight:800;font-size:18px}
+.receipt .tot span:last-child{color:var(--teal)}
+.receipt .stamp{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.chip{border-radius:999px;padding:2px 10px;font-weight:700;background:var(--gold-soft)}
+.chip.ok{background:#dff3e6;color:#1f6b3d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip.ok{background:#173a26;color:#8fe0ae}}
+:root[data-theme="dark"] .chip.ok{background:#173a26;color:#8fe0ae}
+section h2{font-size:clamp(24px,3.4vw,32px);margin:0 0 8px;text-wrap:balance}
+section .sub{color:var(--muted);margin:0 0 26px}
+.ledger{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 36px;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+.row .ic{width:44px;height:44px;border-radius:12px;background:var(--gold-soft);display:grid;place-items:center;font-size:21px}
+.row h3{margin:0 0 2px;font-size:17px}.row p{margin:0;color:var(--muted);font-size:15px}
+.feat{padding-block:20px 56px}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;counter-reset:s}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.step::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;margin-bottom:8px}
+.step h3{margin:0 0 4px;font-size:17px}.step p{margin:0;color:var(--muted);font-size:15px}
+.start{padding-block:10px 56px}
+.web{margin:0 0 56px;background:var(--teal-deep);color:#fff;border-radius:22px;padding:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .web{background:#0b4048}}
+:root[data-theme="dark"] .web{background:#0b4048}
+.web h2{color:#fff;margin:0 0 4px}.web p{margin:0;opacity:.9}
+.web .btn{background:var(--gold);color:#1d1600}
+footer{border-top:1px solid var(--line);padding-block:22px 34px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer nav{display:flex;gap:16px;flex-wrap:wrap}
+.num{direction:ltr;unicode-bidi:embed;font-weight:700;color:var(--ink)}
+@media(max-width:820px){.hero{grid-template-columns:minmax(0,1fr)}.receipt{transform:none}.ledger{grid-template-columns:minmax(0,1fr)}.steps{grid-template-columns:minmax(0,1fr)}.web{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:no-preference){.receipt{transition:transform .4s}.receipt:hover{transform:rotate(0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header>
+  <a class="brand" href="./about.html"><img src="icon-192.png" alt=""><span dir="ltr">Mika <b>Omni</b>x</span></a>
+  <a class="btn ghost" href="./">تسجيل دخول</a>
+ </header>
+
+ <div class="hero">
+  <div>
+   <span class="trial">🎁 جرّبه مجاناً 7 أيام — من غير أي بيانات دفع</span>
+   <h1>سيستم محلك كله <em>في جيبك</em></h1>
+   <p class="lead">فواتير البيع والشراء، المخزون، يومية المحل، الجرد، الشحن، حسابات العملاء والموردين والموظفين — من الموبايل أو الكمبيوتر، وبياناتك محفوظة على السيرفر.</p>
+   <div class="cta"><a class="btn pri" href="./">✨ ابدأ التجربة المجانية</a><a class="btn ghost" href="#features">شوف المميزات</a></div>
+  </div>
+  <div class="receipt" aria-label="مثال لفاتورة بيع من السيستم">
+   <div class="rh"><b>فاتورة بيع MK-0128</b><small>محل النور للأدوات</small></div>
+   <table>
+    <tr><td>مفصلة هيدروليك <small>× 12</small></td><td>540 ج.م</td></tr>
+    <tr><td>مجرى بلي 45 سم <small>× 4</small></td><td>480 ج.م</td></tr>
+    <tr><td>مقبض ألومنيوم 32 <small>× 10</small></td><td>250 ج.م</td></tr>
+   </table>
+   <div class="tot"><span>الإجمالي</span><span>1,270 ج.م</span></div>
+   <div class="stamp"><span class="chip ok">✔ اتخصم من المخزن</span><span class="chip">باقي على العميل 270 ج.م</span></div>
+  </div>
+ </div>
+
+ <section class="feat" id="features">
+  <h2>كل اللي المحل محتاجه في مكان واحد</h2>
+  <p class="sub">نفس السيستم اللي بيشتغل بيه محل حقيقي كل يوم.</p>
+  <div class="ledger">
+   <div class="row"><div class="ic">🧾</div><div><h3>فواتير بيع وشراء</h3><p>فاتورة في ثواني، PDF وواتساب للعميل، والمخزن بيتخصم لوحده.</p></div></div>
+   <div class="row"><div class="ic">📒</div><div><h3>يومية المحل</h3><p>اكتب البيعة وقت الزحمة، وآخر اليوم «صفّي» تطلعلك فاتورة لكل عميل.</p></div></div>
+   <div class="row"><div class="ic">📦</div><div><h3>المخزون والجرد</h3><p>كميات لحظية، تنبيه النواقص، جرد بالباركود، واقتراحات الطلب من الموردين.</p></div></div>
+   <div class="row"><div class="ic">💰</div><div><h3>الديون والتحصيل</h3><p>حساب كل عميل ومورد، دفعات، ورسالة تذكير جاهزة على الواتساب.</p></div></div>
+   <div class="row"><div class="ic">🚚</div><div><h3>الشحن والتوصيل</h3><p>ملصق شحن A4، ومتابعة الشحنة لحد ما فلوسها توصلك.</p></div></div>
+   <div class="row"><div class="ic">👥</div><div><h3>موظفين بصلاحيات</h3><p>كل موظف برقم سري، ومايشوفش أسعار الشراء ولا الأرباح.</p></div></div>
+   <div class="row"><div class="ic">📊</div><div><h3>تقارير وتقفيل اليوم</h3><p>مبيعات اليوم، الأرباح، الدرج المتوقع، وأكتر الأصناف بيعاً.</p></div></div>
+   <div class="row"><div class="ic">💬</div><div><h3>طلبات الواتساب</h3><p>رسايل العملاء اللي فيها «طلب» بتوصلك جوه السيستم جاهزة للفاتورة.</p></div></div>
+  </div>
+ </section>
+
+ <section class="start">
+  <h2>تبدأ في دقيقتين</h2>
+  <p class="sub">مش محتاج تسطّب حاجة.</p>
+  <div class="steps">
+   <div class="step"><h3>اعمل حساب</h3><p>اسم المحل، رقمك، وإيميلك، وكلمة سر جديدة.</p></div>
+   <div class="step"><h3>فعّل الإيميل</h3><p>دوس على لينك التفعيل اللي هيوصلك.</p></div>
+   <div class="step"><h3>ابدأ شغلك</h3><p>ضيف أصنافك وموظفينك وابدأ تبيع على طول.</p></div>
+  </div>
+ </section>
+
+ <div class="web">
+  <div><h2>🌐 عايز موقع لمحلك كمان؟</h2><p>موقع باسم محلك، منتجاتك عليه بضغطة من السيستم، والطلبات توصلك على الواتساب.</p></div>
+  <a class="btn" href="https://wa.me/201119199659?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%B9%D8%A7%D9%8A%D8%B2%20%D8%A3%D8%B9%D8%B1%D9%81%20%D8%B9%D9%86%20Mika%20Omnix" target="_blank" rel="noopener">كلّمنا واتساب</a>
+ </div>
+
+ <footer>
+  <div>© 2026 Mika Omnix · للتواصل واتساب: <span class="num">01119199659</span></div>
+  <nav><a href="./privacy.html">سياسة الخصوصية</a><a href="./terms.html">شروط الاستخدام</a><a href="./">تسجيل دخول</a></nav>
+ </footer>
+</div>
+</body>
+</html>
