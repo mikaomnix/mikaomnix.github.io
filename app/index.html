@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-11';
+const APP_VER='2026-10-10-12';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -4125,11 +4125,11 @@ function delAccount(){document.body.classList.remove('navon');let el=$('promo');
   '<a class="wa" style="background:#c0392b" href="'+href+'">🗑️ ابعت طلب حذف الحساب</a><button type="button" class="x">رجوع</button></div>';
  el.classList.add('show')}
 window.mkDelAccount=delAccount;
-function accountBtns(){const as=document.querySelector('aside');if(!as||$('outBtn'))return;const navs=as.querySelectorAll('nav'),last=navs[navs.length-1];
- (last||as).insertAdjacentHTML('beforeend','<button type="button" class="own" id="outBtn" style="color:#c0392b"><span style="width:1.15em;text-align:center">🚪</span> <span>تسجيل الخروج</span></button>'+
-  ((SUB&&SUB.owner===false)?'':'<button type="button" class="own" id="delAccBtn" style="color:#8a9aa2;font-size:.92em"><span style="width:1.15em;text-align:center">🗑️</span> <span>حذف الحساب</span></button>'));
- $('outBtn').onclick=e=>{e.stopPropagation();document.body.classList.remove('navon');if(window.mkT_out)mkT_out();else $('subOut').click()};
- const d=$('delAccBtn');if(d)d.onclick=e=>{e.stopPropagation();delAccount()}}
+function accountBtns(){const as=document.querySelector('aside');if(!as)return;const navs=as.querySelectorAll('nav'),last=navs[navs.length-1];
+ if(!$('outBtn')){(last||as).insertAdjacentHTML('beforeend','<button type="button" class="own" id="outBtn" style="color:#c0392b"><span style="width:1.15em;text-align:center">🚪</span> <span>تسجيل الخروج</span></button>');
+  $('outBtn').onclick=e=>{e.stopPropagation();document.body.classList.remove('navon');if(window.mkT_out)mkT_out();else $('subOut').click()}}
+ if(!$('delAccBtn')&&!(SUB&&SUB.owner===false)){$('outBtn').insertAdjacentHTML('afterend','<button type="button" class="own" id="delAccBtn" style="color:#8a9aa2;font-size:.92em"><span style="width:1.15em;text-align:center">🗑️</span> <span>حذف الحساب</span></button>');
+  $('delAccBtn').onclick=e=>{e.stopPropagation();delAccount()}}}
 function promoNav(){const nav=document.querySelector('aside nav');if(!nav)return;accountBtns();if(nav.querySelector('.promo'))return;
  if(PLAY){nav.querySelectorAll('[data-page="weborders"]').forEach(b=>b.style.display='none');return}
  const btn=(k)=>'<button type="button" class="own promo" data-promo="'+k+'"><span style="width:1.15em;text-align:center">'+PROMOS[k].ic+'</span> <span>'+PROMOS[k].nav+'</span><span class="pv">✨ جديد</span></button>';
