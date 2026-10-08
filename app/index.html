@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-7';
+const APP_VER='2026-10-10-8';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -3921,6 +3921,9 @@ aside nav button.promo .pv{margin-right:auto;background:linear-gradient(135deg,#
 (function(){
 const WA='201119199659',APP='Mika Omnix',sb=window.mkSB,$=id=>document.getElementById(id);
 let SUB=null;
+/* نسخة جوجل بلاي (الأبلكيشن بيفتح على ?src=play): من غير أي زراير دفع/اشتراك برا المتجر */
+const PLAY=(()=>{try{if(/[?&]src=play/.test(location.search))localStorage.setItem('mk_play','1');return localStorage.getItem('mk_play')==='1'}catch(e){return /[?&]src=play/.test(location.search)}})();
+if(PLAY)document.documentElement.classList.add('play');
 const waLink=(t)=>'https://wa.me/'+WA+'?text='+encodeURIComponent(t);
 const escH=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function shopName(){try{return (db.settings&&db.settings.companyName)||''}catch(e){return ''}}
@@ -3972,11 +3975,13 @@ function show(s){const lock=$('subLock'),bar=$('subBar');
  $('subWa').href=waLink(waMsg());
  if(s.status==='expired'||s.status==='blocked'){
   $('subLockT').textContent=s.status==='blocked'?'الحساب موقوف':(s.paid_until?'الاشتراك خلص':'انتهت الفترة التجريبية');
-  $('subLockP').innerHTML=s.owner===false?'اشتراك المحل محتاج تجديد.<br>كلّم صاحب المحل أو كلّمنا على واتساب.':'بياناتك كلها محفوظة ومش هتضيع.<br>كلّمنا على واتساب عشان نفعّل اشتراكك وتكمّل شغلك على طول.';
+  $('subLockP').innerHTML=PLAY?(s.owner===false?'حساب المحل محتاج تفعيل.<br>كلّم صاحب المحل.':'بياناتك كلها محفوظة ومش هتضيع.<br>حسابك محتاج تفعيل عشان تكمّل تسجيل بيانات جديدة.')
+   :s.owner===false?'اشتراك المحل محتاج تجديد.<br>كلّم صاحب المحل أو كلّمنا على واتساب.':'بياناتك كلها محفوظة ومش هتضيع.<br>كلّمنا على واتساب عشان نفعّل اشتراكك وتكمّل شغلك على طول.';
+  if(PLAY){$('subWa').style.display='none';$('subLockT').textContent=s.status==='blocked'?'الحساب موقوف':'الحساب محتاج تفعيل'}
   lock.classList.add('show');bar.classList.remove('show');return}
  lock.classList.remove('show');
- if(s.status==='trial'){bar.innerHTML='🎁 فترة تجريبية مجانية — باقي '+s.days_left+' '+(s.days_left===1?'يوم':'أيام')+' <a target="_blank" rel="noopener" href="'+waLink(waMsg())+'">فعّل اشتراكك</a>';bar.classList.add('show')}
- else if(s.status==='active'&&s.days_left<=5){bar.innerHTML='⏰ الاشتراك بيخلص '+fmt(s.paid_until)+' <a target="_blank" rel="noopener" href="'+waLink(waMsg())+'">جدّد</a>';bar.classList.add('show')}
+ if(s.status==='trial'){bar.innerHTML='🎁 فترة تجريبية مجانية — باقي '+s.days_left+' '+(s.days_left===1?'يوم':'أيام')+(PLAY?'':' <a target="_blank" rel="noopener" href="'+waLink(waMsg())+'">فعّل اشتراكك</a>');bar.classList.add('show')}
+ else if(s.status==='active'&&s.days_left<=5&&!PLAY){bar.innerHTML='⏰ الاشتراك بيخلص '+fmt(s.paid_until)+' <a target="_blank" rel="noopener" href="'+waLink(waMsg())+'">جدّد</a>';bar.classList.add('show')}
  else bar.classList.remove('show')}
 window.mkSub=()=>SUB;window.mkSubCheck=check;
 
@@ -4000,6 +4005,7 @@ function promo(k){const p=PROMOS[k];if(!p)return;let el=$('promo');
  el.classList.add('show')}
 window.mkPromo=promo;
 function promoNav(){const nav=document.querySelector('aside nav');if(!nav||nav.querySelector('.promo'))return;
+ if(PLAY){nav.querySelectorAll('[data-page="weborders"]').forEach(b=>b.style.display='none');return}
  const btn=(k)=>'<button type="button" class="own promo" data-promo="'+k+'"><span style="width:1.15em;text-align:center">'+PROMOS[k].ic+'</span> <span>'+PROMOS[k].nav+'</span><span class="pv">✨ جديد</span></button>';
  let wo=nav.querySelector('[data-page="weborders"]');
  if(wo){wo.removeAttribute('onclick');wo.removeAttribute('data-page');wo.classList.add('own','promo');wo.dataset.promo='weborders';wo.insertAdjacentHTML('beforeend','<span class="pv">✨ جديد</span>')}
