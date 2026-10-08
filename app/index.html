@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <meta name="theme-color" id="metaTheme" content="#087f8c">
-<title>Mika Omnix | سيستم المخزون والمبيعات</title>
+<title>Mekanix | سيستم المخزون والمبيعات</title>
 <style>
 :root{--blue:#087f8c;--blue2:#075e68;--gold:#d5a928;--bg:#f5f7f8;--card:#fff;--text:#18343a;--muted:#718087;--danger:#c0392b;--green:#159447;--border:#e4eaed}
 *{box-sizing:border-box}body{margin:0;background-repeat:no-repeat;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -45,7 +45,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Mika Omnix">
+<meta name="apple-mobile-web-app-title" content="Mekanix">
 <style>
 #mkLogin,#mkConf{position:fixed;inset:0;z-index:99999;background:#f5f7f8;display:none;align-items:center;justify-content:center;padding:20px;font-family:Cairo,Tahoma,Arial,sans-serif;direction:rtl}
 #mkLogin.show,#mkConf.show{display:flex}
@@ -79,7 +79,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <style>svg.i{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}.ic svg.i{width:1em;height:1em}.mobile-nav svg.i{width:22px;height:22px}.icon-btn svg.i,.fab svg.i{width:1.1em;height:1.1em;vertical-align:middle}.fab,.icon-btn,.close{display:inline-flex;align-items:center;justify-content:center}</style>
 <div class="app">
 <header class="top">
-  <div class="brand"><img id="brandLogo" alt="" style="display:none;height:40px;max-width:90px;object-fit:contain"><div id="brandName">Mika Omnix</div></div>
+  <div class="brand"><img id="brandLogo" alt="" style="display:none;height:40px;max-width:90px;object-fit:contain"><div id="brandName">Mekanix</div></div>
   <div class="top-actions">
     <button class="icon-btn" onclick="openQuick()" title="إضافة"><svg class="i"><use href="#i-plus"/></svg></button>
     <button class="icon-btn" onclick="openVoice()" title="أمر صوتي">🎤</button>
@@ -254,7 +254,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <div id="toast" class="toast"></div>
 
 <div id="mkStat"></div>
-<div id="mkLogin"><div class="mkbox"><h2>Mika Omnix</h2><p>سجّل دخول عشان تفتح نظام المخزون</p>
+<div id="mkLogin"><div class="mkbox"><h2>Mekanix</h2><p>سجّل دخول عشان تفتح نظام المخزون</p>
 <input id="mkEmail" type="email" placeholder="الإيميل" autocomplete="username">
 <input id="mkPass" type="password" placeholder="كلمة السر" autocomplete="current-password">
 <button id="mkGo" type="button">دخول</button><div id="mkErr"></div></div></div>
@@ -352,7 +352,7 @@ function invoiceHTML(r){
  ${T.logoInv&&T.logo?`
  <div style="position:relative;background:${H};line-height:0"><img src="${T.logo}" style="width:100%;display:block"></div>
  <div style="position:relative;background:${H};color:${HT};padding:14px 44px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px">
-  <div><div style="display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;line-height:1.3"><span>${shop}</span>${/[A-Za-z]/.test(shop)?'':'<span style="opacity:.5;font-weight:400">|</span><span dir="ltr" style="letter-spacing:1.5px">Mika Omnix</span>'}</div><div style="margin-top:4px;font-size:13px;opacity:.9;line-height:1.6">${addr}${ph?` &nbsp;•&nbsp; تليفون: <span dir="ltr">${ph}</span>`:''}</div></div>
+  <div><div style="display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;line-height:1.3"><span>${shop}</span>${/[A-Za-z]/.test(shop)?'':'<span style="opacity:.5;font-weight:400">|</span><span dir="ltr" style="letter-spacing:1.5px">Mekanix</span>'}</div><div style="margin-top:4px;font-size:13px;opacity:.9;line-height:1.6">${addr}${ph?` &nbsp;•&nbsp; تليفون: <span dir="ltr">${ph}</span>`:''}</div></div>
   <div style="font-size:20px;font-weight:800;white-space:nowrap">فاتورة بيع</div></div>
  `:`
  <div style="position:relative;background:${H};color:${HT};padding:34px 44px;display:flex;justify-content:space-between;align-items:center">
@@ -442,7 +442,7 @@ function renderTheme(skip){
  if(f){f.value=T.font;document.getElementById('thInvFont').value=T.invFont;document.getElementById('fontSample').style.fontFamily=fontStack(T.font)}
  let lp=document.getElementById('logoPrev');if(lp)lp.innerHTML=T.logo?`<img src="${T.logo}" alt="">`:'مفيش لوجو';
  let bp=document.getElementById('bgPrev');if(bp)bp.innerHTML=T.bgImg?`<img src="${T.bgImg}" alt="" style="width:100%;height:100%;object-fit:cover">`:'خلفية سادة (بدون صورة)';
- let pr=document.getElementById('presets');if(pr&&!pr.children.length)pr.innerHTML=[['Mika Omnix','#087f8c','#d5a928'],['أزرق','#1e5fbf','#f59e0b'],['أخضر','#1f8a4c','#e0a800'],['بنفسجي','#6b3fa0','#e0a800'],['أحمر','#b3261e','#222222'],['أسود وذهبي','#1c1c1c','#d5a928']].map(p=>`<button class="preset" onclick="thPreset('${p[1]}','${p[2]}')"><i style="background:${p[1]}"></i><i style="background:${p[2]}"></i>${p[0]}</button>`).join('')}
+ let pr=document.getElementById('presets');if(pr&&!pr.children.length)pr.innerHTML=[['Mekanix','#087f8c','#d5a928'],['أزرق','#1e5fbf','#f59e0b'],['أخضر','#1f8a4c','#e0a800'],['بنفسجي','#6b3fa0','#e0a800'],['أحمر','#b3261e','#222222'],['أسود وذهبي','#1c1c1c','#d5a928']].map(p=>`<button class="preset" onclick="thPreset('${p[1]}','${p[2]}')"><i style="background:${p[1]}"></i><i style="background:${p[2]}"></i>${p[0]}</button>`).join('')}
 function thPreset(a,b){db.theme.primary=a;db.theme.accent=b;if(db.theme.invSync){db.theme.invHeader=a;db.theme.invAccent=b}saveTheme();applyTheme();renderTheme()}
 function procImage(file,max,type){return new Promise((ok,no)=>{let fr=new FileReader();fr.onerror=no;fr.onload=()=>{let im=new Image();im.onerror=no;im.onload=()=>{let k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);let x=c.getContext('2d');if(type==='jpeg'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}x.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL(type==='jpeg'?'image/jpeg':'image/png',.8))};im.src=fr.result};fr.readAsDataURL(file)})}
 async function thUpload(k,inp){let f=inp.files[0];inp.value='';if(!f)return;try{db.theme[k]=await procImage(f,k==='logo'?1200:1400,k==='logo'?'png':'jpeg');saveTheme();applyTheme();renderTheme();toast(k==='logo'?'تم تغيير اللوجو':'تم تغيير الخلفية')}catch(e){toast('الصورة غير صالحة')}}
@@ -1154,7 +1154,7 @@ function invoiceHTML(r){
  ${T.logoInv&&T.logo?`
  <div style="position:relative;background:${H};line-height:0"><img src="${T.logo}" style="width:100%;display:block"></div>
  <div style="position:relative;background:${H};color:${HT};padding:14px 44px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px">
-  <div><div style="display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;line-height:1.3"><span>${shop}</span>${/[A-Za-z]/.test(shop)?'':'<span style="opacity:.5;font-weight:400">|</span><span dir="ltr" style="letter-spacing:1.5px">Mika Omnix</span>'}</div><div style="margin-top:4px;font-size:13px;opacity:.9;line-height:1.6">${addr}${ph?` &nbsp;•&nbsp; تليفون: <span dir="ltr">${ph}</span>`:''}</div></div>
+  <div><div style="display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800;line-height:1.3"><span>${shop}</span>${/[A-Za-z]/.test(shop)?'':'<span style="opacity:.5;font-weight:400">|</span><span dir="ltr" style="letter-spacing:1.5px">Mekanix</span>'}</div><div style="margin-top:4px;font-size:13px;opacity:.9;line-height:1.6">${addr}${ph?` &nbsp;•&nbsp; تليفون: <span dir="ltr">${ph}</span>`:''}</div></div>
   <div style="font-size:20px;font-weight:800;white-space:nowrap">فاتورة بيع</div></div>
  `:`
  <div style="position:relative;background:${H};color:${HT};padding:34px 44px;display:flex;justify-content:space-between;align-items:center">
@@ -1392,7 +1392,7 @@ function renderOrders(){let b=document.getElementById('woBody');if(!b)return;
  let L=WO.list.filter(o=>WO.tab==='new'?o.status==='new':WO.tab==='done'?woDoneSt(o):(o.status!=='new'&&!woDoneSt(o)));
  if(!L.length){b.innerHTML=`<div class="card"><div class="empty">${WO.loading?'جاري التحميل...':WO.tab==='new'?'مفيش طلبات جديدة.':'مفيش طلبات هنا.'}</div></div>`;return}
  b.innerHTML=L.map(o=>{let it=(o.items||[]).map(x=>({x,p:woProd(x.code)})),est=sumBy(it,y=>y.p?(+y.p.price||0)*(+y.x.qty||0):0),sid=String(o.id).slice(0,8),
-  wa=o.phone?waLinkTo(o.phone,`أهلاً ${o.customer_name}، بخصوص طلبك رقم ${sid} من موقع Mika Omnix`):'',inv=o.invoice_no&&db.sales.find(s=>s.no===o.invoice_no);
+  wa=o.phone?waLinkTo(o.phone,`أهلاً ${o.customer_name}، بخصوص طلبك رقم ${sid} من موقع Mekanix`):'',inv=o.invoice_no&&db.sales.find(s=>s.no===o.invoice_no);
   return `<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b style="font-size:18px">${esc(o.customer_name)}</b>${o.phone?` — <span dir="ltr">${esc(o.phone)}</span>`:''}<div style="color:var(--muted);font-size:12px">طلب رقم ${esc(sid)} • ${esc(new Date(o.created_at).toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}))}</div></div>${woDoneSt(o)?'<span class="badge green">اتعملها فاتورة</span>':o.status==='new'?'<span class="badge red">جديد</span>':'<span class="badge">ملغي</span>'}</div>
   <div class="table-wrap" style="margin-top:10px"><table class="table" style="min-width:380px"><thead><tr><th>الصنف</th><th>المطلوب</th><th>في المخزن</th><th>سعر البيع</th></tr></thead><tbody>${it.map(y=>`<tr><td>${y.p?esc(y.p.name):`<span style="color:var(--danger)">كود ${esc(y.x.code)} مش موجود في السيستم</span>`}${y.x.backorder?' <span class="badge red">⏳ حجز — مش متوفر</span>':''}</td><td><b>${esc(y.x.qty)}</b></td><td style="color:${y.p&&(+y.p.qty||0)>=(+y.x.qty||0)?'inherit':'var(--danger)'}">${y.p?y.p.qty:'—'}</td><td>${y.p?money(y.p.price):'—'}</td></tr>`).join('')}</tbody></table></div>
   <div style="margin:8px 0">الإجمالي التقريبي: <b>${money(est)}</b></div>
@@ -1534,11 +1534,11 @@ function applyRole(){if(window.MK_T){if(window.mkT_applyRole)window.mkT_applyRol
 /* شاشة الدخول */
 function whoStart(){let w=document.getElementById('mkWho');if(!w)return;
  /* جهاز جديد: نستنى بيانات السيرفر الأول عشان مانعملش مدير تاني بالغلط */
- if(!users().some(u=>u.role==='admin')&&lsG('mk_cloud_ver')==null&&navigator.onLine&&typeof supabase!=='undefined'){w.innerHTML='<div class="mkbox" id="wWait"><h2>Mika Omnix</h2><p>⏳ جاري تحميل البيانات من السيرفر...</p></div>';setTimeout(()=>{if(document.getElementById('wWait'))whoStart()},8000);return}
- if(!users().some(u=>u.role==='admin')){w.innerHTML=`<div class="mkbox"><h2>أهلاً بيك في Mika Omnix</h2><p>أول مرة: اعمل حساب المدير (إنت). الاسم والرقم السري ده هتدخل بيهم كل يوم.</p>
+ if(!users().some(u=>u.role==='admin')&&lsG('mk_cloud_ver')==null&&navigator.onLine&&typeof supabase!=='undefined'){w.innerHTML='<div class="mkbox" id="wWait"><h2>Mekanix</h2><p>⏳ جاري تحميل البيانات من السيرفر...</p></div>';setTimeout(()=>{if(document.getElementById('wWait'))whoStart()},8000);return}
+ if(!users().some(u=>u.role==='admin')){w.innerHTML=`<div class="mkbox"><h2>أهلاً بيك في Mekanix</h2><p>أول مرة: اعمل حساب المدير (إنت). الاسم والرقم السري ده هتدخل بيهم كل يوم.</p>
   <input id="wName" placeholder="اسم المدير" style="direction:rtl;text-align:right"><input id="wPin" type="password" inputmode="numeric" placeholder="رقم سري (4 أرقام على الأقل)"><input id="wPin2" type="password" inputmode="numeric" placeholder="اكتب الرقم السري تاني">
   <button type="button" onclick="whoSetup()">حفظ ودخول</button><div id="wErr" class="werr"></div></div>`;return}
- w.innerHTML=`<div class="mkbox"><h2>Mika Omnix</h2><p>اختار طريقة الدخول</p><button type="button" onclick="whoRole('emp')" style="padding:18px;font-size:18px">👷 دخول موظف</button><button type="button" class="alt" onclick="whoRole('admin')" style="padding:18px;font-size:18px;margin-top:10px">👔 دخول مدير</button></div>`}
+ w.innerHTML=`<div class="mkbox"><h2>Mekanix</h2><p>اختار طريقة الدخول</p><button type="button" onclick="whoRole('emp')" style="padding:18px;font-size:18px">👷 دخول موظف</button><button type="button" class="alt" onclick="whoRole('admin')" style="padding:18px;font-size:18px;margin-top:10px">👔 دخول مدير</button></div>`}
 function whoRole(role){let w=document.getElementById('mkWho'),L=users().filter(u=>u.role===role);
  if(!L.length){w.querySelector('.mkbox').insertAdjacentHTML('beforeend','<div class="werr">مفيش موظفين متسجلين لسه — المدير يضيفهم من الإعدادات.</div>');return}
  w.innerHTML=`<div class="mkbox"><h2>${role==='emp'?'👷 دخول موظف':'👔 دخول مدير'}</h2><p>اختار اسمك واكتب الرقم السري</p>
@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-13';
+const APP_VER='2026-10-10-14';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -1623,7 +1623,7 @@ if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventLi
 </script>
 <script>
 /* =====================================================================
-   Mika Omnix — النظام الجديد (المرحلة 1): السيستم بيقرا ويكتب من جداول Supabase الحقيقية.
+   Mekanix — النظام الجديد (المرحلة 1): السيستم بيقرا ويكتب من جداول Supabase الحقيقية.
    - كل واحد بحسابه (مدير / موظف) والصلاحيات على السيرفر نفسه.
    - الفواتير والدفعات والمرتجعات بتتسجل على السيرفر مرة واحدة كاملة.
    - تحديث لحظي بين الأجهزة، والفواتير الجديدة بتتحفظ على الجهاز لو مفيش نت لحد ما يرجع.
@@ -1909,14 +1909,14 @@ function who(){return document.getElementById('mkWho')}
 function showWho(html){let w=who();if(!w)return;w.innerHTML=html;w.classList.add('show')}
 function chooser(){let s=staff();
  if(!s.length)return emailForm('أول مرة على الجهاز ده: ادخل بالإيميل وكلمة السر بتوعك (المدير).');
- showWho(`<div class="mkbox"><h2>Mika Omnix</h2><p>${TEST?'🧪 نسخة تجريبية — ':''}اختار طريقة الدخول</p><button type="button" onclick="mkT_role('emp')" style="padding:18px;font-size:18px">👷 دخول موظف</button><button type="button" class="alt" onclick="mkT_role('admin')" style="padding:18px;font-size:18px;margin-top:10px">👔 دخول مدير</button>
+ showWho(`<div class="mkbox"><h2>Mekanix</h2><p>${TEST?'🧪 نسخة تجريبية — ':''}اختار طريقة الدخول</p><button type="button" onclick="mkT_role('emp')" style="padding:18px;font-size:18px">👷 دخول موظف</button><button type="button" class="alt" onclick="mkT_role('admin')" style="padding:18px;font-size:18px;margin-top:10px">👔 دخول مدير</button>
  <p style="margin:14px 0 0;text-align:center"><a href="#" onclick="mkT_email();return false" style="color:#718087;font-size:13px">الدخول بالإيميل</a></p></div>`)}
 window.mkT_role=function(role){let L=staff().filter(u=>u.role===role);if(!L.length)return toast(role==='emp'?'مفيش موظفين متسجلين — المدير يضيفهم من الإعدادات':'مفيش مدير متسجل على الجهاز ده — ادخل بالإيميل');
  showWho(`<div class="mkbox"><h2>${role==='emp'?'👷 دخول موظف':'👔 دخول مدير'}</h2><p>اختار اسمك واكتب الرقم السري</p>
  <select id="wUser" style="width:100%;padding:13px;border:1px solid #d5dde0;border-radius:11px;margin-bottom:10px;font-size:16px">${L.map(u=>`<option value="${esc(u.email)}">${esc(u.name)}</option>`).join('')}</select>
  <input id="wPin" type="password" inputmode="numeric" placeholder="الرقم السري" autocomplete="off"><button type="button" id="wGo">دخول</button><button type="button" class="alt" style="margin-top:8px" onclick="mkT_chooser()">رجوع</button><div id="wErr" class="werr"></div></div>`);
  let go=()=>signIn(val('wUser'),val('wPin'));wGo.onclick=go;setTimeout(()=>{wPin.focus();wPin.onkeydown=e=>{if(e.key==='Enter')go()}},50)};
-function emailForm(note){showWho(`<div class="mkbox"><h2>Mika Omnix</h2><p>${esc(note||'ادخل بالإيميل وكلمة السر')}</p><input id="wEmail" type="email" placeholder="الإيميل" autocomplete="username"><input id="wPin" type="password" placeholder="كلمة السر" autocomplete="current-password">
+function emailForm(note){showWho(`<div class="mkbox"><h2>Mekanix</h2><p>${esc(note||'ادخل بالإيميل وكلمة السر')}</p><input id="wEmail" type="email" placeholder="الإيميل" autocomplete="username"><input id="wPin" type="password" placeholder="كلمة السر" autocomplete="current-password">
  <button type="button" id="wGo">دخول</button>${staff().length?'<button type="button" class="alt" style="margin-top:8px" onclick="mkT_chooser()">رجوع</button>':''}<div id="wErr" class="werr"></div></div>`);
  let go=()=>signIn(val('wEmail'),val('wPin'));wGo.onclick=go;setTimeout(()=>{wPin.onkeydown=e=>{if(e.key==='Enter')go()}},50)}
 window.mkT_chooser=chooser;window.mkT_email=()=>emailForm();
@@ -2082,7 +2082,7 @@ T.api={rpc,fetchAll,fetchIn,refreshProducts,refreshContacts,refreshInvoices,refr
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — المرحلة 2: الباركود والملصقات، كارت الصنف، الجرد، التسعير الجماعي، تقفيل اليومية، الإيصال الحراري
+   Mekanix — المرحلة 2: الباركود والملصقات، كارت الصنف، الجرد، التسعير الجماعي، تقفيل اليومية، الإيصال الحراري
    ===================================================================== */
 (function(){
 if(!window.MK_T)return;
@@ -2231,7 +2231,7 @@ window.printLabels=function(){if(!LB.length)return toast('ضيف صنف واحد
  let lab=p=>{let v=String(p.barcode||p.code||'').trim(),ok=/^[\x20-\x7E]+$/.test(v);return `<div class="lb"><div class="sh">${shop}</div><div class="nm">${esc(p.name)}</div>${v?(ok?`<svg class="bc" data-v="${esc(v)}"></svg>`:`<div class="tx">${esc(v)}</div>`):'<div class="tx">مفيش كود</div>'}${price?`<div class="pr">${money(p.price)}</div>`:''}</div>`};
  let css=a4?`@page{size:A4;margin:8mm}body{margin:0}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:0}.lb{height:35mm;padding:2mm;box-sizing:border-box;border:1px dashed #ccc}`
   :`@page{size:${dims[0]}mm ${dims[1]}mm;margin:0}body{margin:0}.lb{width:${dims[0]}mm;height:${dims[1]}mm;padding:1.5mm;box-sizing:border-box;page-break-after:always;overflow:hidden}`;
- printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mika Omnix | سيستم المخزون والمبيعات</title><style>${css}*{font-family:Cairo,Tahoma,sans-serif}.lb{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.sh{font-size:7pt;color:#555}.nm{font-size:${a4?9:8}pt;font-weight:700;line-height:1.2;max-height:2.4em;overflow:hidden}.bc{width:95%;height:${a4?16:dims[1]>28?14:11}mm}.tx{font-size:9pt;direction:ltr}.pr{font-size:9pt;font-weight:800}</style>
+ printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mekanix | سيستم المخزون والمبيعات</title><style>${css}*{font-family:Cairo,Tahoma,sans-serif}.lb{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.sh{font-size:7pt;color:#555}.nm{font-size:${a4?9:8}pt;font-weight:700;line-height:1.2;max-height:2.4em;overflow:hidden}.bc{width:95%;height:${a4?16:dims[1]>28?14:11}mm}.tx{font-size:9pt;direction:ltr}.pr{font-size:9pt;font-weight:800}</style>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script></head><body><div class="${a4?'g':''}">${items.map(lab).join('')}</div>
  <script>window.onload=function(){document.querySelectorAll('svg.bc').forEach(function(s){try{JsBarcode(s,s.dataset.v,{format:'CODE128',displayValue:true,fontSize:12,margin:0,height:40})}catch(e){s.outerHTML='<div class="tx">'+s.dataset.v+'</div>'}});setTimeout(function(){print()},500)}<\/script></body></html>`)};
 
@@ -2313,7 +2313,7 @@ window.closingHistory=async function(){try{let r=await window.mkSB.from('mk_clos
 
 /* ---------- 🧾 إيصال حراري 80 مم ---------- */
 window.printReceipt=function(id){let r=db.sales.find(x=>x.id===id);if(!r)return;let G=invGroup('sale',r.no||r.id),GI=G.filter(x=>!x.ship),SH=sumBy(G.filter(x=>x.ship),x=>x.total),T=sumBy(G,x=>x.total),P=sumBy(G,paidOf),R=sumBy(G,x=>x.rem||0);
- printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mika Omnix | سيستم المخزون والمبيعات</title><style>@page{size:80mm auto;margin:0}body{margin:0;width:80mm}*{font-family:Cairo,Tahoma,sans-serif;color:#000}.w{width:72mm;margin:0 auto;padding:3mm 0;font-size:11pt}.c{text-align:center}.b{font-weight:800}hr{border:0;border-top:1px dashed #000;margin:2mm 0}table{width:100%;border-collapse:collapse}td{padding:1mm 0;vertical-align:top}.l{text-align:left;white-space:nowrap}.sm{font-size:9pt}.big{font-size:14pt}</style></head><body><div class="w">
+ printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mekanix | سيستم المخزون والمبيعات</title><style>@page{size:80mm auto;margin:0}body{margin:0;width:80mm}*{font-family:Cairo,Tahoma,sans-serif;color:#000}.w{width:72mm;margin:0 auto;padding:3mm 0;font-size:11pt}.c{text-align:center}.b{font-weight:800}hr{border:0;border-top:1px dashed #000;margin:2mm 0}table{width:100%;border-collapse:collapse}td{padding:1mm 0;vertical-align:top}.l{text-align:left;white-space:nowrap}.sm{font-size:9pt}.big{font-size:14pt}</style></head><body><div class="w">
  ${db.theme&&db.theme.logo?`<div class="c"><img src="${db.theme.logo}" style="max-width:40mm;max-height:18mm"></div>`:''}
  <div class="c b big">${esc(db.settings.companyName||'')}</div>${db.settings.address?`<div class="c sm">${esc(db.settings.address)}</div>`:''}${db.settings.phone?`<div class="c sm" dir="ltr">${esc(db.settings.phone)}</div>`:''}<hr>
  <div class="sm">فاتورة: <b>${esc(invNo(r))}</b><br>التاريخ: ${esc(r.date)}<br>العميل: ${esc(r.person||'عميل نقدي')}${r.phone?' — <span dir="ltr">'+esc(r.phone)+'</span>':''}</div><hr>
@@ -2345,7 +2345,7 @@ const _rtE=renderTables;renderTables=function(){_rtE();renderExpenses()};
 
 /* ---------- 🖨️ الطباعة: التقارير، الجرد، المنتجات، الفواتير ---------- */
 function printA4(title,body,opt){opt=opt||{};let T=db.theme||{},H=T.invHeader||'#087f8c',shop=esc(db.settings.companyName||'');
- printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mika Omnix | سيستم المخزون والمبيعات</title><style>@page{size:A4 ${opt.landscape?'landscape':'portrait'};margin:12mm}*{font-family:Cairo,Tahoma,sans-serif;box-sizing:border-box}body{margin:0;color:#18343a;font-size:11pt}
+ printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mekanix | سيستم المخزون والمبيعات</title><style>@page{size:A4 ${opt.landscape?'landscape':'portrait'};margin:12mm}*{font-family:Cairo,Tahoma,sans-serif;box-sizing:border-box}body{margin:0;color:#18343a;font-size:11pt}
  .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid ${H};padding-bottom:6px;margin-bottom:10px}.hd b{font-size:17pt;color:${H}}.hd small{color:#555}
  h1{font-size:15pt;margin:4px 0 10px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}th{background:${H};color:#fff;padding:6px;font-size:10pt;text-align:right}td{padding:5px 6px;border-bottom:1px solid #ddd;font-size:10pt;vertical-align:top}tr:nth-child(even) td{background:#f6f8f9}
  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}.stats div{border:1px solid #ddd;border-radius:6px;padding:6px}.stats small{display:block;color:#666;font-size:9pt}.stats b{font-size:12pt}
@@ -2382,7 +2382,7 @@ window.printCountResult=function(){let r=lastCount;if(!r)return;let rows=(r.rows
 
 /* فاتورة البيع A4 + فاتورة الشراء */
 window.printInvoiceA4=function(id){let r=db.sales.find(x=>x.id===id);if(!r)return;
- printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mika Omnix | سيستم المخزون والمبيعات</title><style>@page{size:A4;margin:0}body{margin:0}.pg{width:210mm;min-height:297mm;overflow:hidden}.pg>div{transform-origin:top right;transform:scale(${(210/794*3.7795).toFixed(4)})}</style></head><body><div class="pg">${invoiceHTML(r)}</div><script>window.onload=function(){setTimeout(function(){print()},700)}<\/script></body></html>`)};
+ printHTML(`<!doctype html><html dir="rtl"><head>${PRINT_HEAD}<title>Mekanix | سيستم المخزون والمبيعات</title><style>@page{size:A4;margin:0}body{margin:0}.pg{width:210mm;min-height:297mm;overflow:hidden}.pg>div{transform-origin:top right;transform:scale(${(210/794*3.7795).toFixed(4)})}</style></head><body><div class="pg">${invoiceHTML(r)}</div><script>window.onload=function(){setTimeout(function(){print()},700)}<\/script></body></html>`)};
 window.printPurchase=function(id){let r=db.purchases.find(x=>x.id===id);if(!r)return;let G=invGroup('purchase',r.gid||r.id),adm=isAdmin(),GI=G.filter(x=>!x.ship),SH=sumBy(G.filter(x=>x.ship),x=>x.total);
  let rows=GI.map(x=>adm?[esc(x.product),x.qty,money(x.price),money(x.total)]:[esc(x.product),x.qty]);
  printA4('فاتورة شراء '+(r.pno||''),`<p>المورد: <b>${esc(r.person||'—')}</b> &nbsp;&nbsp; التاريخ: <b>${esc(r.date)}</b>${r.by?' &nbsp;&nbsp; سجّلها: '+esc(r.by):''}</p>`+tbl(adm?['الصنف','العدد','السعر','الإجمالي']:['الصنف','العدد'],rows)+(adm?`${SH?`<p>مصاريف النقل: ${money(SH)}</p>`:''}<p><b>الإجمالي: ${money(sumBy(G,x=>x.total))}</b> — المدفوع: ${money(sumBy(G,paidOf))} — المتبقي: ${money(sumBy(G,x=>x.rem||0))}</p>`:''))};
@@ -2454,14 +2454,14 @@ aside .navhd{display:none}
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — القايمة الجانبية على الموبايل + إدارة الشحن والتوصيل (ملصق A4 ومتابعة لحد التحصيل)
+   Mekanix — القايمة الجانبية على الموبايل + إدارة الشحن والتوصيل (ملصق A4 ومتابعة لحد التحصيل)
    ===================================================================== */
 (function(){
 /* ---------- ☰ القايمة الجانبية ---------- */
 const navClose=()=>document.body.classList.remove('navon');
 (function(){let brand=document.querySelector('header.top .brand'),as=document.querySelector('aside');if(!brand||!as)return;
  brand.insertAdjacentHTML('afterbegin','<button type="button" id="navBtn" aria-label="القايمة">☰</button>');
- as.insertAdjacentHTML('afterbegin','<div class="navhd"><span>Mika Omnix</span><button type="button" id="navX" aria-label="قفل">✕</button></div>');
+ as.insertAdjacentHTML('afterbegin','<div class="navhd"><span>Mekanix</span><button type="button" id="navX" aria-label="قفل">✕</button></div>');
  document.body.insertAdjacentHTML('beforeend','<div id="navBg"></div>');
  document.getElementById('navBtn').onclick=e=>{e.stopPropagation();document.body.classList.add('navon')};
  document.getElementById('navX').onclick=navClose;document.getElementById('navBg').onclick=navClose;
@@ -2519,7 +2519,7 @@ window.shipLabel=function(id){let s=SHP.find(x=>x.id===id);if(!s)return;
   <div class="sp"></div>
   <div class="ft"><div class="gr"><span>شحنة <b dir="ltr">${esc(s.no)}</b></span>${s.inv_no?`<span>فاتورة <b dir="ltr">${esc(s.inv_no)}</b></span>`:''}<span>${esc(day)}</span>${who?`<span>${esc(who)}</span>`:''}${s.tracking?`<span>بوليصة <b dir="ltr">${esc(s.tracking)}</b></span>`:''}</div><svg class="bc" data-v="${esc(s.no)}"></svg></div></div>`;
  let pages='';for(let i=1;i<=n;i++)pages+=page(i);
- window.mkPrintHTML(`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap"><title>Mika Omnix | سيستم المخزون والمبيعات</title>
+ window.mkPrintHTML(`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&display=swap"><title>Mekanix | سيستم المخزون والمبيعات</title>
  <style>@page{size:A4;margin:8mm}*{font-family:Cairo,Tahoma,sans-serif;box-sizing:border-box}body{margin:0;color:#000}
  .pg{height:279mm;overflow:hidden;page-break-after:always;border:3px solid #000;border-radius:5mm;padding:8mm;display:flex;flex-direction:column;gap:6mm}.pg:last-child{page-break-after:auto}
  .hd{text-align:center;border-bottom:3px solid #000;padding-bottom:4mm}.lg{width:165mm;max-height:62mm;object-fit:contain;display:block;margin:0 auto 3mm}.cp{font-size:16pt;font-weight:800}.ca{font-size:13pt;font-weight:600}
@@ -2729,7 +2729,7 @@ function shLive(){try{sbx().channel('mk-ship').on('postgres_changes',{event:'*',
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — 📒 يومية المحل: اكتب كل بيعة على طول → المخزن بيتخصم بعد 5 دقايق → «صفّي» يعمل فواتير بيع لكل عميل
+   Mekanix — 📒 يومية المحل: اكتب كل بيعة على طول → المخزن بيتخصم بعد 5 دقايق → «صفّي» يعمل فواتير بيع لكل عميل
    ===================================================================== */
 (function(){
 if(!window.MK_T)return;
@@ -2909,7 +2909,7 @@ let rtT=null;
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — 💰 تذكير الديون: العملاء اللي عليهم فلوس + رسالة واتساب جاهزة + سجل آخر تذكير
+   Mekanix — 💰 تذكير الديون: العملاء اللي عليهم فلوس + رسالة واتساب جاهزة + سجل آخر تذكير
    ===================================================================== */
 (function(){
 if(!window.MK_T)return;
@@ -3007,7 +3007,7 @@ const _rdT=renderDashboard;renderDashboard=function(){_rdT();renderDebts()};
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — المرحلة الرابعة: 📦 اقتراحات الطلب من الموردين + 📊 رسومات لوحة التحكم
+   Mekanix — المرحلة الرابعة: 📦 اقتراحات الطلب من الموردين + 📊 رسومات لوحة التحكم
    ===================================================================== */
 (function(){
 const DAY=86400000,pad=v=>String(v).padStart(2,'0');
@@ -3076,7 +3076,7 @@ const svgBars=(items,{h=170,color='var(--blue)',neg='#c0392b',lblEvery=1,fmt=mon
  let W=640,pl=8,pr=8,pt=14,pb=26,n=items.length,iw=W-pl-pr,bw=iw/n,mx=Math.max(1,...items.map(i=>i.v)),mn=Math.min(0,...items.map(i=>i.v)),span=mx-mn||1,
   y=v=>pt+(h-pt-pb)*(1-(v-mn)/span),z=y(0);
  let bars=items.map((it,i)=>{let x=W-pr-(i+1)*bw+bw*0.15,w=bw*0.7,top=y(Math.max(it.v,0)),bot=y(Math.min(it.v,0)),bh=Math.max(it.v?1.5:0,bot-top);
-  return `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${w.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${it.v<0?neg:color}"><title>Mika Omnix | سيستم المخزون والمبيعات</title></rect>`
+  return `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${w.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${it.v<0?neg:color}"><title>Mekanix | سيستم المخزون والمبيعات</title></rect>`
    +(i%lblEvery===0?`<text x="${(x+w/2).toFixed(1)}" y="${h-8}" text-anchor="middle" font-size="11" fill="#718087">${esc(it.l)}</text>`:'')}).join('');
  return `<svg viewBox="0 0 ${W} ${h}" role="img"><line x1="${pl}" x2="${W-pr}" y1="${z.toFixed(1)}" y2="${z.toFixed(1)}" stroke="#d5dde0"/>${bars}</svg>`};
 const hBars=(rows,fmt)=>{let mx=Math.max(1,...rows.map(r=>r.v));return rows.map(r=>`<div class="hb"><span class="nmx" title="${esc(r.n)}">${esc(r.n)}</span><div class="bar"><i style="width:${Math.max(2,r.v/mx*100).toFixed(1)}%"></i></div><b>${fmt(r.v)}</b></div>`).join('')};
@@ -3150,7 +3150,7 @@ setTimeout(()=>{try{renderCharts();roBanner()}catch(e){}},1500);
 <div id="mkInv"></div><div id="ivBusy" class="ivbusy"></div>
 <script>
 /* =====================================================================
-   Mika Omnix — 📷 قراءة فاتورة المورد بالكاميرا: البنود تنزل على فاتورة الشراء + مطابقة بالتشابه + حفظ أسماء المورد
+   Mekanix — 📷 قراءة فاتورة المورد بالكاميرا: البنود تنزل على فاتورة الشراء + مطابقة بالتشابه + حفظ أسماء المورد
    ===================================================================== */
 (function(){
 const sbx=()=>window.mkSB;
@@ -3281,7 +3281,7 @@ function remember(sup,it,pid){let m=AL[sup]||(AL[sup]={});m[normTxt(it.text)]=pi
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — 📥 طابور فواتير الشراء بالصور: بتتقري في الخلفية + إعادة المحاولة لوحدها + «فواتير للمراجعة»
+   Mekanix — 📥 طابور فواتير الشراء بالصور: بتتقري في الخلفية + إعادة المحاولة لوحدها + «فواتير للمراجعة»
    ===================================================================== */
 (function(){
 if(!window.MK_T)return;
@@ -3484,7 +3484,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — 🔑 نسيت الرقم السري: لينك تغيير على إيميل الحساب + شاشة رقم سري جديد
+   Mekanix — 🔑 نسيت الرقم السري: لينك تغيير على إيميل الحساب + شاشة رقم سري جديد
    ===================================================================== */
 (function(){
 const sbx=()=>window.mkSB;
@@ -3537,7 +3537,7 @@ if(/error_code=otp_expired|error=access_denied/.test(location.hash))setTimeout((
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — طلبات الواتساب: خانة «اكتب الصنف بنفسك» + أيقونات واضحة لطلبات الموقع والواتساب
+   Mekanix — طلبات الواتساب: خانة «اكتب الصنف بنفسك» + أيقونات واضحة لطلبات الموقع والواتساب
    ===================================================================== */
 (function(){
 /* ---------- أيقونات ---------- */
@@ -3585,7 +3585,7 @@ window.waInvoice=function(id){const W=window.WA;let o=W&&W.list.find(x=>x.id===i
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — إضافات: أيقونة الواتساب الخضرا • حركات الدرج في اليومية • تعديل طريقة الدفع بعد التصفية • منتج جديد على الموقع من السيستم
+   Mekanix — إضافات: أيقونة الواتساب الخضرا • حركات الدرج في اليومية • تعديل طريقة الدفع بعد التصفية • منتج جديد على الموقع من السيستم
    ===================================================================== */
 (function(){
 if(!window.MK_T)return;
@@ -3682,7 +3682,7 @@ const _osaS=window.openSiteAdmin;if(_osaS)window.openSiteAdmin=async function(ta
 
 <script>
 /* =====================================================================
-   Mika Omnix — PDF أسرع: الفاتورة / عرض السعر بيترسموا في صفحة لوحدهم (مش بننسخ السيستم كله)
+   Mekanix — PDF أسرع: الفاتورة / عرض السعر بيترسموا في صفحة لوحدهم (مش بننسخ السيستم كله)
    — قبل كده كانت بتطوّل جداً على الآيفون لما الأصناف والفواتير تكتر
    ===================================================================== */
 (function(){
@@ -3708,7 +3708,7 @@ window.mkRenderIso=renderIso;
 </script>
 
 <script>
-/* Mika Omnix — 🚪 تسجيل الخروج واضح في آخر القايمة الجانبية */
+/* Mekanix — 🚪 تسجيل الخروج واضح في آخر القايمة الجانبية */
 (function(){
 function add(){const as=document.querySelector('aside');if(!as||document.getElementById('outBtn'))return;
  const navs=as.querySelectorAll('nav'),last=navs[navs.length-1];
@@ -3720,7 +3720,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* Mika Omnix — 🗑️ مسح الطلبات الملغية (طلبات الموقع / الواتساب) — المدير بس
+/* Mekanix — 🗑️ مسح الطلبات الملغية (طلبات الموقع / الواتساب) — المدير بس
    الزرار برا شريط التابات (التابات بتتلوّن من جديد كل شوية) وليه id ثابت */
 (function(){
 const isAdmin=()=>!!(window.mkT_user&&window.mkT_user.role==='admin');
@@ -3756,7 +3756,7 @@ setTimeout(run,1500);setInterval(run,5000);
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — 📇 استيراد الأسامي من التليفون (vCard .vcf / Excel / CSV)
+   Mekanix — 📇 استيراد الأسامي من التليفون (vCard .vcf / Excel / CSV)
    الأسامي بتتحط في قايمة مراجعة: كل اسم لوحده — عدّله، اختار عميل أو مورد، واحفظ
    ===================================================================== */
 (function(){
@@ -3887,7 +3887,7 @@ setTimeout(btn,1500);setInterval(btn,4000);
 </style>
 <script>
 /* =====================================================================
-   Mika Omnix — طلبات الواتساب أذكى:
+   Mekanix — طلبات الواتساب أذكى:
    • السيستم بيتعلّم: الصنف اللي تختاره لكلمة معيّنة بيتحفظ، والمرة الجاية بيتطابق لوحده
    • اسم العميل: من الرسالة («باسم …» / «الاسم: …») ← أو من رقمه المتسجل ← أو اسم الواتساب
    ===================================================================== */
@@ -4023,10 +4023,10 @@ aside nav button.promo .pv{margin-right:auto;background:linear-gradient(135deg,#
 </div></div>
 <script>
 /* =====================================================================
-   Mika Omnix — حساب جديد (محل جديد) + فترة تجريبية + قفل وتحويل للواتساب + عرض الموقع
+   Mekanix — حساب جديد (محل جديد) + فترة تجريبية + قفل وتحويل للواتساب + عرض الموقع
    ===================================================================== */
 (function(){
-const WA='201119199659',APP='Mika Omnix',sb=window.mkSB,$=id=>document.getElementById(id);
+const WA='201119199659',APP='Mekanix',sb=window.mkSB,$=id=>document.getElementById(id);
 let SUB=null;
 /* نسخة جوجل بلاي (الأبلكيشن بيفتح على ?src=play): من غير أي زراير دفع/اشتراك برا المتجر */
 const PLAY=(()=>{try{if(/[?&]src=play/.test(location.search))localStorage.setItem('mk_play','1');return localStorage.getItem('mk_play')==='1'}catch(e){return /[?&]src=play/.test(location.search)}})();
