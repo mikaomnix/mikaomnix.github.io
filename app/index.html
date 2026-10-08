@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-9';
+const APP_VER='2026-10-10-10';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -3912,9 +3912,19 @@ const NAME_RE=/(?:^|[\s\n،,.])(?:باسم|بإسم|بأسم|الاسم|الإس
 const stripName=raw=>String(raw||'').replace(NAME_RE,' ');
 function nameInMsg(body){const m=String(body||'').match(NAME_RE);if(!m)return '';let n=m[1].replace(/\s+/g,' ').trim();
  n=n.split(' ').filter(w=>!/^(طلب|عايز|عاوز|محتاج)$/.test(w)).slice(0,4).join(' ');return n.length>=2?n:''}
+/* من غير كلمة «باسم»: أول سطر مفيهوش أرقام وكلامه مش شبه أي صنف = اسم العميل («طلب محمد» / «طلب» ثم «محمد علي») */
+let PTOK=null,PTOKn=-1;
+function prodTokens(){const P=db.products||[];if(PTOK&&PTOKn===P.length)return PTOK;PTOK=new Set();P.forEach(p=>VN((p.name||'')+' '+(p.cat||'')).split(' ').forEach(w=>{if(w.length>=2)PTOK.add(w)}));PTOKn=P.length;return PTOK}
+function looksProduct(w){const T=prodTokens();if(T.has(w))return true;for(const t of T){if(w.length>=3&&t.length>=3&&(t.startsWith(w)||w.startsWith(t)))return true}return false}
+function asName(ln){let t=String(ln||'').replace(/^\s*(طلب|طلبيه|طلبية)\s*[:：\-]?\s*/,'').trim();if(!t||/[0-9٠-٩]/.test(t))return '';
+ const ws=VN(t).split(' ').filter(Boolean);if(!ws.length||ws.length>4)return '';
+ if(ws.some(w=>STOPW.has(w)||looksProduct(w)))return '';return t.replace(/\s+/g,' ').slice(0,40)}
+function nameLine(body){const lines=String(body||'').split(/[\n\r،,]+/).map(s=>s.trim()).filter(l=>l&&l.replace(/^\s*(طلب|طلبيه|طلبية)\s*/,'').trim());
+ if(!lines.length)return '';
+ return asName(lines[0])||(lines.length>1?asName(lines[lines.length-1]):'')}   // أول سطر أو آخر سطر
 const tail=p=>String(p||'').replace(/\D/g,'').slice(-9);
 function contactByPhone(ph){const t=tail(ph);if(t.length<9)return null;return (db.contacts||[]).find(c=>c.type==='عميل'&&tail(c.phone)===t)||null}
-function whoFor(o){const m=nameInMsg(o.body);if(m)return {name:m,src:'msg'};const c=contactByPhone(o.phone);if(c)return {name:c.name,src:'contact'};
+function whoFor(o){const m=nameInMsg(o.body)||nameLine(o.body);if(m)return {name:m,src:'msg'};const c=contactByPhone(o.phone);if(c)return {name:c.name,src:'contact'};
  return {name:o.customer_name||'',src:'wa'}}
 window.mkWaWho=whoFor;
 
@@ -3929,6 +3939,8 @@ async function decorate(){const body=document.getElementById('waBody');if(!body)
    // سطر الاسم («باسم محمد») مش صنف
    const hasName=NAME_RE.test(' '+raw),item=hasName?stripName(' '+raw):raw;
    if(hasName&&!akey(item)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;return}
+   const nl=nameLine(o.body);if(nl&&VN(raw.replace(/^\s*(طلب|طلبيه|طلبية)\s*/,''))===VN(nl)){tr.classList.add('wa-name');sel.value='';sel.disabled=true;
+    const td=tr.querySelector('td');if(td&&!td.querySelector('small'))td.insertAdjacentHTML('beforeend',' <small style="color:var(--blue)">(اسم العميل)</small>');return}
    const k=akey(item),pid=AL[k],p=pid&&(db.products||[]).find(x=>x.id===pid);
    if(p){ensureOpt(sel,p);sel.insertAdjacentHTML('afterend','<span class="wa-learn">✔ متطابق من قبل</span>')}
    tr.dataset.k=k;
