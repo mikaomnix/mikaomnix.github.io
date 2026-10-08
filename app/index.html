@@ -228,12 +228,12 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <div class="card"><h3>بيانات الشركة</h3><div class="settings">
    <div class="field"><label>اسم الشركة</label><input id="companyName" value="" placeholder="اسم المحل"></div>
    <div class="field"><label>رقم واتساب / تليفون المحل</label><input id="companyPhone" placeholder="01xxxxxxxxx"></div>
-   <div class="field"><label>عنوان المحل (يظهر في الفاتورة)</label><input id="companyAddress" placeholder="الجيزة - أرض اللواء - شارع ١٠"></div>
+   <div class="field"><label>عنوان المحل (يظهر في الفاتورة)</label><input id="companyAddress" placeholder="مثال: القاهرة - مدينة نصر - شارع عباس العقاد"></div>
    <button class="primary" onclick="saveSettings()">حفظ الإعدادات</button>
   </div></div>
   <div class="card"><h3>النسخ الاحتياطي</h3><p style="color:var(--muted)">احفظ نسخة من بيانات النظام على جهازك، أو استعد نسخة سابقة.</p>
-   <div class="toolbar"><button class="secondary" onclick="backup()"><svg class="i"><use href="#i-download"/></svg> تصدير نسخة</button><button class="secondary" onclick="document.getElementById('restoreFile').click()"><svg class="i"><use href="#i-upload"/></svg> استعادة نسخة</button><input id="restoreFile" type="file" accept=".json" hidden onchange="restore(event)"></div>
-   <button class="secondary" onclick="openRecat()">إعادة تصنيف الأصناف</button> <button class="secondary" onclick="cloudLogout()">تسجيل الخروج</button> <button class="secondary danger" onclick="clearOps()">مسح العمليات فقط (الأصناف تفضل)</button> <button class="secondary danger" onclick="resetData()">مسح كل شيء حتى المظهر</button>
+   <div class="toolbar"><button class="secondary" onclick="backup()"><svg class="i"><use href="#i-download"/></svg> تصدير نسخة</button></div>
+   <button class="secondary" onclick="openRecat()">إعادة تصنيف الأصناف</button> <button class="secondary" onclick="cloudLogout()">تسجيل الخروج</button>
   </div>
  </div>
 </section>
@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-6';
+const APP_VER='2026-10-10-7';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
