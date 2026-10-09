@@ -1,8 +1,9 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.mikaomnix.app",
-        "sha256_cert_fingerprints": ["3D:92:D7:1F:C8:4A:16:CF:E7:D2:CE:AD:42:1F:0A:4D:8A:2D:29:13:13:AC:FD:76:71:41:3C:DF:0E:00:17:F6"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {"namespace": "android_app", "package_name": "com.mikaomnix.app",
+    "sha256_cert_fingerprints": ["3D:92:D7:1F:C8:4A:16:CF:E7:D2:CE:AD:42:1F:0A:4D:8A:2D:29:13:13:AC:FD:76:71:41:3C:DF:0E:00:17:F6"]}
+},{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {"namespace": "android_app", "package_name": "com.mikaomnix.woodmaster",
+    "sha256_cert_fingerprints": ["81:8C:3D:C7:9B:22:7E:67:64:3D:BE:FD:79:9C:8D:87:FB:89:3E:5D:F4:4F:B6:55:44:4F:CD:72:52:0A:D3:75"]}
+}]
