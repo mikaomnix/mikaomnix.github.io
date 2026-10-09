@@ -197,16 +197,26 @@ async function ocrWorker() { if (OCR) return OCR; await loadTess(); OCR = await 
 async function sha(blob) { const b = await blob.arrayBuffer(); const h = await crypto.subtle.digest('SHA-256', b); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join(''); }
 async function shrink(file) { try { const u = URL.createObjectURL(file), im = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = u; }); const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return await new Promise(r => c.toBlob(r, 'image/jpeg', .85)); } catch (e) { return file; } }
 const QUEUE = {};
-async function importImages(files, forTx, opt) { opt = opt || {}; let added = 0, dup = 0;
+async function importImages(files, forTx, opt) { opt = opt || {}; let added = 0, dup = 0; const dups = [];
   for (const f of files) {
     if (!/^image\//.test(f.type)) { toast('ده مش صورة: ' + f.name, 'r'); continue; }
-    const hash = await sha(f), dupe = Object.values(S.proofs).find(p => p.hash === hash);
-    if (dupe && (opt.batch || !window.confirm('الصورة دي اتستوردت قبل كده' + (dupe.txId && S.tx[dupe.txId] ? ' ومربوطة بالعملية ' + S.tx[dupe.txId].no : '') + ' — تضيفها تاني؟'))) { dup++; continue; }
+    const hash = await sha(f), dupe = opt.force ? null : Object.values(S.proofs).find(p => p.hash === hash);
+    if (dupe && opt.batch) { dup++; dups.push({ f, dupe }); continue; }   // في الدفعات: مابنشيلهاش — بنسأل بعد ما الباقي يخلص
+    if (dupe && !window.confirm('الملف ده بالظبط (نفس الصورة بايت ببايت) اتستورد قبل كده' + (dupe.txId && S.tx[dupe.txId] ? ' ومربوط بالعملية ' + S.tx[dupe.txId].no : '') + ' — تضيفه تاني؟')) { dup++; continue; }
     const id = C.uid(), blob = await shrink(f); await dbPut('blobs', { id, blob, name: f.name, at: nowIso() });
     await dispatch('proof.add', { id, hash, name: f.name, size: f.size, status: 'ocr', forTx: forTx || null, ext: {}, src: opt.src || '', via: opt.via || 'img', sel: opt.dir ? { dir: opt.dir } : null }); QUEUE[id] = 0; runOcr(id, blob, forTx); added++;
   }
-  return { added, dup };
+  if (dups.length) setTimeout(() => dupAsk(dups, opt), 400);
+  return { added, dup, dups };
 }
+/* صور متكررة في الدفعة: نوريها لصاحبها ونسيبله القرار */
+function dupAsk(dups, opt) { const urls = dups.map(d => URL.createObjectURL(d.f));
+  const info = d => { const p = d.dupe, t = p.txId && S.tx[p.txId], e = p.ext || {}; return t ? `اتصفّت قبل كده: ${H(t.no)} · ${M(t.amount)} · ${H((cust(t.customerId) || {}).name || '')} · ${T(t.executedAt)}` : p.settled ? 'اتصفّت قبل كده (سداد)' : p.ignored ? 'اتجاهلت قبل كده' : `موجودة في الصندوق${e.amount ? ' · ' + M(e.amount) : ''}`; };
+  modal(`<h3>${ic('copy')} ${N(dups.length)} صورة اتستوردت قبل كده</h3><p class="muted" style="margin-top:0;line-height:1.8">دي <b>نفس ملف الصورة بالظبط</b> (بصمة الملف متطابقة بايت ببايت) — مش مجرد نفس المبلغ أو نفس الرقم. لو عملت تحويلين بنفس المبلغ لنفس الشخص، كل اسكرين بيبقى ملف مختلف ومش هيتعتبر متكرر. لو متأكد إن دي عملية جديدة دوس «ضيفها برضه».</p>
+  ${dups.map((d, i) => `<div class="row" style="flex-wrap:nowrap;gap:10px;align-items:center;border-top:1px solid var(--line);padding:8px 0"><img src="${urls[i]}" class="thumb" style="width:64px;height:64px"><div class="f"><b>${H(d.f.name)}</b><div class="meta">${info(d)}</div></div><button class="s" data-i="${i}">${ic('plus')}ضيفها برضه</button></div>`).join('')}
+  <div class="row" style="margin-top:10px">${dups.length > 1 ? `<button class="s" id="duAll">${ic('plus')}ضيفهم كلهم</button>` : ''}<button class="g" onclick="A.closeM()">سيبهم (ماتضيفش)</button></div>`);
+  const add = async list => { closeM(); const r = await importImages(list.map(d => d.f), null, Object.assign({}, opt, { force: true })); toast('اتضافت ' + N(r.added) + ' صورة للصندوق', 'g'); };
+  $$('#mbox [data-i]').forEach(b => b.onclick = () => add([dups[+b.dataset.i]])); const a = $('#duAll'); if (a) a.onclick = () => add(dups); }
 async function runOcr(id, blob, forTx) {
   try { const w = await ocrWorker(); const r = await w.recognize(blob); const text = r.data.text || ''; const ext = C.extractProof(text, ST().providers);
     await dispatch('proof.update', { id, ocrText: text, ext, status: 'ready' });
@@ -665,7 +675,8 @@ function plan(p) { const e = p.ext || {}, sel = p.sel || {}, x = { p, e, probs: 
   x.counter = x.dir === 'in' ? (e.sender || e.recipient || '') : (e.ipa || e.recipient || '');
   if (p.status === 'ocr') x.probs.push('بيقرا الصورة…'); else if (p.status === 'error') x.probs.push('ماقدرش يقرا الصورة');
   if (!x.amount && p.status !== 'ocr') x.probs.push('المبلغ مش واضح'); if (!x.src) x.probs.push('اختار المصدر'); if (!x.cust) x.probs.push('مين العميل؟');
-  if (e.ref) { const d = C.refExists(S, e.ref); if (d) x.probs.push('المرجع ده متسجل على ' + d.no); }
+  if (e.ref) { const d = C.refExists(S, e.ref); if (d) x.probs.push('المرجع ده متسجل على ' + d.no);
+    else if (Object.values(S.proofs).some(q => q.id !== p.id && !q.ignored && !q.txId && !q.settled && q.ext && q.ext.ref === e.ref)) x.probs.push('نفس رقم المرجع في إثبات تاني بالصندوق — غالباً نفس العملية'); }
   if (!x.probs.length) { const [t, id] = x.src.split(':'), c = cust(x.cust.id) || {};
     if (x.mode === 'coll') x.line = `هينزل من حساب ${H(c.name)} ${M(x.amount)} · ويدخل ${H(srcName(x.src))}`;
     else { const w = t === 'w' ? S.wallets[id] : null, k = C.calcCommission(S, x.amount, { customerId: c.id, group: c.group, walletId: w ? id : null, provider: w ? w.provider : e.provider });
@@ -729,7 +740,7 @@ function importBatch(files) { const pre = files || null, last = lastSrc();
   <div id="ibF" class="stl-line" style="${pre ? '' : 'display:none'}">${pre ? N(pre.length) + ' صورة جاهزة' : ''}</div><input type="file" id="ibIn" accept="image/*" multiple hidden>
   <div class="row" style="margin-top:12px">${pre ? '' : `<button class="s" style="flex:1" onclick="document.getElementById('ibIn').click()">${ic('image')}اختار الصور</button>`}<button id="ibGo" style="flex:1" ${pre ? '' : 'disabled'}>${ic('check')}ابدأ القراية</button></div>`);
   let F = pre ? [...pre] : []; $('#ibIn').onchange = e => { F = [...e.target.files]; $('#ibF').style.display = ''; $('#ibF').textContent = N(F.length) + ' صورة جاهزة'; $('#ibGo').disabled = !F.length; };
-  $('#ibGo').onclick = async () => { const src = val('ibS'), dir = val('ibD'); if (src) try { localStorage.setItem('cs_lastsrc', src); } catch (e) { } closeM(); INF = 'todo'; location.hash = 'inbox'; const r = await importImages(F, null, { src, dir, via: (pre && pre.via) || 'img', batch: true }); toast(`بيقرا ${N(r.added)} صورة${r.dup ? ' · ' + N(r.dup) + ' متكررة اتشالت' : ''}`, 'g'); }; }
+  $('#ibGo').onclick = async () => { const src = val('ibS'), dir = val('ibD'); if (src) try { localStorage.setItem('cs_lastsrc', src); } catch (e) { } closeM(); INF = 'todo'; location.hash = 'inbox'; const r = await importImages(F, null, { src, dir, via: (pre && pre.via) || 'img', batch: true }); toast(`بيقرا ${N(r.added)} صورة${r.dup ? ' · ' + N(r.dup) + ' متكررة مستنية قرارك' : ''}`, 'g'); }; }
 function importBatchFor(k) { try { localStorage.setItem('cs_lastsrc', k); } catch (e) { } importBatch(); }
 async function addTextProof(text, opt) { opt = opt || {}; const id = opt.id || C.uid(); if (S.proofs[id]) return; const ext = C.extractProof(text, ST().providers), mt = C.matchProof(S, ext, opt.at || nowIso());
   await dispatch('proof.add', { id, hash: opt.hash || ('t-' + id), name: opt.name || 'رسالة', size: 0, status: 'ready', source: 'sms', isText: true, via: opt.via || 'text', sender: opt.sender || '', smsAt: opt.at || null, ocrText: text, ext, src: opt.src || '', sel: opt.dir ? { dir: opt.dir } : null, forTx: null, cands: mt.candidates, suggested: mt.suggested, ambiguous: mt.ambiguous }); }
