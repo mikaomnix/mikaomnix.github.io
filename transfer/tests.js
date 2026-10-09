@@ -102,6 +102,25 @@ function run(C) {
   // تعديل بعد التنفيذ ممنوع على الفلوس
   push('tx.update', { id: 't1', amount: C.toP(9999), notes: 'ملاحظة' }); S = C.build(E);
   ok('مبلغ عملية منفذة مايتعدلش بصمت (التصحيح بحركة)', S.tx.t1.amount === C.toP(5000) && S.tx.t1.notes === 'ملاحظة');
+  // رسالة فودافون كاش الحقيقية: «5.00 جنيه» ومعاها مصاريف خدمة
+  const sms = C.extractProof('تم تحويل 5.00 جنيه لرقم 01007007277 مصاريف الخدمة 1 جنيه. رصيدك الحالي 120.50 جنيه. اطلب #9* للمزيد');
+  ok('OCR: «5.00 جنيه» = ٥ ج مش ٥٠٠٠', sms.amount === C.toP(5), C.fromP(sms.amount)); ok('OCR: مصاريف الخدمة ١ ج اتعرفت لوحدها', sms.fee === C.toP(1), C.fromP(sms.fee)); ok('OCR: «5,00» = ٥ ج', C.extractProof('تم ارسال 5,00 جنيه').amount === C.toP(5)); ok('OCR: «5,000.00 EGP» = ٥٠٠٠', C.extractProof('Amount: 5,000.00 EGP').amount === C.toP(5000));
+  // الصورة تتعرّف على العميل من رقمه حتى من غير طلب مفتوح
+  push('cust.upsert', { id: 'c3', name: 'محمد', phones: ['01007007277'] }); S = C.build(E);
+  const g = C.matchProof(S, sms, E[E.length - 1].t); ok('الصورة عرفت العميل من رقمه من غير طلب', g.customer && g.customer.id === 'c3', JSON.stringify(g.customer));
+  ok('رقم بيحوّل عليه العميل بيتحفظ ويتعرف', C.guessCustomer(S, { recipient: '01098765432' }) && C.guessCustomer(S, { recipient: '01098765432' }).id === 'c1');
+  // رصيد افتتاحي + تسوية
+  push('cust.upsert', { id: 'c4', name: 'عم حسن', phones: ['01200000001'], opening: C.toP(1500) }); push('cust.upsert', { id: 'c5', name: 'تاجر ليه فلوس', phones: ['01200000002'], opening: -C.toP(800) });
+  S = C.build(E); L = C.ledgers(S); ok('رصيد افتتاحي عليه ١٥٠٠', L.parties.c4.balance === C.toP(1500)); ok('رصيد افتتاحي له ٨٠٠', L.parties.c5.balance === -C.toP(800));
+  push('party.adjust', { id: 'a1', partyId: 'c4', delta: -C.toP(500), reason: 'خصم اتفقنا عليه' }); S = C.build(E); L = C.ledgers(S); ok('التسوية نزلت المديونية لـ ١٠٠٠', L.parties.c4.balance === C.toP(1000));
+  const cashBeforeAdj = C.balances(S).cash; ok('التسوية مالهاش أثر على الخزنة', cashBeforeAdj === B.cash);
+  // سحب كاش: العميل حوّل ١٠٠٠ على محفظتنا وعمولة ١٠، وخد ٩٩٠ كاش
+  const w1b = C.balances(S).wallets.w1;
+  push('tx.create', { id: 't9', kind: 'receive', customerId: 'c5', amount: C.toP(1000) }); push('tx.execute', { id: 't9', walletId: 'w1', commission: C.toP(10), fee: 0 }); push('pay.out', { id: 'o1', partyId: 'c5', amount: C.toP(990), method: 'cash' });
+  S = C.build(E); B = C.balances(S); L = C.ledgers(S);
+  ok('سحب الكاش: المحفظة زادت ١٠٠٠', B.wallets.w1 - w1b === C.toP(1000), C.fromP(B.wallets.w1 - w1b)); ok('سحب الكاش: الخزنة نقصت ٩٩٠', cashBeforeAdj - B.cash === C.toP(990), C.fromP(cashBeforeAdj - B.cash)); ok('سحب الكاش: رصيد العميل ماتغيرش (له ٨٠٠ زي ما هو)', L.parties.c5.balance === -C.toP(800), C.fromP(L.parties.c5.balance));
+  const r2 = C.report(S, C.dayOf(E[E.length - 1].t, S.settings.dayStartHour)); ok('التقرير: سحب الكاش منفصل عن التحويلات', r2.recvAmount === C.toP(1000) && r2.amount === C.toP(6000) && r2.payouts === C.toP(990), [r2.recvAmount, r2.amount, r2.payouts].map(C.fromP).join('/'));
+  ok('حدود المحفظة: استهلاك اليوم ٦٠٠٠ (الإرسال بس)', C.walletUsage(S, 'w1', C.dayOf(E[E.length - 1].t, 6), 6).day === C.toP(6000), C.fromP(C.walletUsage(S, 'w1', C.dayOf(E[E.length - 1].t, 6), 6).day));
   // دقة القروش
   ok('دقة الفلوس: ٠٫١ + ٠٫٢ = ٠٫٣ بالظبط', C.toP(0.1) + C.toP(0.2) === C.toP(0.3)); ok('تحويل الأرقام العربية', C.toP('١٬٢٣٤٫٥٠') === 123450);
   return R;

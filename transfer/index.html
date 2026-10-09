@@ -17,6 +17,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
 .top .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px;flex:1;min-width:0}.top .logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--sky));display:grid;place-items:center;color:#fff;flex:none}
 .top .logo span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:560px){.top .logo span{display:none}#net{font-size:0;gap:0;padding:6px}#net svg.i{width:16px;height:16px}#sync{padding:4px 8px}}
 .chip{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;background:var(--soft);color:var(--pri2);white-space:nowrap}.chip.off{background:#fdecec;color:var(--bad)}.chip.w{background:#fff4e2;color:#a86500}.chip svg.i{width:15px;height:15px}
 .layout{display:flex;min-height:calc(100vh - 56px)}
 nav.side{width:230px;background:var(--card);border-inline-end:1px solid var(--line);padding:10px;position:sticky;top:56px;height:calc(100vh - 56px);overflow:auto;flex:none}
@@ -63,13 +64,30 @@ body.dense th,body.dense td{padding:5px 6px;font-size:13px}.sc{overflow:auto;max
 .chart{display:flex;align-items:flex-end;gap:6px;height:150px}.chart .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px}.chart .c i{display:block;width:100%;max-width:34px;border-radius:7px 7px 2px 2px}.chart small{font-size:11px;color:var(--mut)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{font-weight:700}
 .sel{outline:2px solid var(--pri)}
+button,a,.kpi,.tx,input,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active,.btn:active,.kpi.clk:active{transform:scale(.97)}button,.btn,.kpi{transition:transform .08s,background .12s}
+#modal.on #mbox{animation:mup .16s cubic-bezier(.2,.8,.3,1)}@keyframes mup{from{transform:translateY(28px);opacity:.4}to{transform:none;opacity:1}}
+.ib{min-height:38px!important;width:40px;padding:0!important;flex:none}
+#drawer{position:fixed;top:0;bottom:0;right:0;width:min(330px,88vw);background:var(--card);z-index:45;transform:translateX(105%);transition:transform .18s cubic-bezier(.2,.8,.3,1);overflow-y:auto;overscroll-behavior:contain;box-shadow:-10px 0 30px #0002;padding:14px;padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+body.dr #drawer{transform:none}#dback{position:fixed;inset:0;background:#0b1a2055;z-index:44;opacity:0;pointer-events:none;transition:opacity .18s}body.dr #dback{opacity:1;pointer-events:auto}body.dr{overflow:hidden}
+.sd-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}.sd-head b{display:block;font-size:16px}.sd-head small{color:var(--mut);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sd-av{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--pri),var(--sky));color:#fff;display:grid;place-items:center;flex:none}
+.sd-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.sd-kpi div{background:var(--bg);border-radius:12px;padding:8px 10px;cursor:pointer}.sd-kpi small{display:block;color:var(--mut);font-size:11px}.sd-kpi b{font-size:15px}
+.sd-qa{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}.sd-qa button{flex-direction:column;background:var(--soft);color:var(--pri2);padding:8px 2px;min-height:64px;font-size:11px;gap:4px;line-height:1.3}
+.sd-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--ink);text-decoration:none;font-weight:600;margin-bottom:2px}.sd-nav a.on{background:var(--soft);color:var(--pri2)}.sd-nav a:hover{background:var(--bg)}.sd-nav .bd{background:var(--bad);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;margin-inline-start:auto}
+.sd-foot{display:flex;gap:6px;margin-top:10px}.sd-foot button{flex:1}
+nav.side{width:270px}nav.side .sd-qa{grid-template-columns:repeat(4,1fr)}
+.seg2{display:flex;gap:6px;background:var(--bg);border-radius:14px;padding:4px;margin:6px 0}.seg2 button{flex:1;background:transparent;color:var(--mut);min-height:40px}.seg2 button.on{background:var(--card);color:var(--pri2);box-shadow:0 2px 8px #0001}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.chips button{min-height:32px;padding:3px 10px;font-size:13px}
+.tg{display:flex;gap:8px;align-items:center;color:var(--ink);font-weight:700;margin:8px 0;font-size:14px}.tg input{width:22px;height:22px;min-height:0}
+.guess{background:linear-gradient(120deg,var(--soft),var(--sky-soft));border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
+.srow{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}.srow span{flex:1;min-width:0}
 @media print{.top,.bn,nav.side,.fab,.np{display:none!important}main{padding:0;max-width:none}.card{break-inside:avoid;border-color:#ccc}body{background:#fff;color:#000}}
 </style>
 </head>
 <body>
-<header class="top"><div class="logo"><i id="lgI"></i><span id="lgN">Islam Transfer</span></div><span id="net" class="chip"></span><span id="sync" class="chip"></span><button class="g" id="lockB" title="قفل الشاشة" style="min-height:36px;padding:6px 10px"></button></header>
+<header class="top"><button class="g ib" id="menuB" title="القائمة"></button><div class="logo"><i id="lgI"></i><span id="lgN">Islam Transfer</span></div><button class="g ib" id="srchB" title="بحث"></button><span id="net" class="chip"></span><span id="sync" class="chip"></span><button class="g" id="lockB" title="قفل الشاشة" style="min-height:36px;padding:6px 10px"></button></header>
 <div class="layout"><nav class="side" id="side"></nav><main id="app"><div class="empty">⏳ بيحمّل…</div></main></div>
-<nav class="bn" id="bn"></nav>
+<nav class="bn" id="bn"></nav><aside id="drawer"></aside><div id="dback"></div>
 <button class="fab" id="fab" title="طلب جديد"></button>
 <div id="modal"><div id="mbox"></div></div><div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>

@@ -94,11 +94,15 @@ function parseMessage(text, providers) {
 
 /* ---------- قراية بيانات صورة الإثبات من نص الـ OCR ---------- */
 function extractProof(text, providers) {
-  const raw = String(text || ''), t = normDigits(raw), low = t.toLowerCase(); const out = { amount: 0, ref: '', date: '', time: '', phones: [], sender: '', recipient: '', recipientName: '', provider: '', status: '' };
-  const am = [];
-  t.replace(/(?:egp|le|l\.e|جنيه|ج\.م|جم|مبلغ|المبلغ|amount|قيمة|القيمة|total|الإجمالي|الاجمالي)\s*[:\-]?\s*(\d[\d,٬]*(?:[.٫]\d{1,2})?)/gi, (m, n) => { am.push({ v: parseFloat(n.replace(/[,٬]/g, '').replace('٫', '.')), w: 2 }); });
-  t.replace(/(\d[\d,٬]*(?:[.٫]\d{1,2})?)\s*(?:egp|le|جنيه|ج\.م|جم)/gi, (m, n) => { am.push({ v: parseFloat(n.replace(/[,٬]/g, '').replace('٫', '.')), w: 2 }); });
-  const best = am.filter(x => x.v > 0 && x.v < 5e6).sort((a, b) => b.w - a.w || b.v - a.v)[0]; if (best) out.amount = Math.round(best.v * 100);
+  const raw = String(text || ''), t = normDigits(raw), low = t.toLowerCase(); const out = { amount: 0, fee: 0, ref: '', date: '', time: '', phones: [], sender: '', recipient: '', recipientName: '', provider: '', status: '' };
+  const num = n => { n = n.replace(/٫/g, '.').replace(/٬/g, ','); if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(n)) n = n.replace(/,/g, ''); else if (/^\d+,\d{1,2}$/.test(n)) n = n.replace(',', '.'); else n = n.replace(/,/g, ''); return parseFloat(n); };
+  // الرسوم/المصاريف: بنطلعها لوحدها ومش بنعتبرها المبلغ
+  const feeRe = /(?:مصاريف|مصروفات|رسوم|عمولة|fees?|service\s*charge|charges?)[^\d\n]{0,25}(\d[\d,٬]*(?:[.٫]\d{1,2})?)/gi; let fm; while ((fm = feeRe.exec(t))) { const v = num(fm[1]); if (v > 0 && v < 1e5) out.fee = Math.round(v * 100); }
+  const clean = t.replace(feeRe, ' '), am = [];
+  clean.replace(/(?:تحويل|حولت|حوّلت|ارسال|إرسال|sent|transfer(?:red)?|مبلغ|المبلغ|amount|قيمة|القيمة|total|الإجمالي|الاجمالي)\s*[:\-]?\s*(?:مبلغ\s*)?(\d[\d,٬]*(?:[.٫]\d{1,2})?)/gi, (m, n) => { am.push({ v: num(n), w: 3 }); });
+  clean.replace(/(?:egp|le|l\.e)\s*[:\-]?\s*(\d[\d,٬]*(?:[.٫]\d{1,2})?)/gi, (m, n) => { am.push({ v: num(n), w: 2 }); });
+  clean.replace(/(\d[\d,٬]*(?:[.٫]\d{1,2})?)\s*(?:egp|le|جنيه|جنية|ج\.م|جم)/gi, (m, n) => { am.push({ v: num(n), w: 2 }); });
+  const best = am.filter(x => x.v > 0 && x.v < 5e6).sort((a, b) => b.w - a.w)[0]; if (best) out.amount = Math.round(best.v * 100);
   const ref = t.match(/(?:رقم\s*(?:العملية|المرجع|المعاملة|الحركة)|المرجع|reference|ref(?:erence)?\s*(?:no|number|#)?|transaction\s*(?:id|no|number)|txn\s*id|trx\s*id|operation\s*id)\s*[:#\-]?\s*([A-Za-z0-9]{6,})/i);
   if (ref) out.ref = ref[1]; else { const lone = t.match(/\b(\d{10,16})\b/g); if (lone) { const nonPhone = lone.filter(x => !/^01[0125]\d{8}$/.test(x)); if (nonPhone.length) out.ref = nonPhone[0]; } }
   const d = t.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/) || t.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/); if (d) out.date = d[0];
@@ -125,11 +129,24 @@ function matchProof(state, ext, at) {
   }
   C.sort((a, b) => b.score - a.score);
   const auto = C.length && C[0].score >= 75 && (!C[1] || C[0].score - C[1].score >= 20) ? C[0].txId : null;
-  return { candidates: C.slice(0, 6), suggested: auto, ambiguous: C.length > 1 && !auto };
+  return { candidates: C.slice(0, 6), suggested: auto, ambiguous: C.length > 1 && !auto, customer: guessCustomer(state, ext) };
+}
+/* العميل من الأرقام اللي في الصورة: رقمه هو، أو رقم بيحوّل عليه دايماً */
+function guessCustomer(state, ext) {
+  const ph = [ext.recipient, ext.sender].concat(ext.phones || []).map(normPhone).filter(Boolean);
+  for (const p of ph) { if (state.phoneIndex[p]) return { id: state.phoneIndex[p], phone: p, why: p === normPhone(ext.recipient) ? 'رقم المستلم هو رقم العميل' : 'رقم العميل ظاهر في الصورة' }; }
+  for (const p of ph) { if (state.recipIndex[p]) return { id: state.recipIndex[p], phone: p, why: 'رقم بيحوّل عليه العميل ده قبل كده' }; }
+  return null;
+}
+/* استهلاك حدود المحفظة (يومي / شهري) */
+function walletUsage(state, walletId, day, startHour) {
+  let d = 0, m = 0; const mon = day.slice(0, 7);
+  for (const t of Object.values(state.tx)) { if (!isEffective(t) || t.walletId !== walletId || t.kind === 'receive') continue; const td = dayOf(t.executedAt, startHour); if (td === day) d += t.amount; if (td.slice(0, 7) === mon) m += t.amount; }
+  return { day: d, month: m };
 }
 
 /* ---------- الحالة (من الأحداث) ---------- */
-function emptyState() { return { seq: 0, customers: {}, phoneIndex: {}, wallets: {}, rules: {}, tx: {}, proofs: {}, colls: {}, exps: {}, moves: {}, closes: {}, settings: { name: 'Islam Transfer', currency: 'ج', dayStartHour: 6, cashOpening: 0, providers: DEFAULT_PROVIDERS, alerts: { walletLow: 100000, cashHigh: 0, creditOver: true }, templates: { proof: 'أهلاً {name} 👋\nتم تحويل {amount} على رقم {recipient} ✅\nرقم العملية: {ref}\nالمطلوب: {due}\nشكراً لتعاملك مع {office}' } }, users: {}, audit: [], seen: {}, txNo: 0 }; }
+function emptyState() { return { seq: 0, customers: {}, phoneIndex: {}, recipIndex: {}, wallets: {}, rules: {}, tx: {}, proofs: {}, colls: {}, exps: {}, moves: {}, closes: {}, adjusts: {}, payouts: {}, settings: { name: 'Islam Transfer', currency: 'ج', dayStartHour: 6, cashOpening: 0, providers: DEFAULT_PROVIDERS, alerts: { walletLow: 100000, cashHigh: 0, creditOver: true }, templates: { proof: 'أهلاً {name} 👋\nتم تحويل {amount} على رقم {recipient} ✅\nرقم العملية: {ref}\nالمطلوب: {due}\nشكراً لتعاملك مع {office}' } }, users: {}, audit: [], seen: {}, txNo: 0 }; }
 function dayOf(ts, startHour) { const d = new Date(new Date(ts).getTime() - (startHour || 0) * 36e5); const z = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
 function apply(state, ev) {
   if (state.seen[ev.id]) return state;                                   // نفس الحدث مايتطبقش مرتين (مزامنة آمنة)
@@ -145,7 +162,11 @@ function apply(state, ev) {
     case 'tx.create': if (!state.tx[d.id]) { state.txNo++; state.tx[d.id] = Object.assign({ no: d.no || ('T' + String(state.txNo).padStart(5, '0')), status: 'pending', createdAt: ev.t, proofIds: [], history: [] }, d); state.tx[d.id].history.push({ t: ev.t, s: 'pending', by: ev.by }); } break;
     case 'tx.update': { const t = state.tx[d.id]; if (!t) break; const f = Object.assign({}, d); delete f.id; if (t.executedAt) { delete f.amount; delete f.walletId; delete f.commission; delete f.fee; }  // بعد التنفيذ الفلوس بتتصحح بحركة، مش بتعديل
       Object.assign(t, f); t.history.push({ t: ev.t, s: 'edit', by: ev.by, f: Object.keys(f) }); break; }
-    case 'tx.execute': { const t = state.tx[d.id]; if (!t || t.executedAt || DEAD.includes(t.status)) break; Object.assign(t, { walletId: d.walletId, ref: d.ref || t.ref || '', executedAt: d.executedAt || ev.t, commission: d.commission | 0, fee: d.fee | 0, net: (d.commission | 0) - (d.fee | 0), payer: d.payer || 'customer', ruleSnap: d.ruleSnap || null, status: (t.proofIds && t.proofIds.length) ? 'proof' : 'executed' });
+    case 'party.adjust': if (!state.adjusts[d.id]) state.adjusts[d.id] = Object.assign({ createdAt: ev.t, reversed: false }, d); break;
+    case 'party.adjust.reverse': if (state.adjusts[d.id]) { state.adjusts[d.id].reversed = true; state.adjusts[d.id].reverseReason = d.reason || ''; } break;
+    case 'pay.out': if (!state.payouts[d.id]) state.payouts[d.id] = Object.assign({ createdAt: ev.t, reversed: false }, d); break;
+    case 'pay.out.reverse': if (state.payouts[d.id]) state.payouts[d.id].reversed = true; break;
+    case 'tx.execute': { const t = state.tx[d.id]; if (!t || t.executedAt || DEAD.includes(t.status)) break; if (t.customerId && t.recipient && t.kind !== 'receive') { const rp = normPhone(t.recipient); if (rp && !state.phoneIndex[rp]) state.recipIndex[rp] = t.customerId; } Object.assign(t, { walletId: d.walletId, ref: d.ref || t.ref || '', executedAt: d.executedAt || ev.t, commission: d.commission | 0, fee: d.fee | 0, net: (d.commission | 0) - (d.fee | 0), payer: d.payer || 'customer', ruleSnap: d.ruleSnap || null, status: (t.proofIds && t.proofIds.length) ? 'proof' : 'executed' });
       t.history.push({ t: ev.t, s: t.status, by: ev.by }); break; }
     case 'tx.status': { const t = state.tx[d.id]; if (!t) break; if (d.status === 'refunded' && !t.executedAt) break; if (['failed', 'cancelled'].includes(d.status) && t.status === 'completed') break; t.status = d.status; if (d.reason) t.reason = d.reason; if (d.ref) t.ref = d.ref; t.history.push({ t: ev.t, s: d.status, by: ev.by, r: d.reason || '' }); break; }
     case 'proof.add': if (!state.proofs[d.id]) state.proofs[d.id] = Object.assign({ createdAt: ev.t, txId: null }, d); break;
@@ -170,8 +191,9 @@ function build(events) { const s = emptyState(); events.slice().sort((a, b) => (
 function balances(state, untilTs) {
   const W = {}; for (const w of Object.values(state.wallets)) W[w.id] = w.opening || 0;
   let cash = state.settings.cashOpening || 0; const until = untilTs ? new Date(untilTs).getTime() : Infinity, inT = t => new Date(t).getTime() <= until;
-  for (const t of Object.values(state.tx)) if (isEffective(t) && inT(t.executedAt) && t.walletId && W[t.walletId] != null) W[t.walletId] -= (t.amount + (t.fee || 0));
+  for (const t of Object.values(state.tx)) if (isEffective(t) && inT(t.executedAt) && t.walletId && W[t.walletId] != null) { if (t.kind === 'receive') W[t.walletId] += t.amount - (t.fee || 0); else W[t.walletId] -= (t.amount + (t.fee || 0)); }
   for (const c of Object.values(state.colls)) if (!c.reversed && inT(c.date || c.createdAt)) { if (c.method === 'wallet' && c.walletId && W[c.walletId] != null) W[c.walletId] += c.amount; else cash += c.amount; }
+  for (const p of Object.values(state.payouts)) if (!p.reversed && inT(p.date || p.createdAt)) { if (p.method === 'wallet' && p.walletId && W[p.walletId] != null) W[p.walletId] -= p.amount; else cash -= p.amount; }
   for (const e of Object.values(state.exps)) if (!e.reversed && inT(e.date || e.createdAt)) { if (e.walletId && W[e.walletId] != null) W[e.walletId] -= e.amount; else cash -= e.amount; }
   for (const m of Object.values(state.moves)) { if (m.reversed || !inT(m.date || m.createdAt)) continue; const a = m.amount || 0, fee = m.fee || 0;
     if (m.kind === 'topup') { cash -= a; if (W[m.to] != null) W[m.to] += a - fee; }            // كاش → محفظة
@@ -183,19 +205,27 @@ function balances(state, untilTs) {
   const walletsTotal = Object.values(W).reduce((a, b) => a + b, 0);
   return { wallets: W, cash, walletsTotal, liquidity: walletsTotal + cash };
 }
-/* حساب كل عميل + توزيع التحصيل على العمليات (المحدد الأول، والباقي بالأقدم) */
+/* حساب كل عميل:
+   الرصيد = عليه − دفع.  عليه: تحويلات (المبلغ + العمولة) + رصيد افتتاحي عليه + تسويات عليه + كاش صرفناه له.
+   دفع: تحصيلات + سحب كاش (حوّل لنا: المبلغ − العمولة) + رصيد افتتاحي له + تسويات له.
+   التحصيل بيتوزع على التحويلات: المحدد الأول، والباقي بالأقدم. */
 function ledgers(state) {
-  const L = {}, txPaid = {};
-  const get = id => L[id] || (L[id] = { id, due: 0, paid: 0, count: 0, amount: 0, commission: 0, balance: 0, open: [], lastTx: null });
+  const L = {}, txPaid = {}, free = {};
+  const get = id => L[id] || (L[id] = { id, due: 0, paid: 0, count: 0, amount: 0, recv: 0, commission: 0, balance: 0, open: [], lastTx: null, opening: 0 });
+  for (const c of Object.values(state.customers)) { const o = c.opening || 0; if (!o) continue; const l = get(c.id); l.opening = o; if (o > 0) l.due += o; else { l.paid += -o; free[c.id] = (free[c.id] || 0) - o; } }
   const txs = Object.values(state.tx).filter(isEffective).sort((a, b) => a.executedAt < b.executedAt ? -1 : 1);
-  for (const t of txs) { if (!t.customerId) continue; const l = get(t.customerId), due = t.amount + (t.commission || 0); l.due += due; l.count++; l.amount += t.amount; l.commission += t.commission || 0; txPaid[t.id] = 0; l.lastTx = t.executedAt; }
-  const cs = Object.values(state.colls).filter(c => !c.reversed && c.partyId).sort((a, b) => (a.date || a.createdAt) < (b.date || b.createdAt) ? -1 : 1); const free = {};
+  for (const t of txs) { if (!t.customerId) continue; const l = get(t.customerId); l.count++; l.commission += t.commission || 0; l.lastTx = t.executedAt;
+    if (t.kind === 'receive') { const cr = t.amount - (t.commission || 0); l.recv += t.amount; l.paid += cr; free[t.customerId] = (free[t.customerId] || 0) + cr; }
+    else { const due = t.amount + (t.commission || 0); l.due += due; l.amount += t.amount; txPaid[t.id] = 0; } }
+  for (const a of Object.values(state.adjusts)) { if (a.reversed || !a.partyId) continue; const l = get(a.partyId); if (a.delta > 0) l.due += a.delta; else { l.paid += -a.delta; free[a.partyId] = (free[a.partyId] || 0) - a.delta; } }
+  for (const p of Object.values(state.payouts)) { if (p.reversed || !p.partyId) continue; const l = get(p.partyId); l.due += p.amount; free[p.partyId] = (free[p.partyId] || 0) - p.amount; }
+  const cs = Object.values(state.colls).filter(c => !c.reversed && c.partyId).sort((a, b) => (a.date || a.createdAt) < (b.date || b.createdAt) ? -1 : 1);
   for (const c of cs) { const l = get(c.partyId); l.paid += c.amount; let rest = c.amount;
-    for (const a of (c.alloc || [])) { const t = state.tx[a.txId]; if (!t || !isEffective(t)) continue; const due = t.amount + (t.commission || 0), can = Math.min(a.amount, due - (txPaid[t.id] || 0), rest); if (can > 0) { txPaid[t.id] = (txPaid[t.id] || 0) + can; rest -= can; } }
+    for (const a of (c.alloc || [])) { const t = state.tx[a.txId]; if (!t || !isEffective(t) || t.kind === 'receive') continue; const due = t.amount + (t.commission || 0), can = Math.min(a.amount, due - (txPaid[t.id] || 0), rest); if (can > 0) { txPaid[t.id] = (txPaid[t.id] || 0) + can; rest -= can; } }
     free[c.partyId] = (free[c.partyId] || 0) + rest; }
-  for (const t of txs) { if (!t.customerId) continue; const due = t.amount + (t.commission || 0); const need = due - (txPaid[t.id] || 0), f = free[t.customerId] || 0, take = Math.min(need, f); if (take > 0) { txPaid[t.id] += take; free[t.customerId] = f - take; } }
+  for (const t of txs) { if (!t.customerId || t.kind === 'receive') continue; const due = t.amount + (t.commission || 0); const need = due - (txPaid[t.id] || 0), f = Math.max(0, free[t.customerId] || 0), take = Math.min(need, f); if (take > 0) { txPaid[t.id] += take; free[t.customerId] -= take; } }
   for (const l of Object.values(L)) { l.balance = l.due - l.paid; l.credit = l.balance < 0 ? -l.balance : 0; }
-  for (const t of txs) if (t.customerId) { const due = t.amount + (t.commission || 0); if ((txPaid[t.id] || 0) < due) L[t.customerId].open.push({ txId: t.id, due, paid: txPaid[t.id] || 0, rest: due - (txPaid[t.id] || 0) }); }
+  for (const t of txs) if (t.customerId && t.kind !== 'receive') { const due = t.amount + (t.commission || 0); if ((txPaid[t.id] || 0) < due) L[t.customerId].open.push({ txId: t.id, due, paid: txPaid[t.id] || 0, rest: due - (txPaid[t.id] || 0) }); }
   return { parties: L, txPaid };
 }
 
@@ -206,15 +236,15 @@ function report(state, from, to) {     // from/to: 'YYYY-MM-DD' (يوم شغل)
   const sum = (a, f) => a.reduce((s, x) => s + (f(x) || 0), 0);
   const created = T.filter(t => inR(t.createdAt));
   const colls = Object.values(state.colls).filter(c => !c.reversed && inR(c.date || c.createdAt)), exps = Object.values(state.exps).filter(e => !e.reversed && inR(e.date || e.createdAt));
-  const moves = Object.values(state.moves).filter(m => !m.reversed && inR(m.date || m.createdAt));
+  const moves = Object.values(state.moves).filter(m => !m.reversed && inR(m.date || m.createdAt)), pays = Object.values(state.payouts).filter(p => !p.reversed && inR(p.date || p.createdAt));
   const r = {
     from, to: to || from,
     completed: eff.filter(t => t.status === 'completed').length, executed: eff.length,
     failed: created.filter(t => t.status === 'failed').length, cancelled: created.filter(t => t.status === 'cancelled').length, refunded: T.filter(t => t.status === 'refunded' && t.executedAt && inR(t.executedAt)).length,
     pending: T.filter(t => t.status === 'pending').length,
-    amount: sum(eff, t => t.amount), commission: sum(eff, t => t.commission), fees: sum(eff, t => t.fee), net: sum(eff, t => t.net),
+    amount: sum(eff.filter(t => t.kind !== 'receive'), t => t.amount), recvAmount: sum(eff.filter(t => t.kind === 'receive'), t => t.amount), recvCount: eff.filter(t => t.kind === 'receive').length, commission: sum(eff, t => t.commission), fees: sum(eff, t => t.fee), net: sum(eff, t => t.net),
     expenses: sum(exps, e => e.amount), cashIn: sum(colls.filter(c => c.method !== 'wallet'), c => c.amount), walletIn: sum(colls.filter(c => c.method === 'wallet'), c => c.amount),
-    cashOut: sum(exps.filter(e => !e.walletId), e => e.amount) + sum(moves.filter(m => m.kind === 'topup' || m.kind === 'drawing'), m => m.amount),
+    cashOut: sum(exps.filter(e => !e.walletId), e => e.amount) + sum(moves.filter(m => m.kind === 'topup' || m.kind === 'drawing'), m => m.amount) + sum(pays.filter(p => p.method !== 'wallet'), p => p.amount), payouts: sum(pays, p => p.amount),
     collected: sum(colls, c => c.amount),
     noProof: eff.filter(t => !(t.proofIds || []).length).map(t => t.id), review: T.filter(t => t.status === 'review' || t.status === 'dispute').map(t => t.id),
     unlinkedProofs: Object.values(state.proofs).filter(p => !p.txId && !p.ignored).map(p => p.id)
@@ -239,6 +269,6 @@ const PERMS = { approve: 'اعتماد العمليات', commission: 'تعدي�
 const ROLES = { admin: { name: 'مدير النظام', perms: Object.keys(PERMS) }, operator: { name: 'موظف تنفيذ التحويلات', perms: ['approve', 'collect'] }, collector: { name: 'موظف التحصيل', perms: ['collect'] }, accountant: { name: 'محاسب', perms: ['collect', 'balances', 'reports', 'export'] }, viewer: { name: 'قراءة وتقارير', perms: ['reports'] } };
 const can = (user, perm) => !!user && (user.role === 'admin' || (user.perms || (ROLES[user.role] || {}).perms || []).includes(perm));
 
-const API = { normDigits, toP, fromP, fmt, pct, uid, normPhone, maskPhone, DEFAULT_PROVIDERS, TX_STATUS, DEAD, isEffective, applyMode, pickRule, calcCommission, wordsAmount, findPhones, parseMessage, extractProof, matchProof, emptyState, dayOf, apply, build, balances, ledgers, report, duplicates, refExists, PERMS, ROLES, can };
+const API = { guessCustomer, walletUsage, normDigits, toP, fromP, fmt, pct, uid, normPhone, maskPhone, DEFAULT_PROVIDERS, TX_STATUS, DEAD, isEffective, applyMode, pickRule, calcCommission, wordsAmount, findPhones, parseMessage, extractProof, matchProof, emptyState, dayOf, apply, build, balances, ledgers, report, duplicates, refExists, PERMS, ROLES, can };
 root.ITCore = API; if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);
