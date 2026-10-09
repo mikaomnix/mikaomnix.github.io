@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-16';
+const APP_VER='2026-10-10-17';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -4165,6 +4165,72 @@ window.mkPC={view,pick,edit,add,rm,first,save:saveInfo,back,send,wa,share,info:l
 /* الضغط على أي منتج يفتح شاشة المنتج، والتعديل القديم بقى «الاسم والسعر والكمية» */
 const _openP=openProduct;window.mkPC.base=()=>_openP(CUR);
 openProduct=function(id){if(id&&typeof id==='string'&&db.products.some(x=>x.id===id))return view(id);return _openP.apply(this,arguments)};
+})();
+</script>
+
+<style>
+#vsBox{position:fixed;inset:0;z-index:99990;background:#0008;display:flex;align-items:flex-end;justify-content:center;font-family:Cairo,Tahoma,sans-serif;direction:rtl}
+#vsBox .vs{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px 18px;box-shadow:0 -10px 40px #0003}
+@media(min-width:700px){#vsBox{align-items:center}#vsBox .vs{border-radius:18px}}
+#vsBox .vsh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+#vsBox .vsh b{font-size:17px}
+#vsBox .vsph{width:100%;max-height:230px;object-fit:contain;background:#f4f7f8;border-radius:12px}
+#vsBox .vsseen{background:#eef6f7;border-radius:10px;padding:8px 12px;margin:10px 0;font-size:14px;line-height:1.8}
+#vsBox .vsm{display:flex;gap:10px;align-items:center;border:1px solid #e3e8ea;border-radius:14px;padding:8px;margin-top:8px}
+#vsBox .vsm img,#vsBox .vsm .ni{width:68px;height:68px;border-radius:10px;object-fit:cover;background:#f4f7f8;flex:none;display:grid;place-items:center;color:#9aa;font-size:22px}
+#vsBox .vsm .t{flex:1;min-width:0;font-size:14px;line-height:1.6}
+#vsBox .vsm .t small{color:#6b7c82;display:block}
+#vsBox .vsm .s{font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;background:#dff3e6;color:#1f6b3d}
+#vsBox .vsm .s.m{background:#fef3c7;color:#92400e}#vsBox .vsm .s.l{background:#ffe4e8;color:#c0392b}
+#vsBox .vsb{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}#vsBox .vsb button{flex:1 1 140px}
+.vsbtn{flex:none!important;padding:0 12px!important;min-width:44px}
+</style>
+<script>
+/* =====================================================================
+   Mekanix — «صوّر القطعة يطلعلك الصنف»: صورة قطعة → أقرب ٣ أصناف من المحل (بالذكاء الاصطناعي)
+   في شاشة المنتجات وفي فاتورة البيع/الشراء. واللي مش موجود بيتسجل في «مطلوب ومش عندنا».
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,adm=()=>!!(window.mkT_user&&window.mkT_user.role==='admin');
+const APPV=typeof SB_URL!=='undefined'&&/rzvncstjattlklpdtkfn/.test(SB_URL);
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const M=n=>typeof money==='function'?money(n):(+n||0).toLocaleString('ar-EG')+' ج.م';
+let CTX='prod',LAST=null;
+const shrink=(file,max,q)=>new Promise((ok,no)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*k);c.height=Math.round(i.height*k);c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',q))};i.onerror=()=>no(new Error('الصورة مش بتفتح'));i.src=u});
+const imgOf=p=>{const inf=window.mkPC&&mkPC._info&&mkPC._info[p.id];if(inf&&inf.imgs&&inf.imgs[0])return inf.imgs[0];try{const S=window.mkSite&&mkSite.get(),s=S&&S.data.products.find(x=>String(x.code||'')===String(p.code));return s?(s.imgs&&s.imgs[0])||s.img||'':''}catch(e){return ''}};
+const locOf=p=>{const inf=window.mkPC&&mkPC._info&&mkPC._info[p.id];return inf&&inf.loc||''};
+function box(html){let b=document.getElementById('vsBox');if(!b){b=document.createElement('div');b.id='vsBox';b.onclick=e=>{if(e.target===b)close()};document.body.appendChild(b)}b.innerHTML='<div class="vs">'+html+'</div>'}
+function close(){const b=document.getElementById('vsBox');if(b)b.remove()}
+function pick(ctx){CTX=ctx||'prod';const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=()=>{if(f.files&&f.files[0])run(f.files[0])};f.click()}
+async function run(file){let big,thumb;try{big=await shrink(file,1024,.82);thumb=await shrink(file,220,.6)}catch(e){return toast(e.message)}
+ box(`<div class="vsh"><b>📷 بدوّر على القطعة…</b><button class="secondary" onclick="mkVS.close()">✕</button></div><img class="vsph" src="${big}"><div class="vsseen">⏳ الذكاء الاصطناعي بيشوف الصورة ويقارنها بأصنافك… (ثواني)</div>`);
+ try{const r=await SBc().functions.invoke('match-product',{body:{image:big,media_type:'image/jpeg'}});let err='';
+  if(r.error){try{err=(await r.error.context.json()).error}catch(_){err=r.error.message}throw new Error(err||'مشكلة')}
+  LAST={seen:r.data.seen||'',thumb,big};show(r.data)}
+ catch(e){box(`<div class="vsh"><b>📷 صوّر القطعة</b><button class="secondary" onclick="mkVS.close()">✕</button></div><img class="vsph" src="${big}"><div class="vsseen" style="background:#ffe4e8">ماعرفتش أدوّر: ${H(e.message||e)}</div><div class="vsb"><button class="primary" onclick="mkVS.pick(mkVS.ctx())">صوّر تاني</button></div>`)}}
+function show(d){const ms=(d.matches||[]).map(m=>({m,p:db.products.find(x=>String(x.code)===String(m.code))})).filter(x=>x.p),tx=CTX==='tx',own=adm();
+ box(`<div class="vsh"><b>📷 القطعة دي…</b><button class="secondary" onclick="mkVS.close()">✕</button></div><img class="vsph" src="${LAST.big}">${d.seen?`<div class="vsseen">👁️ ${H(d.seen)}</div>`:''}
+ ${ms.length?`<b style="font-size:15px">أقرب أصناف عندك:</b>`+ms.map(({m,p})=>{const im=imgOf(p),sc=+m.score||0,loc=locOf(p);return `<div class="vsm">${im?`<img src="${H(im)}" alt="">`:'<div class="ni">📦</div>'}<div class="t"><b>${H(p.name)}</b> ${sc?`<span class="s ${sc>=70?'':sc>=40?'m':'l'}">${Math.round(sc)}%</span>`:''}<small>كود ${H(p.code)} · ${p.qty<=0?'<span style="color:#c0392b">نفد</span>':'متاح '+(+p.qty||0)+' '+H(p.unit||'')}${loc?' · '+H(loc):''}${own||tx?' · '+M(p.price):''}</small>${m.why?`<small>${H(m.why)}</small>`:''}</div><button class="primary" style="flex:none" onclick="mkVS.choose('${p.id}')">${tx?'أضفه':'افتحه'}</button></div>`}).join(''):'<div class="vsseen" style="background:#fff7e6">مالقيتش صنف شبهها في أصنافك.</div>'}
+ <div class="vsb"><button class="secondary" onclick="mkVS.pick(mkVS.ctx())">📷 صوّر تاني</button><button class="secondary danger" onclick="mkVS.want()">🔎 مش موجود عندي — سجّله مطلوب</button></div>`)}
+function choose(pid){close();if(CTX==='tx'&&typeof openLineCard==='function')openLineCard(pid);else if(window.mkPC)mkPC.view(pid);else if(typeof openProduct==='function')openProduct(pid)}
+async function want(){if(!LAST)return;try{const r=await SBc().from('mk_wanted').insert({descr:LAST.seen||'قطعة من صورة',thumb:LAST.thumb,source:'المحل',by_name:(window.mkT_user&&mkT_user.name)||''});if(r.error)throw r.error;toast('✔ اتسجلت في «مطلوب ومش عندنا»');close()}catch(e){toast('ماتسجلتش: '+(/mk_wanted/.test(e.message)?'الجدول لسه مش متركب':e.message))}}
+/* ---------- قايمة «مطلوب ومش عندنا» ---------- */
+async function wanted(){let L=[];try{const r=await SBc().from('mk_wanted').select('*').eq('done',false).order('created_at',{ascending:false}).limit(300);L=r.data||[]}catch(e){}
+ openModal(`<div class="modal-head"><h2>🔎 مطلوب ومش عندنا (${L.length})</h2><button class="close" onclick="closeModal()"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <p style="margin:0 0 8px;color:#7b8a90;font-size:13px">قطع الناس سألت عليها ومالقيتهاش عندك — دي قايمة الشراء الجاية.</p>
+ ${L.length?L.map(w=>`<div style="display:flex;gap:10px;align-items:center;border:1px solid #e3e8ea;border-radius:12px;padding:8px;margin-top:8px">${w.thumb?`<img src="${H(w.thumb)}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none">`:''}<div style="flex:1;min-width:0;font-size:14px;line-height:1.6">${H(w.descr)}<br><small style="color:#7b8a90">${H(String(w.created_at).slice(0,10))} · ${H(w.source)}${w.phone?' · '+H(w.phone):''}${w.by_name?' · '+H(w.by_name):''}</small></div>${adm()?`<div style="display:flex;flex-direction:column;gap:4px;flex:none"><button class="secondary" onclick="mkVS.done('${w.id}')">✔ اتوفر</button><button class="secondary danger" onclick="mkVS.del('${w.id}')">حذف</button></div>`:''}</div>`).join(''):'<div class="empty">مفيش طلبات متسجلة. لما تصوّر قطعة ومتلاقيهاش دوس «مش موجود عندي».</div>'}
+ <div class="modal-foot"><button class="primary" onclick="closeModal();mkVS.pick('prod')">📷 صوّر قطعة</button><button class="secondary" onclick="closeModal()">إغلاق</button></div>`)}
+async function done(id){await SBc().from('mk_wanted').update({done:true}).eq('id',id);wanted()}
+async function del(id){if(typeof ask==='function'&&!(await ask('حذف الطلب ده من القايمة؟','حذف')))return wanted();await SBc().from('mk_wanted').delete().eq('id',id);wanted()}
+window.mkVS={pick,close,choose,want,wanted,done,del,ctx:()=>CTX};
+
+/* ---------- الزراير ---------- */
+function prodBtns(){const s=document.getElementById('productSearch');if(!s||document.getElementById('vsProdBtn'))return;
+ s.insertAdjacentHTML('afterend',`<button type="button" id="vsProdBtn" class="primary vsbtn" title="صوّر القطعة يطلعلك الصنف" onclick="mkVS.pick('prod')">📷</button><button type="button" id="vsWantBtn" class="secondary vsbtn" title="مطلوب ومش عندنا" onclick="mkVS.wanted()">🔎</button>`);
+ const p=s.parentElement;if(p&&getComputedStyle(p).display!=='flex'){p.style.display='flex';p.style.gap='6px';p.style.alignItems='center';s.style.flex='1';s.style.minWidth='0'}}
+if(typeof renderProducts==='function'){const _rp=renderProducts;renderProducts=function(){const r=_rp.apply(this,arguments);try{prodBtns()}catch(e){}return r}}
+if(typeof openTransaction==='function'){const _ot=openTransaction;openTransaction=function(){const r=_ot.apply(this,arguments);try{const s=document.getElementById('txSearch');if(s&&!document.getElementById('vsTxBtn')){s.insertAdjacentHTML('afterend',`<button type="button" id="vsTxBtn" class="primary vsbtn" title="صوّر القطعة يطلعلك الصنف" onclick="mkVS.pick('tx')" style="height:44px">📷</button>`);const p=s.parentElement;if(p&&getComputedStyle(p).display!=='flex'){p.style.display='flex';p.style.gap='6px';s.style.flex='1';s.style.minWidth='0'}}}catch(e){}return r}}
+setTimeout(()=>{try{prodBtns()}catch(e){}},1500);
 })();
 </script>
 
