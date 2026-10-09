@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-17';
+const APP_VER='2026-10-10-18';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -4161,7 +4161,7 @@ function unitize(pid){const box=document.getElementById('lcBox');if(!box||!pid||
   setTimeout(()=>{const k=window._pcPk;if(!k)return;const l=document.querySelector('#txLines .txl[data-pid="'+k.pid+'"]');if(l){let s=l.querySelector('.pcpk');if(!s){s=document.createElement('small');s.className='pcpk';s.style.cssText='display:block;color:#087f8c;font-weight:700';const h=l.firstElementChild;h&&h.insertAdjacentElement('afterend',s)}s.textContent='('+k.t+')'}window._pcPk=null},0)},true)}
 if(typeof openLineCard==='function'){const _olc=openLineCard;openLineCard=function(pid,nm,line){const r=_olc.apply(this,arguments);try{unitize(line&&line.dataset?line.dataset.pid:pid)}catch(e){}return r}}
 
-window.mkPC={view,pick,edit,add,rm,first,save:saveInfo,back,send,wa,share,info:loadInfo,framed,variant,variantSave,drawPacks,aiDesc,packAdd:()=>{window._pcE.packs.push({u:'',n:0});drawPacks()},reload:()=>loadAll(1),_info:INFO};
+window.mkPC={view,pick,edit,add,rm,first,save:saveInfo,back,send,wa,share,info:loadInfo,framed,variant,variantSave,drawPacks,aiDesc,card:async(pid,withPrice)=>{const p=db.products.find(x=>x.id===pid);if(!p)return null;if(window.mkSite&&!window.mkSite.get())try{await window.mkSite.loadSite()}catch(e){}const inf=await loadInfo(pid);return{text:msgOf(p,inf,withPrice),imgs:imgsOf(p,inf).slice(0,4)}},packAdd:()=>{window._pcE.packs.push({u:'',n:0});drawPacks()},reload:()=>loadAll(1),_info:INFO};
 /* الضغط على أي منتج يفتح شاشة المنتج، والتعديل القديم بقى «الاسم والسعر والكمية» */
 const _openP=openProduct;window.mkPC.base=()=>_openP(CUR);
 openProduct=function(id){if(id&&typeof id==='string'&&db.products.some(x=>x.id===id))return view(id);return _openP.apply(this,arguments)};
@@ -4222,11 +4222,46 @@ async function wanted(){let L=[];try{const r=await SBc().from('mk_wanted').selec
  <div class="modal-foot"><button class="primary" onclick="closeModal();mkVS.pick('prod')">📷 صوّر قطعة</button><button class="secondary" onclick="closeModal()">إغلاق</button></div>`)}
 async function done(id){await SBc().from('mk_wanted').update({done:true}).eq('id',id);wanted()}
 async function del(id){if(typeof ask==='function'&&!(await ask('حذف الطلب ده من القايمة؟','حذف')))return wanted();await SBc().from('mk_wanted').delete().eq('id',id);wanted()}
-window.mkVS={pick,close,choose,want,wanted,done,del,ctx:()=>CTX};
+/* ---------- 📷 صور الواتساب: عميل بعت صورة → أقرب صنف → كارت المنتج يروحله من رقم المحل ---------- */
+const OWNER=!APPV;let WAP=null,WCNT=0;
+const tm=iso=>{try{return new Date(iso).toLocaleString('ar-EG',{weekday:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''}};
+async function waList(){let N=[],O=[];try{const a=await SBc().from('wa_photos').select('id,created_at,phone,name,caption,img,seen,matches,status').eq('status','new').order('created_at',{ascending:false}).limit(25);N=a.data||[];
+ const b=await SBc().from('wa_photos').select('id,created_at,phone,name,caption,seen,status,handled_by').neq('status','new').order('created_at',{ascending:false}).limit(20);O=b.data||[]}catch(e){}
+ WAP={};N.forEach(x=>WAP[x.id]=x);const st={sent:'اتبعتله الكارت',missing:'مش موجود',ignored:'اتجاهلت'};
+ box(`<div class="vsh"><b>📷 صور الواتساب ${N.length?'('+N.length+' جديدة)':''}</b><button class="secondary" onclick="mkVS.close()">✕</button></div>
+ ${N.length?N.map(x=>`<div class="vsm" style="cursor:pointer" onclick="mkVS.waOpen('${x.id}')"><img src="${H(x.img)}" alt=""><div class="t"><b>${H(x.name||x.phone||'عميل')}</b> <span class="s m">جديدة</span><small>${H(x.phone)} · ${H(tm(x.created_at))}</small>${x.caption?`<small>«${H(x.caption)}»</small>`:''}${x.seen?`<small>👁️ ${H(x.seen)}</small>`:''}</div><button class="primary" style="flex:none">افتح</button></div>`).join(''):'<div class="vsseen">مفيش صور جديدة. أي عميل يبعت صورة قطعة على واتساب المحل هتظهر هنا.</div>'}
+ ${O.length?`<b style="display:block;margin-top:14px;font-size:14px;color:#6b7c82">اللي اتعاملنا معاه</b>`+O.map(x=>`<div style="font-size:13px;border-bottom:1px solid #eef1f2;padding:6px 0">${H(x.name||x.phone)} · ${H(tm(x.created_at))} — <b>${H(st[x.status]||x.status)}</b>${x.handled_by?' ('+H(x.handled_by)+')':''}${x.seen?`<br><small style="color:#6b7c82">${H(x.seen)}</small>`:''}</div>`).join(''):''}`)}
+async function waOpen(id){const x=WAP&&WAP[id];if(!x)return;
+ box(`<div class="vsh"><b>📷 ${H(x.name||x.phone)}</b><button class="secondary" onclick="mkVS.waList()">رجوع</button></div><img class="vsph" src="${H(x.img)}">${x.caption?`<div class="vsseen" style="background:#f6f6f6">💬 «${H(x.caption)}»</div>`:''}<div class="vsseen">⏳ بقارنها بأصنافك…</div>`);
+ let d={seen:x.seen,matches:x.matches||[]};
+ if(!d.seen&&!(d.matches||[]).length){try{const r=await SBc().functions.invoke('match-product',{body:{image:x.img,media_type:(x.img.match(/^data:([^;]+)/)||[])[1]||'image/jpeg'}});let err='';if(r.error){try{err=(await r.error.context.json()).error}catch(_){err=r.error.message}throw new Error(err||'مشكلة')}
+  d=r.data;x.seen=d.seen||'';x.matches=d.matches||[];await SBc().from('wa_photos').update({seen:x.seen,matches:x.matches}).eq('id',id)}catch(e){d={seen:'',matches:[],err:e.message}}}
+ const ms=(d.matches||[]).map(m=>({m,p:db.products.find(q=>String(q.code)===String(m.code))})).filter(q=>q.p);
+ box(`<div class="vsh"><b>📷 ${H(x.name||x.phone)} <small style="font-weight:400;color:#6b7c82">${H(x.phone)}</small></b><button class="secondary" onclick="mkVS.waList()">رجوع</button></div><img class="vsph" src="${H(x.img)}">${x.caption?`<div class="vsseen" style="background:#f6f6f6">💬 «${H(x.caption)}»</div>`:''}${d.seen?`<div class="vsseen">👁️ ${H(d.seen)}</div>`:''}${d.err?`<div class="vsseen" style="background:#ffe4e8">ماعرفتش أطابقها: ${H(d.err)}</div>`:''}
+ <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0"><input type="checkbox" id="waPr" style="width:auto"> ابعت السعر مع الكارت</label>
+ ${ms.length?ms.map(({m,p})=>{const im=imgOf(p),sc=+m.score||0;return `<div class="vsm">${im?`<img src="${H(im)}" alt="">`:'<div class="ni">📦</div>'}<div class="t"><b>${H(p.name)}</b> ${sc?`<span class="s ${sc>=70?'':sc>=40?'m':'l'}">${Math.round(sc)}%</span>`:''}<small>كود ${H(p.code)} · ${p.qty<=0?'<span style="color:#c0392b">نفد</span>':'متاح '+(+p.qty||0)}${' · '+M(p.price)}</small>${m.why?`<small>${H(m.why)}</small>`:''}</div><button class="primary" style="flex:none" onclick="mkVS.waSend('${id}','${p.id}')">📤 ابعتله</button></div>`}).join(''):'<div class="vsseen" style="background:#fff7e6">مالقيتش صنف شبهها في أصنافك.</div>'}
+ <div class="vsb"><button class="secondary" onclick="mkVS.waMiss('${id}',1)">🔎 مش موجود + بلّغه</button><button class="secondary" onclick="mkVS.waMiss('${id}',0)">مش موجود (من غير رسالة)</button><button class="secondary" onclick="mkVS.waIgn('${id}')">تجاهل</button></div>
+ <small style="display:block;color:#6b7c82;margin-top:8px">الرسالة بتتبعت من رقم المحل نفسه (عن طريق الجسر اللي على الكمبيوتر).</small>`)}
+const who=()=>(window.mkT_user&&mkT_user.name)||'';
+async function waMark(id,status){await SBc().from('wa_photos').update({status,handled_by:who(),handled_at:new Date().toISOString()}).eq('id',id);WCNT=Math.max(0,WCNT-1);chip()}
+async function waSend(id,pid){const x=WAP[id],pr=!!(document.getElementById('waPr')||{}).checked;try{const c=await mkPC.card(pid,pr);if(!c)throw new Error('الصنف مش موجود');
+ const r=await SBc().from('wa_out').insert({to_phone:x.phone,body:c.text,imgs:c.imgs,by_name:who()});if(r.error)throw r.error;await waMark(id,'sent');toast('✔ الكارت في الطريق للعميل من رقم المحل');waList()}catch(e){toast('ماتبعتش: '+(e.message||e))}}
+async function waMiss(id,tell){const x=WAP[id];try{let th='';try{th=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,220/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.onerror=no;i.src=x.img})}catch(_){}
+ await SBc().from('mk_wanted').insert({descr:x.seen||x.caption||'قطعة من صورة واتساب',thumb:th,source:'واتساب',phone:x.phone,by_name:who()});
+ if(tell)await SBc().from('wa_out').insert({to_phone:x.phone,body:'أهلاً بحضرتك 🌷\nللأسف القطعة دي مش متوفرة عندنا دلوقتي، وسجّلناها وهنبلغك أول ما توصل إن شاء الله.'+(shopN()?'\n'+shopN():''),imgs:[],by_name:who()});
+ await waMark(id,'missing');toast(tell?'✔ اتسجلت مطلوبة واتبلّغ العميل':'✔ اتسجلت في «مطلوب ومش عندنا»');waList()}catch(e){toast('مشكلة: '+(e.message||e))}}
+const shopN=()=>(db.settings&&(db.settings.companyName||db.settings.name))||'';
+async function waIgn(id){await waMark(id,'ignored');waList()}
+/* زرار عايم بعدد الصور الجديدة + تنبيه لما توصل صورة */
+function chip(){let c=document.getElementById('waChip');if(!WCNT){if(c)c.remove();return}if(!c){c=document.createElement('button');c.id='waChip';c.type='button';c.className='primary';c.style.cssText='position:fixed;left:14px;bottom:84px;z-index:9990;border-radius:99px;padding:10px 16px;box-shadow:0 8px 24px #0003;font-weight:700';c.onclick=waList;document.body.appendChild(c)}c.textContent='📷 '+WCNT+' صورة من الواتساب'}
+async function poll(){if(!OWNER||!SBc()||!window.mkT_user)return;try{const r=await SBc().from('wa_photos').select('id',{count:'exact',head:true}).eq('status','new');if(r.error)return;const n=r.count||0;if(n>WCNT&&WCNT>=0&&window._waPolled){toast('📷 عميل بعت صورة قطعة على الواتساب');try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.08;o.start();setTimeout(()=>{o.stop();a.close()},300)}catch(e){}}window._waPolled=1;WCNT=n;chip()}catch(e){}}
+if(OWNER){setTimeout(poll,4000);setInterval(poll,45000)}
+
+window.mkVS={pick,close,choose,want,wanted,done,del,ctx:()=>CTX,waList,waOpen,waSend,waMiss,waIgn};
 
 /* ---------- الزراير ---------- */
 function prodBtns(){const s=document.getElementById('productSearch');if(!s||document.getElementById('vsProdBtn'))return;
- s.insertAdjacentHTML('afterend',`<button type="button" id="vsProdBtn" class="primary vsbtn" title="صوّر القطعة يطلعلك الصنف" onclick="mkVS.pick('prod')">📷</button><button type="button" id="vsWantBtn" class="secondary vsbtn" title="مطلوب ومش عندنا" onclick="mkVS.wanted()">🔎</button>`);
+ s.insertAdjacentHTML('afterend',`<button type="button" id="vsProdBtn" class="primary vsbtn" title="صوّر القطعة يطلعلك الصنف" onclick="mkVS.pick('prod')">📷</button><button type="button" id="vsWantBtn" class="secondary vsbtn" title="مطلوب ومش عندنا" onclick="mkVS.wanted()">🔎</button>${OWNER?`<button type="button" id="vsWaBtn" class="secondary vsbtn" title="صور الواتساب" onclick="mkVS.waList()">📲</button>`:''}`);
  const p=s.parentElement;if(p&&getComputedStyle(p).display!=='flex'){p.style.display='flex';p.style.gap='6px';p.style.alignItems='center';s.style.flex='1';s.style.minWidth='0'}}
 if(typeof renderProducts==='function'){const _rp=renderProducts;renderProducts=function(){const r=_rp.apply(this,arguments);try{prodBtns()}catch(e){}return r}}
 if(typeof openTransaction==='function'){const _ot=openTransaction;openTransaction=function(){const r=_ot.apply(this,arguments);try{const s=document.getElementById('txSearch');if(s&&!document.getElementById('vsTxBtn')){s.insertAdjacentHTML('afterend',`<button type="button" id="vsTxBtn" class="primary vsbtn" title="صوّر القطعة يطلعلك الصنف" onclick="mkVS.pick('tx')" style="height:44px">📷</button>`);const p=s.parentElement;if(p&&getComputedStyle(p).display!=='flex'){p.style.display='flex';p.style.gap='6px';s.style.flex='1';s.style.minWidth='0'}}}catch(e){}return r}}
