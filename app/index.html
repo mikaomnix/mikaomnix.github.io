@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-14';
+const APP_VER='2026-10-10-15';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -3983,6 +3983,134 @@ window.waInvoice=function(id){const o=(window.WA&&WA.list||[]).find(x=>x.id===id
   // رقم المدير عمره ما يتحط كرقم العميل
   if(ph){if(w.src==='mgr'||w.phone!==ph.value){setTimeout(()=>{ph.value=w.phone||'';ph.dispatchEvent(new Event('input',{bubbles:true}))},0)}}
   if(w.src==='mgr'&&!w.name)toast('الطلب من رقم مدير ومفيش اسم عميل في الرسالة — اكتب اسم العميل')}};
+})();
+</script>
+
+<style>
+#pcv .pc-gal{display:grid;grid-template-columns:1fr;gap:8px}
+#pcv .pc-main{width:100%;aspect-ratio:4/3;object-fit:contain;background:#f4f7f8;border-radius:14px;border:1px solid var(--line,#e3e8ea)}
+#pcv .pc-noimg{aspect-ratio:4/3;display:grid;place-items:center;background:#f4f7f8;border-radius:14px;color:#8a979c;font-size:14px;text-align:center;padding:10px}
+#pcv .pc-th{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+#pcv .pc-th img{width:62px;height:62px;object-fit:cover;border-radius:10px;border:2px solid transparent;cursor:pointer;flex:none;background:#f4f7f8}
+#pcv .pc-th img.on{border-color:var(--blue,#087f8c)}
+#pcv .pc-card{border:1px solid var(--line,#e3e8ea);border-radius:14px;padding:12px 14px;margin-top:10px}
+#pcv .pc-card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+#pcv .pc-kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px 12px;font-size:14px}
+#pcv .pc-kv small{display:block;color:#7b8a90;font-size:12px}
+#pcv .pc-specs{white-space:pre-line;font-size:14px;line-height:1.8;margin:8px 0 0}
+#pcv .pc-own{background:#fffaf0;border-color:#f1dfb5}
+#pcv .pc-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+#pcv .pc-acts button{flex:1 1 140px}
+#pce .pc-imgs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+#pce .pc-imgs div{position:relative}
+#pce .pc-imgs img{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e3e8ea)}
+#pce .pc-imgs button{position:absolute;top:-6px;left:-6px;padding:0;width:24px;height:24px;border-radius:50%;font-size:13px;line-height:1}
+#pce .pc-imgs .main{position:absolute;bottom:3px;right:3px;background:#087f8c;color:#fff;font-size:10px;border-radius:6px;padding:0 5px}
+</style>
+<script>
+/* =====================================================================
+   Mekanix — شاشة المنتج: كارت العرض (صور بالفريم + مواصفات + إرسال واتساب)
+   وكارت البيانات للمدير بس (أسعار الشراء والبيع والحركة)
+   الصور: صور الموقع (لو المنتج مرفوع) + صور بتترفع من هنا وتتحط في الفريم
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,adm=()=>!!(window.mkT_user&&window.mkT_user.role==='admin');
+const APPV=typeof SB_URL!=='undefined'&&/rzvncstjattlklpdtkfn/.test(SB_URL);   // أبلكيشن المشتركين
+const BUCKET=APPV?'product-images':'site-images';
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const M=n=>typeof money==='function'?money(n):(+n||0).toLocaleString('ar-EG')+' ج.م';
+const INFO={};let CUR=null,IDX=0,ORG=null;
+const siteOf=p=>{try{const S=window.mkSite&&window.mkSite.get();return S&&p.code?S.data.products.find(x=>String(x.code||'')===String(p.code)):null}catch(e){return null}};
+const shop=()=>(db.settings&&(db.settings.companyName||db.settings.name))||'';
+async function loadInfo(id){if(INFO[id])return INFO[id];let row=null;try{const r=await SBc().from('mk_product_info').select('*').eq('product_id',id).maybeSingle();if(!r.error)row=r.data}catch(e){}
+ INFO[id]=row||{product_id:id,brand:'',finish:'',size:'',specs:'',loc:'',imgs:[]};if(!Array.isArray(INFO[id].imgs))INFO[id].imgs=[];return INFO[id]}
+const imgsOf=(p,inf)=>{const s=siteOf(p),a=[...(inf.imgs||[])];((s&&(s.imgs||(s.img?[s.img]:[])))||[]).forEach(u=>{if(u&&!a.includes(u))a.push(u)});return a};
+
+/* ---------- الفريم ---------- */
+let FR=null;
+async function frame(){if(FR!==null)return FR;FR=false;if(APPV)return FR;
+ try{const cfg=await (await fetch('frame.json',{cache:'no-store'})).json(),im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src='frame.png'});FR={cfg,im}}catch(e){FR=false}return FR}
+const loadImg=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('الصورة مش بتفتح'));i.src=u});
+async function framed(file,code){const im=await loadImg(file),F=await frame(),c=document.createElement('canvas'),x=c.getContext('2d');
+ if(F){const W=F.im.naturalWidth,Hh=F.im.naturalHeight,w=F.cfg.window;c.width=W;c.height=Hh;x.fillStyle='#fff';x.fillRect(0,0,W,Hh);
+  const k=Math.max(w.w/im.width,w.h/im.height),sw=w.w/k,sh=w.h/k;x.drawImage(im,(im.width-sw)/2,(im.height-sh)/2,sw,sh,w.x,w.y,w.w,w.h);x.drawImage(F.im,0,0,W,Hh);
+  if(code&&F.cfg.code){const q=F.cfg.code;x.font='700 '+q.size+'px Arial,Tahoma,sans-serif';x.fillStyle=q.color;x.textAlign=q.anchor=='middle'?'center':(q.anchor||'center');x.fillText(code,q.x,q.y)}}
+ else{/* فريم بسيط للمشتركين: الصورة + شريط تحت فيه اسم المحل والكود */const W=1200,Hh=1000,bar=120;c.width=W;c.height=Hh;x.fillStyle='#fff';x.fillRect(0,0,W,Hh);
+  const k=Math.min(W/im.width,(Hh-bar)/im.height),dw=im.width*k,dh=im.height*k;x.drawImage(im,(W-dw)/2,(Hh-bar-dh)/2,dw,dh);
+  x.fillStyle='#087f8c';x.fillRect(0,Hh-bar,W,bar);x.fillStyle='#fff';x.font='700 44px Cairo,Tahoma,sans-serif';x.textAlign='right';x.direction='rtl';x.fillText(shop()||'',W-36,Hh-bar/2+15);
+  if(code){x.textAlign='left';x.direction='ltr';x.font='700 46px Arial,Tahoma,sans-serif';x.fillStyle='#f6d77a';x.fillText(code,36,Hh-bar/2+16)}}
+ return await new Promise(r=>c.toBlob(r,'image/jpeg',.88))}
+async function orgId(){if(ORG)return ORG;const r=await SBc().rpc('mk_org');if(r.error||!r.data)throw new Error('مش عارف أحدد المحل');ORG=r.data;return ORG}
+async function upload(blob,code){const name=(APPV?(await orgId())+'/':'prod/')+String(code||'p').replace(/[^\w-]/g,'')+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+ const {error}=await SBc().storage.from(BUCKET).upload(name,blob,{contentType:'image/jpeg',cacheControl:'31536000'});if(error)throw error;return SBc().storage.from(BUCKET).getPublicUrl(name).data.publicUrl}
+const ownPath=u=>{const m=String(u).match(new RegExp('/object/public/'+BUCKET+'/(.+)$'));if(!m)return null;const p=decodeURIComponent(m[1]);return APPV||p.startsWith('prod/')?p:null};
+
+/* ---------- شاشة المنتج ---------- */
+async function view(id){const p=db.products.find(x=>x.id===id);if(!p)return;CUR=id;IDX=0;
+ openModal(`<div id="pcv"><div class="modal-head"><h2><span class="pico"><svg class="i"><use href="#i-box"/></svg></span>${H(p.name)}</h2><button class="close" onclick="closeModal()"><svg class="i"><use href="#i-x"/></svg></button></div><div style="padding:30px;text-align:center;color:#8a979c">⏳ بفتح المنتج…</div></div>`);
+ if(window.mkSite&&!window.mkSite.get()&&adm())try{await window.mkSite.loadSite()}catch(e){}
+ const inf=await loadInfo(id);if(CUR!==id)return;draw(p,inf)}
+function draw(p,inf){const box=document.getElementById('pcv');if(!box)return;const im=imgsOf(p,inf),own=adm(),cost=+p.cost||0,price=+p.price||0;
+ const kv=(l,v)=>v||v===0?`<div><small>${l}</small>${v}</div>`:'';
+ const st=p.qty<=0?'<span class="badge red">نفد</span>':p.qty<=p.min?'<span class="badge red">قرب يخلص</span>':'<span class="badge green">متوفر</span>';
+ let sales='',last='';if(own){const since=new Date(Date.now()-90*864e5).toISOString().slice(0,10),S=(db.sales||[]).filter(r=>r.pid===p.id&&!r.ship),S90=S.filter(r=>String(r.iso||'')>=since),qty=S90.reduce((a,r)=>a+(+r.qty||0),0),by={};
+  S.forEach(r=>{if(r.person)by[r.person]=(by[r.person]||0)+(+r.qty||0)});const top=Object.entries(by).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const L=(db.purchases||[]).filter(r=>r.pid===p.id&&!r.ship).sort((a,b)=>String(b.iso||'').localeCompare(String(a.iso||'')))[0];
+  last=L?`${M(L.price)} من ${H(L.person||'—')} (${H(String(L.iso||'').slice(0,10))})`:'—';
+  sales=`${kv('اتباع آخر ٣ شهور',qty+' '+H(p.unit||''))}${kv('أكتر عملاء بيشتروه',top.map(t=>H(t[0])+' ('+t[1]+')').join('، ')||'—')}`}
+ box.innerHTML=`<div class="modal-head"><h2><span class="pico"><svg class="i"><use href="#i-box"/></svg></span>${H(p.name)}</h2><button class="close" onclick="closeModal()"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div class="pc-gal">${im.length?`<img class="pc-main" id="pcMain" src="${H(im[0])}" alt="">${im.length>1?`<div class="pc-th">${im.map((u,i)=>`<img src="${H(u)}" alt="" class="${i?'':'on'}" onclick="mkPC.pick(${i})">`).join('')}</div>`:''}`:`<div class="pc-noimg">مفيش صور للمنتج ده لسه${own?'<br>دوس «تفاصيل وصور» وارفع صوره، وهتتحط في الفريم بالكود لوحدها':''}</div>`}</div>
+ <div class="pc-card"><h3>🏷️ كارت المنتج <small style="color:#7b8a90;font-weight:400">(ده اللي بيتبعت للعميل)</small></h3><div class="pc-kv">${kv('الكود','<b>'+H(p.code||'—')+'</b>')}${kv('التصنيف',H(p.cat||''))}${kv('الماركة',H(inf.brand))}${kv('التشطيب / اللون',H(inf.finish))}${kv('المقاس',H(inf.size))}${kv('الوحدة',H(p.unit||''))}${kv('الحالة',st)}</div>${inf.specs?`<p class="pc-specs">${H(inf.specs)}</p>`:''}</div>
+ ${own?`<div class="pc-card pc-own"><h3>🔒 بيانات المنتج <small style="color:#7b8a90;font-weight:400">(ليك انت بس)</small></h3><div class="pc-kv">${kv('سعر البيع','<b>'+M(price)+'</b>')}${kv('سعر الشراء',M(cost))}${kv('هامش الربح',price?Math.round((price-cost)/price*100)+'%':'—')}${kv('الرصيد',(+p.qty||0)+' '+H(p.unit||''))}${kv('حد التنبيه',p.min)}${kv('مكانه في المحل',H(inf.loc)||'—')}${kv('آخر شراء',last)}${sales}${p.barcode?kv('الباركود',H(p.barcode)):''}</div></div>`:(inf.loc?`<div class="pc-card"><div class="pc-kv">${kv('مكانه في المحل',H(inf.loc))}${kv('سعر البيع','<b>'+M(price)+'</b>')}</div></div>`:'')}
+ <div class="pc-acts"><button class="primary" onclick="mkPC.send()">📤 ابعته واتساب</button>${own?`<button class="secondary" onclick="mkPC.edit()">📝 تفاصيل وصور</button><button class="secondary" onclick="mkPC.base()">✏️ الاسم والسعر والكمية</button>${typeof itemCard==='function'?`<button class="secondary" onclick="itemCard('${p.id}')">📋 حركة الصنف</button>`:''}`:''}</div>`}
+function pick(i){const p=db.products.find(x=>x.id===CUR),im=imgsOf(p,INFO[CUR]);IDX=i;const m=document.getElementById('pcMain');if(m)m.src=im[i];document.querySelectorAll('#pcv .pc-th img').forEach((e,k)=>e.classList.toggle('on',k===i))}
+
+/* ---------- تعديل التفاصيل والصور ---------- */
+function edit(){const p=db.products.find(x=>x.id===CUR),inf=JSON.parse(JSON.stringify(INFO[CUR]));window._pcE=inf;
+ const f=(k,l,ph)=>`<div class="field"><label>${l}</label><input id="pce_${k}" value="${H(inf[k])}" placeholder="${ph||''}"></div>`;
+ openModal(`<div id="pce"><div class="modal-head"><h2>📝 تفاصيل وصور: ${H(p.name)}</h2><button class="close" onclick="mkPC.back()"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div class="form">${f('brand','الماركة','مثلاً: ...')}${f('finish','التشطيب / اللون','نيكل، كروم، أسود مطفي…')}${f('size','المقاس','مثلاً: 45 سم / 35 مم')}${f('loc','مكانه في المحل','رف 3 – دولاب المفصلات')}
+ <div class="field full"><label>المواصفات (كل ميزة في سطر)</label><textarea id="pce_specs" rows="4" placeholder="كاتم صوت&#10;زاوية فتح 110°&#10;يستحمل 30 كيلو">${H(inf.specs)}</textarea></div>
+ <div class="field full"><label>صور المنتج (أول صورة هي الأساسية)</label><div class="pc-imgs" id="pceImgs"></div>
+ <label class="secondary" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:9px 14px;border-radius:12px;width:auto">📷 ارفع صور<input type="file" accept="image/*" multiple hidden onchange="mkPC.add(this)"></label>
+ <small style="display:block;color:#7b8a90;margin-top:6px">${APPV?'الصور بتتحط في إطار باسم محلك والكود.':'الصور بتتحط في فريم الموقع والكود لوحدها.'}${siteOf(p)?' صور الموقع بتظهر في الكارت لوحدها.':''}</small></div></div>
+ <div class="modal-foot"><button class="primary" id="pceSave" onclick="mkPC.save()">حفظ</button><button class="secondary" onclick="mkPC.back()">رجوع</button></div></div>`);drawImgs()}
+function drawImgs(){const b=document.getElementById('pceImgs');if(!b)return;const a=window._pcE.imgs;b.innerHTML=a.length?a.map((u,i)=>`<div><img src="${H(u)}" alt="">${i?`<span class="main" style="background:#5d7477;cursor:pointer" onclick="mkPC.first(${i})">خليها الأساسية</span>`:'<span class="main">الأساسية</span>'}<button class="secondary danger" title="شيل" onclick="mkPC.rm(${i})">×</button></div>`).join(''):'<small style="color:#7b8a90">مفيش صور مرفوعة من هنا لسه</small>'}
+async function add(inp){const p=db.products.find(x=>x.id===CUR),fs=[...inp.files];inp.value='';if(!fs.length)return;const sv=document.getElementById('pceSave');if(sv)sv.disabled=true;
+ let ok=0;for(const f of fs){try{toast('⏳ بجهّز الصورة '+(ok+1)+' من '+fs.length+'…');const b=await framed(f,p.code);window._pcE.imgs.push(await upload(b,p.code));ok++;drawImgs()}catch(e){toast('صورة ماترفعتش: '+(e.message||e))}}
+ if(sv)sv.disabled=false;if(ok)toast('✔ اترفع '+ok+' صورة — دوس «حفظ»')}
+function rm(i){window._pcE.imgs.splice(i,1);drawImgs()}
+function first(i){const a=window._pcE.imgs;a.unshift(a.splice(i,1)[0]);drawImgs()}
+async function save(){const e=window._pcE,old=INFO[CUR];['brand','finish','size','loc','specs'].forEach(k=>e[k]=(document.getElementById('pce_'+k).value||'').trim());
+ const row={product_id:CUR,brand:e.brand,finish:e.finish,size:e.size,specs:e.specs,loc:e.loc,imgs:e.imgs,updated_at:new Date().toISOString()};
+ const r=await SBc().from('mk_product_info').upsert(row,{onConflict:'product_id'});if(r.error){toast('ماتحفظش: '+(/mk_product_info/.test(r.error.message)?'جدول تفاصيل المنتج لسه مش متركب على السيرفر':r.error.message));return}
+ (old.imgs||[]).filter(u=>!e.imgs.includes(u)).map(ownPath).filter(Boolean).forEach(pth=>{SBc().storage.from(BUCKET).remove([pth]).catch(()=>{})});
+ INFO[CUR]=Object.assign(old,row);toast('✔ اتحفظ');back()}
+function back(){view(CUR)}
+
+/* ---------- الإرسال على واتساب ---------- */
+const wnum=ph=>{let d=String(ph||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/\D/g,'');if(d.startsWith('00'))d=d.slice(2);if(d.startsWith('0'))d='2'+d;return d};
+function msgOf(p,inf,withPrice,links){const L=[p.name,p.code?'الكود: '+p.code:'',inf.brand?'الماركة: '+inf.brand:'',inf.finish?'التشطيب: '+inf.finish:'',inf.size?'المقاس: '+inf.size:'',inf.specs||'',withPrice?'السعر: '+M(p.price):'',p.qty<=0?'(غير متوفر حالياً)':''].filter(Boolean);
+ if(links&&links.length)L.push('','الصور:',...links);if(shop())L.push('',shop());return L.join('\n')}
+function send(){const p=db.products.find(x=>x.id===CUR),inf=INFO[CUR],im=imgsOf(p,inf),C=(db.contacts||[]).filter(c=>c.phone);
+ openModal(`<div id="pcs"><div class="modal-head"><h2>📤 ابعت ${H(p.name)}</h2><button class="close" onclick="mkPC.back()"><svg class="i"><use href="#i-x"/></svg></button></div><div class="form">
+ <div class="field full"><label>لمين؟ (عميل أو مورد أو اكتب رقم)</label><input id="pcsTo" list="pcsList" placeholder="اسم من جهات الاتصال أو رقم موبايل"><datalist id="pcsList">${C.map(c=>`<option value="${H(c.name)} — ${H(c.phone)}">`).join('')}</datalist></div>
+ <div class="field full"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="pcsPrice" style="width:auto"> اكتب سعر البيع في الرسالة</label></div>
+ <p style="margin:0;color:#7b8a90;font-size:13px;line-height:1.8">${im.length?`فيه ${im.length} صورة. «شارك الصور» بيفتح قايمة المشاركة على الموبايل وتختار واتساب والشخص. «ابعت للرقم» بيفتح واتساب على الرقم ومعاه الوصف ولينكات الصور.`:'المنتج ملوش صور لسه، هيتبعت الوصف بس.'}</p></div>
+ <div class="modal-foot">${im.length&&navigator.canShare?`<button class="primary" onclick="mkPC.share()">📲 شارك الصور</button>`:''}<button class="${im.length&&navigator.canShare?'secondary':'primary'}" onclick="mkPC.wa()">💬 ابعت للرقم</button><button class="secondary" onclick="mkPC.back()">رجوع</button></div></div>`)}
+const priceOn=()=>{const c=document.getElementById('pcsPrice');return !!(c&&c.checked)};
+function wa(){const p=db.products.find(x=>x.id===CUR),inf=INFO[CUR],im=imgsOf(p,inf),v=(document.getElementById('pcsTo').value||'').trim();
+ const c=(db.contacts||[]).find(x=>v&&(v===x.name||v.startsWith(x.name+' — ')));const n=wnum(c?c.phone:v);if(n.length<11)return toast('اختار شخص من القايمة أو اكتب رقم صحيح');
+ const url='https://wa.me/'+n+'?text='+encodeURIComponent(msgOf(p,inf,priceOn(),im.slice(0,4)));const w=window.open(url,'_blank');if(!w)location.href=url}
+async function share(){const p=db.products.find(x=>x.id===CUR),inf=INFO[CUR],im=imgsOf(p,inf).slice(0,6);try{toast('⏳ بجهّز الصور…');
+ const files=[];for(let i=0;i<im.length;i++){const b=await (await fetch(im[i],{mode:'cors'})).blob();files.push(new File([b],(p.code||'product')+'-'+(i+1)+'.jpg',{type:b.type||'image/jpeg'}))}
+ const data={files,text:msgOf(p,inf,priceOn())};if(!navigator.canShare(data))throw new Error('الجهاز ده مش بيدعم مشاركة الصور، استخدم «ابعت للرقم»');await navigator.share(data)}
+ catch(e){if(e&&e.name==='AbortError')return;toast(e.message||'المشاركة ماتمتش')}}
+
+window.mkPC={view,pick,edit,add,rm,first,save,back,send,wa,share,info:loadInfo,framed};
+/* الضغط على أي منتج يفتح شاشة المنتج، والتعديل القديم بقى «الاسم والسعر والكمية» */
+const _openP=openProduct;window.mkPC.base=()=>_openP(CUR);
+openProduct=function(id){if(id&&typeof id==='string'&&db.products.some(x=>x.id===id))return view(id);return _openP.apply(this,arguments)};
 })();
 </script>
 
