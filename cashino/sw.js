@@ -1,0 +1,11 @@
+/* كاشينو — شغل من غير نت + استقبال المشاركة من واتساب (أندرويد) */
+const V='it-v1',SHELL=['./','index.html','core.js','tests.js','app.js','manifest.webmanifest','icon-192.png','icon-512.png'];
+self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).catch(()=>{}))});
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
+function idb(){return new Promise((ok,no)=>{const r=indexedDB.open('islam-transfer',2);r.onupgradeneeded=()=>{const d=r.result;['events','blobs','meta'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:s==='meta'?'k':'id'})});if(!d.objectStoreNames.contains('shared'))d.createObjectStore('shared',{keyPath:'id',autoIncrement:true})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+self.addEventListener('fetch',e=>{const u=new URL(e.request.url);
+ if(e.request.method==='POST'&&u.pathname.endsWith('/share')){e.respondWith((async()=>{const f=await e.request.formData(),d=await idb();const items=[];const t={title:f.get('title')||'',text:f.get('text')||'',url:f.get('url')||''};if(t.title||t.text||t.url)items.push(t);for(const x of f.getAll('files'))items.push({file:x});
+   await new Promise((ok,no)=>{const tx=d.transaction('shared','readwrite');items.forEach(i=>tx.objectStore('shared').add(i));tx.oncomplete=ok;tx.onerror=()=>no(tx.error)});return Response.redirect('./#inbox',303)})());return}
+ if(e.request.method!=='GET')return;
+ if(u.origin===location.origin){e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(V).then(x=>x.put(e.request,c));return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('index.html'))));return}
+ if(/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com|tessdata|projectnaptha/.test(u.host+u.pathname)){e.respondWith(caches.open(V).then(c=>c.match(e.request).then(m=>m||fetch(e.request).then(r=>{if(r.ok||r.type==='opaque')c.put(e.request,r.clone());return r}))))}});
