@@ -41,10 +41,10 @@ const st=r=>r.blocked?'blocked':(r.paid_until&&new Date(r.paid_until)>new Date()
 const SL={trial:'تجربة',active:'مشترك',expired:'منتهي',blocked:'موقوف'};
 const left=r=>{const e=st(r)==='active'?r.paid_until:r.trial_end;return Math.max(0,Math.ceil((new Date(e)-Date.now())/864e5))};
 function loginUI(msg){$('#app').innerHTML=`<div id="login"><b style="font-size:19px">دخول الأدمن</b><label>الإيميل</label><input id="le" type="email" dir="ltr"><label>كلمة السر</label><input id="lp" type="password" dir="ltr"><div class="err" id="lx">${H(msg||'')}</div><button id="lg">دخول</button></div>`;
- $('#lp').onkeydown=e=>{if(e.key==='Enter')$('#lg').click()};$('#lg').onclick=async()=>{const r=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(r.error)return $('#lx').textContent=/Invalid login/i.test(r.error.message)?'الإيميل أو كلمة السر غلط':r.error.message;load()}}
+ $('#lp').onkeydown=e=>{if(e.key==='Enter')$('#lg').click()};$('#lg').onclick=async()=>{const r=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(r.error){const m=r.error.message||'';return $('#lx').textContent=/Invalid login/i.test(m)?'الإيميل أو كلمة السر غلط':/not confirmed/i.test(m)?'الإيميل لسه مش متفعّل':/rate|too many/i.test(m)?'محاولات كتير — استنى شوية':'حصلت مشكلة: '+m}load()}}
 async function out(){await sb.auth.signOut();loginUI()}
 async function load(){const {data:{session}}=await sb.auth.getSession();if(!session)return loginUI();
- const r=await sb.rpc('cash_admin_list');if(r.error)return loginUI(/not_admin/.test(r.error.message)?'الحساب ده مش أدمن':r.error.message);ROWS=r.data||[];draw()}
+ const r=await sb.rpc('cash_admin_list');if(r.error){const m=r.error.message||'';if(/not_admin/.test(m)){await sb.auth.signOut();return loginUI('الحساب ده مش أدمن — ادخل بإيميل الأدمن')}return loginUI(/schema cache|Could not find/i.test(m)?'السيرفر بيتحدّث — دوس «تحديث» كمان دقيقة':/JWT|expired/i.test(m)?'الجلسة خلصت — ادخل تاني':'حصلت مشكلة: '+m)}ROWS=r.data||[];draw()}
 function draw(){const c={all:ROWS.length,trial:0,active:0,expired:0,blocked:0};ROWS.forEach(r=>c[st(r)]++);
  const now=Date.now(),new7=ROWS.filter(r=>now-new Date(r.created_at)<7*864e5).length,act7=ROWS.filter(r=>r.last_seen&&now-new Date(r.last_seen)<7*864e5).length,soon=ROWS.filter(r=>st(r)==='trial'&&left(r)<=2).length;
  const L=ROWS.filter(r=>(F==='all'||st(r)===F||(F==='soon'&&st(r)==='trial'&&left(r)<=2))&&JSON.stringify(r).toLowerCase().includes(Q.toLowerCase()));
