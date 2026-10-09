@@ -2400,7 +2400,24 @@ function bgAsk(){nav('rfq');setTimeout(()=>{rfqNew();setTimeout(()=>{if($('#rq_t
 /* ---------- القائمة ---------- */
 GG('ورشة النجار')[2].push(['flap','arm','حاسبة الدراع القلاب'],['perg','perg','حاسبة البرجولة'],['env','wave','الخامات حسب المكان'],['boards','search2','فين ألاقي لوح بالمقاس ده'],['sheets','list','مقاسات الألواح عند الموردين']);
 G.forEach(g=>g[2].forEach(n=>TT[n[0]]=n[2]));
-/* ===================== /WOODMASTER PRO 3 ===================== */
+/* ---------- 📱 إصلاح القائمة الجانبية على الموبايل ---------- */
+document.head.insertAdjacentHTML('beforeend',`<style>
+@media(max-width:860px){
+ aside{top:0;bottom:0;height:auto!important;max-height:100dvh;width:min(290px,86vw);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom));z-index:30!important}
+ #navBk{position:fixed;inset:0;background:#0b2e3366;z-index:29;opacity:0;pointer-events:none;transition:opacity .15s}
+ body.open #navBk{opacity:1;pointer-events:auto}
+ body.open{overflow:hidden;touch-action:none}body.open aside{touch-action:pan-y}
+ #navX{display:flex!important}
+}
+#navX{display:none;position:sticky;top:0;z-index:2;justify-content:flex-start;margin:-6px 0 4px;background:inherit;padding:4px 0}
+#navX button{background:var(--bg);color:var(--ink);padding:8px 12px;border-radius:12px}
+</style>`);
+(()=>{const close=()=>document.body.classList.remove('open');
+ if(!document.getElementById('navBk')){const bk=document.createElement('div');bk.id='navBk';bk.onclick=close;document.body.appendChild(bk)}
+ const addX=()=>{const n=document.getElementById('nav');if(n&&n.querySelector('a')&&!document.getElementById('navX'))n.insertAdjacentHTML('afterbegin',`<div id="navX"><button type="button" onclick="document.body.classList.remove('open')">✕ قفل القائمة</button></div>`)};
+ addX();new MutationObserver(addX).observe(document.getElementById('nav'),{childList:true});
+ let sx=null;const a=document.getElementById('nav');a.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});a.addEventListener('touchend',e=>{if(sx!==null&&e.changedTouches[0].clientX-sx>70)close();sx=null},{passive:true});
+ addEventListener('keydown',e=>{if(e.key==='Escape')close()});addEventListener('hashchange',close)})();/* ===================== /WOODMASTER PRO 3 ===================== */
 go();if(!LSOK)setTimeout(()=>toast('التخزين مقفول هنا (معاينة التطبيق)، البيانات مش هتتحفظ. افتح السيستم من رابط الاستضافة.','r'),400);
 
 </script>
