@@ -2450,6 +2450,7 @@ let PLAY=false;try{if(/[?&]src=play/.test(location.search))localStorage.setItem(
 const L=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
 const isPublic=()=>/^#(client|verify)\//.test(location.hash||'');
 if(!window.supabase){console.warn('supabase lib missing');return}
+let RECOV=/type=recovery/.test(location.hash+location.search);
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,storageKey:'wm-auth',detectSessionInUrl:true}});window.wmSB=sb;
 let USER=null,SUB=null,dirty=false,pushT=null,busy=false,blockedWrite=false;
 const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2483,7 +2484,7 @@ function lock(){box(`<b style="font-size:19px">${SUB.status==='blocked'?'⛔ ا�
  <button class="s" style="background:#eef5f6;color:#0b4e57" onclick="wmExport()">⬇️ نزّل نسخة من بياناتك</button><button class="lnk" onclick="wmOut()">تسجيل خروج</button>`,true)}
 window.wmExport=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='woodmaster-backup-'+today()+'.json';a.click()};
 function account(){const s=SUB||{};openM(`<h3 style="margin:0 0 6px">👤 حسابي</h3><div style="line-height:2"><b>${H(USER.email)}</b><br>${H(s.shop||'')}<br>الحالة: <b>${s.status==='trial'?'فترة تجريبية':s.status==='active'?'مشترك':s.status==='admin'?'أدمن':'منتهي'}</b>${s.days_left!=null&&s.status!=='admin'?' — باقي '+s.days_left+' يوم':''}<br><small style="color:var(--mut)">البيانات بتتحفظ على السيرفر تلقائياً وتقدر تفتح من أي موبايل أو كمبيوتر بنفس الحساب.</small></div>
- ${s.status!=='admin'?payBtns():''}<div class="row" style="margin-top:12px"><button class="s" onclick="wmPush();toast('بنحفظ على السيرفر…','g')">☁️ احفظ دلوقتي</button><button class="s" onclick="wmExport()">⬇️ نسخة احتياطية</button><button class="s" onclick="wmOut()">🚪 تسجيل خروج</button><button class="d" onclick="wmDel()">🗑️ حذف الحساب</button><button class="s" onclick="closeM()">إغلاق</button></div>`)}
+ ${s.status!=='admin'?payBtns():''}<div class="row" style="margin-top:12px"><button class="s" onclick="wmPush();toast('بنحفظ على السيرفر…','g')">☁️ احفظ دلوقتي</button><button class="s" onclick="wmExport()">⬇️ نسخة احتياطية</button><button class="s" onclick="wmPass()">🔑 تغيير كلمة السر</button><button class="s" onclick="wmOut()">🚪 تسجيل خروج</button><button class="d" onclick="wmDel()">🗑️ حذف الحساب</button><button class="s" onclick="closeM()">إغلاق</button></div>`)}
 window.wmOut=async()=>{if(dirty)await push();await sb.auth.signOut();['wmp2','wm_rev','wm_owner'].forEach(k=>L(k,null));location.reload()};
 window.wmDel=()=>ask('حذف الحساب وكل بياناته من السيرفر نهائياً؟ (نزّل نسخة احتياطية الأول لو محتاجها)',async()=>{const r=await sb.rpc('wm_delete_me');if(r.error)return alert(r.error.message);await sb.auth.signOut();['wmp2','wm_rev','wm_owner'].forEach(k=>L(k,null));location.href='mailto:'+MAIL+'?subject='+encodeURIComponent('حذف حساب WOODMASTER PRO')+'&body='+encodeURIComponent('برجاء حذف حسابي نهائياً: '+(USER&&USER.email));setTimeout(()=>location.reload(),800)});
 
@@ -2493,8 +2494,8 @@ function box(inner,hard){let d=document.getElementById('wmAuth');if(!d){d=docume
 function closeBox(){const d=document.getElementById('wmAuth');if(d)d.remove()}
 function toast2(m,fn){if(typeof toast==='function')toast(m,'g');if(fn)setTimeout(fn,1500)}
 function authUI(mode){mode=mode||'in';const up=mode==='up';
- box(`<div class="tabs"><button class="${up?'':'on'}" onclick="wmAuthUI('in')">تسجيل دخول</button><button class="${up?'on':''}" onclick="wmAuthUI('up')">حساب جديد — جرّب ٧ أيام مجاناً</button></div>
- <p>${up?'سجّل مصنعك أو ورشتك وجرّب كل حاجة ٧ أيام مجاناً — من غير فيزا.':'ادخل بحسابك — بياناتك محفوظة على السيرفر ومتزامنة على كل أجهزتك.'}</p>
+ box(`<div class="tabs"><button class="${up?'':'on'}" onclick="wmAuthUI('in')">تسجيل دخول</button><button class="${up?'on':''}" onclick="wmAuthUI('up')">حساب جديد — جرّب شهر مجاناً</button></div>
+ <p>${up?'سجّل مصنعك أو ورشتك وجرّب كل حاجة شهر كامل مجاناً — من غير فيزا.':'ادخل بحسابك — بياناتك محفوظة على السيرفر ومتزامنة على كل أجهزتك.'}</p>
  ${up?`<label>اسمك</label><input id="wa_n" autocomplete="name"><label>اسم المصنع / الورشة / المعرض</label><input id="wa_s"><label>الموبايل</label><input id="wa_p" inputmode="tel" dir="ltr"><label>المحافظة</label><input id="wa_c" placeholder="دمياط، القاهرة…">`:''}
  <label>الإيميل</label><input id="wa_e" type="email" dir="ltr" autocomplete="email"><label>كلمة السر</label><input id="wa_w" type="password" dir="ltr" autocomplete="${up?'new-password':'current-password'}">
  <div class="err" id="wa_x"></div><button id="wa_go">${up?'✨ ابدأ التجربة المجانية':'دخول'}</button>${up?'':'<button class="lnk" onclick="wmForgot()">نسيت كلمة السر؟</button>'}
@@ -2512,11 +2513,14 @@ function authUI(mode){mode=mode||'in';const up=mode==='up';
 window.wmAuthUI=authUI;
 function authExisting(em){setTimeout(()=>{authUI('in');const e=document.getElementById('wa_e');if(e)e.value=em;const x=document.getElementById('wa_x');if(x){x.textContent='الإيميل ده عنده حساب قبل كده — اكتب كلمة السر القديمة، أو دوس «نسيت كلمة السر» يوصلك لينك تغيّرها.'}},2500)}
 window.wmForgot=async()=>{const em=(document.getElementById('wa_e')||{}).value||'',x=document.getElementById('wa_x');if(!/^\S+@\S+\.\S+$/.test(em.trim()))return x.textContent='اكتب الإيميل الأول';const r=await sb.auth.resetPasswordForEmail(em.trim(),{redirectTo:location.origin+location.pathname});x.className='err ok';x.textContent=r.error?r.error.message:'✔ بعتنالك لينك على الإيميل تغيّر منه كلمة السر'};
-sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){box(`<b>🔑 كلمة سر جديدة</b><label>كلمة السر الجديدة</label><input id="wa_np" type="password" dir="ltr"><div class="err" id="wa_x"></div><button id="wa_ok">حفظ</button>`,true);
- document.getElementById('wa_ok').onclick=async()=>{const p=document.getElementById('wa_np').value;if(p.length<6)return document.getElementById('wa_x').textContent='٦ حروف على الأقل';const r=await sb.auth.updateUser({password:p});if(r.error)return document.getElementById('wa_x').textContent=r.error.message;closeBox();boot()}}});
-
+function passUI(title){box(`<b>🔑 ${title||'كلمة سر جديدة'}</b><label>كلمة السر الجديدة</label><input id="wa_np" type="password" dir="ltr" autocomplete="new-password"><label>اكتبها تاني</label><input id="wa_np2" type="password" dir="ltr" autocomplete="new-password"><div class="err" id="wa_x"></div><button id="wa_ok">حفظ كلمة السر</button>${RECOV?'':'<button class="lnk" onclick="document.getElementById(\'wmAuth\').remove()">إلغاء</button>'}`,true);
+ document.getElementById('wa_ok').onclick=async()=>{const p=document.getElementById('wa_np').value,p2=document.getElementById('wa_np2').value,x=document.getElementById('wa_x');if(p.length<6)return x.textContent='٦ حروف على الأقل';if(p!==p2)return x.textContent='الكلمتين مش زي بعض';
+  const r=await sb.auth.updateUser({password:p});if(r.error)return x.textContent=r.error.message;x.className='err ok';x.textContent='✔ اتغيرت كلمة السر';const was=RECOV;RECOV=false;setTimeout(()=>{closeBox();if(was)boot()},900)}}
+window.wmPass=()=>{closeM();passUI('تغيير كلمة السر')};
+sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){RECOV=true;passUI()}});
 /* ---------- التشغيل ---------- */
 async function boot(){const {data:{session}}=await sb.auth.getSession();USER=session&&session.user;if(!USER){if(!isPublic())authUI('in');return}
+ if(RECOV){passUI();return}
  if(L('wm_owner')&&L('wm_owner')!==USER.id){['wmp2','wm_rev'].forEach(k=>L(k,null));L('wm_owner',USER.id);location.reload();return}
  try{await status();if(blockedWrite)return;closeBox();await pull(true);L('wm_owner',USER.id);chip()}catch(e){console.warn(e);if(!navigator.onLine){closeBox();toast2('مفيش نت — شغال من البيانات اللي على الجهاز وهيتحفظ أول ما النت يرجع')}else box(`<b>حصلت مشكلة في الاتصال</b><p>${H(e.message||e)}</p><button onclick="location.reload()">حاول تاني</button><button class="lnk" onclick="wmOut()">تسجيل خروج</button>`)}}
 window.addEventListener('online',()=>{if(dirty)push()});
