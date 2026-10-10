@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-p7';
+const APP_VER='2026-10-10-p8';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5225,17 +5225,21 @@ async function rRep(){const b=$('phRep');if(!b)return;if(!REP)REP=await getSet('
  b.innerHTML=`<div class="title-row"><div class="title"><h1>🛠️ الصيانة</h1><p>استلام الجهاز بتذكرة · التشخيص · طلب القطعة · جاهز · التسليم — ورسالة واتساب للعميل أول ما يخلص</p></div><button class="primary" onclick="mkPH2.repNew()">➕ استلام جهاز</button></div>
  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${[['open','المفتوح'],...Object.entries(RST).map(([k,v])=>[k,v[0]]),['all','الكل']].map(([k,l])=>`<button class="${RF===k?'primary':'secondary'}" onclick="mkPH2.rf('${k}')">${l} (${k==='all'?REP.length:k==='open'?REP.filter(r=>!['out','rt'].includes(r.st)).length:REP.filter(r=>r.st===k).length})</button>`).join('')}${late?`<span class="ph-st st-rt" style="align-self:center">⏰ ${late} متأخر عن ميعاده</span>`:''}</div>
  ${L.map(r=>{const i=REP.indexOf(r),cost=(+r.parts||0)+(+r.labor||0);return `<div class="ph-card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:16px">#${r.no} · ${H(r.model)}</b><span class="ph-st ${RST[r.st][1]}">${RST[r.st][0]}</span>${r.due&&!['out','rt'].includes(r.st)?`<small style="color:${r.due<new Date().toISOString().slice(0,10)?'#b42318':'var(--muted)'}">التسليم ${H(r.due)}</small>`:''}<span style="flex:1"></span><b>${M(r.price||0)}</b></div>
- <div style="font-size:14px;color:var(--muted);margin-top:4px">${H(r.cust)} · <span dir="ltr">${H(r.phone)}</span> · ${H(r.issue)}${r.tech?' · الفني: '+H(r.tech):''}${r.dep?' · عربون '+M(r.dep):''}${cost?' · تكلفة '+M(cost)+' · ربح '+M((r.price||0)-cost):''}</div>
- <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${Object.entries(RST).filter(([k])=>k!==r.st).map(([k,v])=>`<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repSt(${i},'${k}')">${v[0]}</button>`).join('')}<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repEdit(${i})">✏️ تعديل</button><button class="secondary" style="padding:5px 10px" onclick="mkPH2.repTicket(${i})">🧾 التذكرة</button>${r.phone?`<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repWa(${i})">💬 واتساب</button>`:''}</div></div>`}).join('')||'<div class="empty">مفيش أجهزة هنا</div>'}`}
+ <div style="font-size:14px;color:var(--muted);margin-top:4px">${H(r.cust)} · <span dir="ltr">${H(r.phone)}</span> · ${H(r.issue)}${r.tech?' · الفني: '+H(r.tech)+(r.techPct?' ('+r.techPct+'٪)':''):''}${r.place&&r.place!=='جوا المحل'?' · 📍 '+H(r.place):''}${r.dep?' · عربون '+M(r.dep):''}${cost?' · تكلفة '+M(cost)+' · ربح '+M((r.price||0)-cost):''}</div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${Object.entries(RST).filter(([k])=>k!==r.st).map(([k,v])=>`<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repSt(${i},'${k}')">${v[0]}</button>`).join('')}<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repEdit(${i})">✏️ تعديل</button><button class="secondary" style="padding:5px 10px" onclick="mkPH2.repTicket(${i})">🧾 التذكرة</button><button class="secondary" style="padding:5px 10px" onclick="mkPH2.repLabel(${i})">🏷️ ليبل الجهاز</button>${r.phone?`<button class="secondary" style="padding:5px 10px" onclick="mkPH2.repWa(${i})">💬 واتساب</button>`:''}</div></div>`}).join('')||'<div class="empty">مفيش أجهزة هنا</div>'}`}
 function repForm(i){const r=i==null?{no:(REP.reduce((a,x)=>Math.max(a,x.no||0),0)+1),st:'in',at:nowS()}:REP[i];
  openModal(`<div class="modal-head"><h2>${i==null?'استلام جهاز صيانة':'تذكرة #'+r.no}</h2><button class="close" onclick="closeModal()">✕</button></div><div class="form">
- ${[['cust','اسم العميل'],['phone','موبايل العميل'],['model','الجهاز والموديل'],['imei','IMEI / السيريال'],['issue','العطل (زي ما العميل قال)'],['cond','حالة الجهاز وقت الاستلام (خدوش، كسر...)'],['lock','الباسورد / النمط (لو العميل وافق)'],['acc','استلمنا معاه (شاحن، جراب، شريحة...)'],['tech','الفني'],['due','ميعاد التسليم'],['dep','العربون'],['parts','تكلفة القطع'],['labor','أجرة الفني'],['price','السعر للعميل'],['warranty','ضمان (أيام)'],['partSup','القطعة من مورد'],['note','ملاحظات']].map(([k,l])=>`<div class="field ${['issue','cond','note'].includes(k)?'full':''}"><label>${l}</label><input id="rp_${k}" ${k==='due'?'type="date"':''} ${['dep','parts','labor','price','warranty'].includes(k)?'inputmode="decimal"':''} value="${H(r[k]||'')}"></div>`).join('')}</div>
+ ${[['cust','اسم العميل'],['phone','موبايل العميل'],['model','الجهاز والموديل'],['imei','IMEI / السيريال'],['issue','العطل (زي ما العميل قال)'],['cond','حالة الجهاز وقت الاستلام (خدوش، كسر...)'],['lock','الباسورد / النمط (لو العميل وافق)'],['acc','استلمنا معاه (شاحن، جراب، شريحة...)'],['tech','الفني (اللي بيصلّح)'],['techPct','نسبة الفني من الربح % (٠ = أجرة ثابتة)'],['place','مكان الصيانة'],['due','ميعاد التسليم'],['dep','العربون'],['parts','تكلفة القطع'],['labor','أجرة الفني'],['price','السعر للعميل'],['warranty','ضمان (أيام)'],['partSup','القطعة من مورد'],['note','ملاحظات']].map(([k,l])=>`<div class="field ${['issue','cond','note'].includes(k)?'full':''}"><label>${l}</label><input id="rp_${k}" ${k==='due'?'type="date"':''} ${['dep','parts','labor','price','warranty','techPct'].includes(k)?'inputmode="decimal"':''} ${k==='place'?'list="rpPL"':k==='tech'?'list="rpTL"':''} value="${H(r[k]||(k==='place'?'جوا المحل':''))}"></div>`).join('')}</div>
+ <datalist id="rpPL"><option value="جوا المحل"><option value="برّه (عند فني خارجي)"></datalist><datalist id="rpTL">${[...new Set(REP.map(x=>x.tech).filter(Boolean))].map(t=>`<option value="${H(t)}">`).join('')}</datalist>
  <p style="font-size:12px;color:var(--muted)">⚠️ الباسورد بيتحفظ عشان الفني يقدر يختبر الجهاز — اطلبه بموافقة العميل، وامسحه بعد التسليم.</p><div class="modal-foot"><button class="primary" id="rpGo">حفظ</button>${i!=null?`<button class="secondary" onclick="if(confirm('مسح التذكرة؟')){REPDEL(${i})}">🗑️</button>`:''}</div>`);
  window.REPDEL=async j=>{REP.splice(j,1);await putSet('ph_repairs',REP);closeModal();rRep()};
- $('rpGo').onclick=async()=>{const o=Object.assign({},r);['cust','phone','model','imei','issue','cond','lock','acc','tech','due','dep','parts','labor','price','warranty','partSup','note'].forEach(k=>o[k]=ND($('rp_'+k).value.trim()));if(!o.model)return toast('اكتب الجهاز');['dep','parts','labor','price','warranty'].forEach(k=>o[k]=+o[k]||0);
+ $('rpGo').onclick=async()=>{const o=Object.assign({},r);['cust','phone','model','imei','issue','cond','lock','acc','tech','techPct','place','due','dep','parts','labor','price','warranty','partSup','note'].forEach(k=>o[k]=ND($('rp_'+k).value.trim()));if(!o.model)return toast('اكتب الجهاز');['dep','parts','labor','price','warranty','techPct'].forEach(k=>o[k]=+o[k]||0);
   if(i==null)REP.unshift(o);else REP[i]=o;const x=await putSet('ph_repairs',REP);if(x.error)return toast('ماتحفظش');closeModal();toast('✔ اتحفظت التذكرة #'+o.no);rRep();if(i==null)repTicket(0)}}
 function repTicket(i){const r=REP[i],sh=(db.settings&&db.settings.companyName)||'';openModal(`<div class="modal-head"><h2>تذكرة صيانة #${r.no}</h2><button class="close" onclick="closeModal()">✕</button></div><div id="phPrint" style="font-size:15px;line-height:1.9;border:2px solid #b08328;border-radius:12px;padding:12px"><b style="font-size:18px">${H(sh)}</b><br>تذكرة صيانة رقم <b style="font-size:22px">#${r.no}</b><br>${H(r.at||'')}<hr>العميل: ${H(r.cust)} — <span dir="ltr">${H(r.phone)}</span><br>الجهاز: <b>${H(r.model)}</b> ${r.imei?'<br>IMEI: <span dir="ltr">'+H(r.imei)+'</span>':''}<br>العطل: ${H(r.issue)}<br>الحالة: ${H(r.cond||'—')}<br>استلمنا معاه: ${H(r.acc||'—')}<br>${r.price?'السعر المتوقع: <b>'+M(r.price)+'</b><br>':''}${r.dep?'العربون: '+M(r.dep)+'<br>':''}${r.due?'ميعاد التسليم: '+H(r.due)+'<br>':''}${r.warranty?'الضمان: '+r.warranty+' يوم<br>':''}<small>المحل مش مسؤول عن الجهاز بعد ٣٠ يوم من ميعاد التسليم.</small></div>
  <div class="modal-foot"><button class="primary" onclick="document.body.classList.add('ph-print');window.print();document.body.classList.remove('ph-print')">🖨️ طباعة</button>${r.phone?`<button class="secondary" onclick="mkPH2.repWa(${i})">💬 ابعتها للعميل</button>`:''}</div>`)}
+function repLabel(i){const r=REP[i],sh=(db.settings&&db.settings.companyName)||'';
+ openModal(`<div class="modal-head"><h2>🏷️ ليبل الجهاز #${r.no}</h2><button class="close" onclick="closeModal()">✕</button></div><div id="ph6Label" style="width:58mm;max-width:100%;margin:auto;font:9px/1.5 Cairo,Tahoma,sans-serif;border:1px dashed #999;padding:3mm;color:#000;background:#fff"><div style="display:flex;justify-content:space-between;font-weight:800;font-size:11px"><span>${H(sh)}</span><span>#${r.no}</span></div><div style="font-weight:800;font-size:11px">${H(r.model)}</div><div>${H(r.cust)} — <span dir="ltr">${H(r.phone)}</span></div>${r.imei?'<div>IMEI: <span dir="ltr">'+H(r.imei)+'</span></div>':''}<div>العطل: ${H(r.issue)}</div>${r.cond?'<div>الحالة: '+H(r.cond)+'</div>':''}${r.acc?'<div>معاه: '+H(r.acc)+'</div>':''}<div>استلام: ${H(r.at||'')}</div>${r.due?'<div>تسليم: <b>'+H(r.due)+'</b></div>':''}${r.tech?'<div>الفني: '+H(r.tech)+(r.place&&r.place!=='جوا المحل'?' — '+H(r.place):'')+'</div>':''}${r.price?'<div>السعر: <b>'+M(r.price)+'</b>'+(r.dep?' · عربون '+M(r.dep):'')+'</div>':''}</div>
+ <div class="modal-foot"><button class="primary" onclick="document.body.classList.add('ph6-lbl');window.print();document.body.classList.remove('ph6-lbl')">🖨️ اطبع الليبل</button></div>`)}
 function repWa(i){const r=REP[i],sh=(db.settings&&db.settings.companyName)||'';const t=r.st==='ok'?`أهلاً ${r.cust} 👋\nجهازك ${r.model} جاهز للاستلام ✅\nالمطلوب: ${M((r.price||0)-(r.dep||0))}${r.warranty?'\nعليه ضمان '+r.warranty+' يوم':''}\nتذكرة #${r.no} — ${sh}`:`أهلاً ${r.cust} 👋\nاستلمنا جهازك ${r.model} — تذكرة صيانة #${r.no}\nالعطل: ${r.issue}\nالحالة دلوقتي: ${RST[r.st][0]}${r.due?'\nميعاد التسليم: '+r.due:''}\n${sh}`;wa(r.phone,t)}
 
 /* ---------- 🛡️ الاسكرينات والجرابات حسب الموديل ---------- */
@@ -5267,7 +5271,7 @@ async function rPts(){const b=$('phPts');if(!b)return;if(!PTS)PTS=await getSet('
  <div class="ph-card"><b>العمال</b><div class="table-wrap"><table><thead><tr><th>العامل</th><th>مبيعات</th><th>تركيبات</th><th>صيانة</th><th>النقاط</th></tr></thead><tbody>${Wk.map(x=>`<tr><td><b>${H(x.n)}</b></td><td>${M(x.sales)}</td><td>${x.inst}</td><td>${x.rep}</td><td><b style="color:#7f5d17">${x.p}</b></td></tr>`).join('')||'<tr><td colspan="5" class="empty">لسه مفيش</td></tr>'}</tbody></table></div></div>`}
 
 function ensure(){addPage('phRep');addPage('phScr');addPage('phPts');addNav('phPts','⭐','نقاط العملاء والعمال');addNav('phScr','🛡️','الاسكرينات والجرابات');addNav('phRep','🛠️','الصيانة')}
-window.mkPH2={rf:k=>{RF=k;rRep()},repNew:()=>repForm(null),repEdit:i=>repForm(i),repSt:async(i,k)=>{REP[i].st=k;if(k==='out')REP[i].outAt=nowS();await putSet('ph_repairs',REP);rRep();if(k==='ok'&&REP[i].phone&&confirm('تبعت للعميل إن جهازه جاهز؟'))repWa(i)},repTicket,repWa,
+window.mkPH2={rf:k=>{RF=k;rRep()},repNew:()=>repForm(null),repEdit:i=>repForm(i),repSt:async(i,k)=>{REP[i].st=k;if(k==='out')REP[i].outAt=nowS();await putSet('ph_repairs',REP);rRep();if(k==='ok'&&REP[i].phone&&confirm('تبعت للعميل إن جهازه جاهز؟'))repWa(i)},repTicket,repWa,repLabel,
  sq:v=>{SQ=v;clearTimeout(window._sqT);window._sqT=setTimeout(()=>{rScr();const q=$('scQ');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}},350)},link,install,labels,
  ptSave:async()=>{PTS.per=Math.max(1,+ND($('ptPer').value)||100);await putSet('ph_points',PTS);toast('✔ اتحفظ');rPts()},ptUse:async(n,max)=>{const u=+prompt('كام نقطة هيستبدل؟ (عنده '+max+')',max);if(!u||u>max)return;PTS.used=PTS.used||{};PTS.used[n]=(+PTS.used[n]||0)+u;await putSet('ph_points',PTS);toast('✔ اتخصم '+u+' نقطة');rPts()}};
 const tick=()=>{try{ensure()}catch(e){}};setTimeout(tick,900);setTimeout(tick,2600);setInterval(tick,5000);
@@ -5428,7 +5432,7 @@ function card(i){const x=U[i];openModal(`${head('🧾 كارت ضمان')}<div i
 function waW(i){const x=U[i];wa(x.soldPhone,`أهلاً ${x.soldTo||''} 👋\nشكراً إنك اشتريت من ${shop()}\nجهاز: ${x.brand} ${x.model}\nIMEI: ${x.imei||'—'}\n${x.wEnd?'الضمان ساري لحد '+x.wEnd:'من غير ضمان'}\nأي مشكلة كلّمنا 🙏`)}
 
 /* ---------- 🪒 منظومة مكن الحلاقة ---------- */
-const SHV=[['Philips','OneBlade (QP2520 / QP2724 / QP2834 / QP6530)','رجالي — شفرة'],['Philips','Series 3000 / 5000 / 7000 / 9000','رجالي — دوّار'],['Philips','Multigroom (MG3730 / MG5730 / MG7745)','تريمر متعدد'],['Philips','Lumea','حريمي — ليزر IPL'],['Philips','Satinelle (BRE / BRP)','حريمي — إزالة شعر'],['Braun','Series 3 / 5 / 7 / 9','رجالي — ترددي'],['Braun','Silk-épil 5 / 7 / 9','حريمي — إزالة شعر'],['Braun','MGK (Multi Grooming Kit)','تريمر متعدد'],['Panasonic','ES / ER','رجالي وتريمر'],['Remington','Style / Pro','رجالي وتريمر'],['Kemei','(اكتب الموديل)','ماكينة شعر / تريمر'],['VGR','(اكتب الموديل)','ماكينة شعر / تريمر'],['Gemei','(اكتب الموديل)','ماكينة شعر'],['Sokany','(اكتب الموديل)','ماكينة شعر / تريمر'],['Rozia','(اكتب الموديل)','تريمر / حريمي'],['Dingling','(اكتب الموديل)','ماكينة شعر'],['Wahl','Magic Clip / Senior / Detailer','ماكينة صالون'],['Andis','Master / T-Outliner','ماكينة صالون']];
+const SHV=[["Kemei","(اكتب الموديل)","ماكينة شعر / تريمر"],["VGR","(اكتب الموديل)","ماكينة شعر / تريمر"],["Gemei","(اكتب الموديل)","ماكينة شعر / تريمر"],["Geemy","(اكتب الموديل)","ماكينة شعر"],["Surker","(اكتب الموديل)","ماكينة حلاقة"],["Sokany","(اكتب الموديل)","تريمر / سشوار"],["Rozia","(اكتب الموديل)","تريمر / حريمي"],["Dingling","(اكتب الموديل)","ماكينة شعر"],["Nova","(اكتب الموديل)","ماكينة / تريمر"],["Shinon","(اكتب الموديل)","ماكينة / تريمر"],["Pritech","(اكتب الموديل)","تريمر"],["لوكال","بدون ماركة","ماكينة / تريمر"]];
 const SPARE=['شفرة/راس بديلة','أمشاط (دليل طول)','شاحن/كابل','بطارية','زيت ماكينة','فرشاة تنضيف','شنطة'];
 let SH=null;
 async function renderShavers(){const box=$('phShave');if(!box)return;SH=await getS('ph_shavers',{sold:[],compat:{},blades:90});const t=today(),act=SH.sold.filter(x=>x.wEnd>=t),due=SH.sold.filter(x=>x.nextBlade&&x.nextBlade<=t&&!x.bladeDone);
@@ -5539,6 +5543,243 @@ function reportTxt(){const ms=mainShop(),br=[...new Set([...LINKS.map(l=>l.name)
 function report(sendWa){const t=reportTxt();if(sendWa){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}else{const h=`<pre style="font:16px/1.9 Cairo,Tahoma;white-space:pre-wrap;direction:rtl">${H(t)}</pre>`;if(typeof printHTML==='function')printHTML(h);else{const w=window.open('');w.document.write(h);w.print()}}}
 if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const r=_sp.apply(this,arguments);if(id==='phBr')setTimeout(()=>{try{render()}catch(e){}},60);return r}}
 window.mkBR={add,wa,copy,tog,del,rev,view,report,day:v=>{DAY=v;render()},re:render};
+})();
+</script>
+
+<style>
+.ph6-x{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid var(--border,#e4eaed);background:var(--card,#fff);font-size:20px;cursor:pointer;margin-inline-end:8px;flex:0 0 auto}
+.ph6-tile{background:var(--card,#fff);border:1px solid var(--border,#eadfca);border-radius:16px;padding:12px 8px;text-align:center;cursor:pointer;font-weight:800}
+.ph6-tile b{display:block;font-size:28px}
+.ph6-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.ph6-chip{display:inline-block;border:1px solid var(--border,#e4eaed);border-radius:99px;padding:4px 12px;margin:3px;font-size:13px;cursor:pointer;background:var(--card,#fff)}
+.ph6-chip.on{background:#b08328;color:#fff;border-color:#b08328}
+.ph6-cart{border:1px dashed #b08328;border-radius:12px;padding:8px 10px;margin-top:8px}
+@media print{body.ph6-lbl *{visibility:hidden}body.ph6-lbl #ph6Label,body.ph6-lbl #ph6Label *{visibility:visible}body.ph6-lbl #ph6Label{position:absolute;top:0;inset-inline-start:0;width:58mm}}
+</style>
+<script>
+/* =====================================================================
+   فون سيستم — الدفعة ٦: ماركات + قراءة صورة «حول الجهاز» + الضريبة + أقسام بالأصناف والماركات والستوك
+   + 🛒 بيع إكسسوار بالقسم + 🔄 بدل + 💳 كروت وخدمات + 👨‍🔧 الفنيين + ✕ في كل شاشة
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,$=id=>document.getElementById(id),adm=()=>!window.mkT_user||window.mkT_user.role==='admin';
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ND=v=>String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));const num=v=>{const n=parseFloat(ND(v).replace(/[,٬\s]/g,''));return isNaN(n)?0:n};
+const M=n=>typeof money==='function'?money(n):(Math.round(+n||0)).toLocaleString('ar-EG')+' ج.م';
+const tst=m=>typeof toast==='function'?toast(m):alert(m);
+const head=t=>`<div class="modal-head"><h2>${t}</h2><button class="close" onclick="closeModal()">✕</button></div>`;
+const DB=()=>typeof db!=='undefined'?db:{products:[],contacts:[],sales:[]};
+const norm=s=>String(s||'').trim().toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ');
+const today=()=>{const d=new Date(new Date().toLocaleString('en-US',{timeZone:'Africa/Cairo'}));return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+async function getS(k,d){try{const r=await SBc().from('mk_settings').select('value').eq('key',k).maybeSingle();return (r.data&&r.data.value)||d}catch(e){return d}}
+async function putS(k,v){const r=await SBc().from('mk_settings').upsert([{key:k,value:v,updated_at:new Date().toISOString()}],{onConflict:'key'});if(r.error){tst('ماتحفظش — جرّب تاني');return false}return true}
+const api=()=>window.mkT&&mkT.api;
+
+/* ---------- الماركات ---------- */
+const PHONE_BRANDS=['Apple (آيفون)','Samsung (سامسونج)','Xiaomi (شاومي)','Redmi (ريدمي)','POCO (بوكو)','Oppo (أوبو)','Realme (ريلمي)','Vivo (فيفو)','Huawei (هواوي)','Honor (هونر)','Infinix (إنفينكس)','Tecno (تكنو)','Itel (آيتل)','Nokia (نوكيا)','HMD','Motorola (موتورولا)','Lenovo (لينوفو)','Google Pixel (بيكسل)','OnePlus (ون بلس)','Sony (سوني)','Asus (أسوس)','ZTE (زد تي إي)','Nubia','Meizu','Blackview','Ulefone','Doogee','Cubot','Umidigi','Oukitel','Hotwav','Oscal','Sico','Mione','Smart','Lava','Alcatel','TCL','Tab (تابلت)','أخرى / لوكال'];
+const BR={
+ 'اسكرينات وجرابات':['Spigen','Baseus','Ugreen','Hoco','Joyroom','Remax','Wiwu','Benks','Mocoll','Rock','Nillkin','Totu','Green Lion','Porodo','UAG','Otterbox','Apple','Samsung','Xiaomi','لوكال / بدون ماركة'],
+ 'شواحن وكابلات':['Anker','Baseus','Ugreen','Hoco','Remax','Joyroom','Borofone','Yesido','Wiwu','LDNIO','Oraimo','Samsung','Apple','Xiaomi','Huawei','Oppo','Realme','Vivo','Infinix','Tecno','Itel','Choetech','Romoss','Powerology','Porodo','Green Lion','Mcdodo','Aukey','Belkin','لوكال / بدون ماركة'],
+ 'سماعات وصوتيات':['JBL','Sony','Soundcore','Baseus','Ugreen','QCY','Haylou','Oraimo','Lenovo','Awei','Remax','Hoco','Borofone','Joyroom','Samsung','Apple','Xiaomi','Huawei','Realme','Oppo','Edifier','Havit','Marshall','Harman Kardon','لوكال / بدون ماركة'],
+ 'باور بانك':['Anker','Baseus','Ugreen','Xiaomi','Romoss','Hoco','Remax','Joyroom','Powerology','Porodo','Oraimo','Aukey','Wiwu','Zero','لوكال / بدون ماركة'],
+ 'ساعات ذكية':['Apple','Samsung','Xiaomi','Huawei','Amazfit','Haylou','Realme','Oppo','Imilab','Kieslect','Zeblaze','Colmi','لوكال / بدون ماركة'],
+ 'مكن حلاقة وعناية شخصية':['Kemei','VGR','Gemei','Geemy','Surker','Sokany','Rozia','Dingling','Nova','Shinon','Pritech','لوكال / بدون ماركة'],
+ 'إكسسوار الدش (ريسيفر، LNB، وصلات)':['Starsat','Strong','Geant','Opticum','Humax','Amiko','Gecko','لوكال / بدون ماركة'],
+ 'كاميرات مراقبة':['Hikvision','Dahua','Imou','EZVIZ','TP-Link Tapo','Xiaomi','Reolink','Uniview','Yoosee','V380','Hiseeu','Vimtag','لوكال / بدون ماركة'],
+ 'أدوات وعدد':['Ingco','Total','Bosch','Stanley','Makita','DeWalt','Black+Decker','لوكال / بدون ماركة'],
+ 'أسلاك وكهرباء':['السويدي','الكابلات الكهربائية المصرية','Schneider','Legrand','Philips','Osram','Ledvance','لوكال / بدون ماركة'],
+ 'كروت شحن وخطوط':['Vodafone','e& (اتصالات)','Orange','WE'],
+ 'قطع غيار صيانة':['أصلي OEM','نسخة أولى','كوبي'],
+ 'ألعاب وإكسسوار جيمنج':['Redragon','Havit','Rapoo','Logitech','A4Tech','Gamdias','لوكال / بدون ماركة'],
+ 'إكسسوار عربيات':['Baseus','Hoco','Ugreen','Anker','Remax','لوكال / بدون ماركة'],
+ 'موبايلات جديدة':PHONE_BRANDS,'موبايلات مستعملة':PHONE_BRANDS};
+const CATS6=[['📱','موبايلات جديدة'],['♻️','موبايلات مستعملة'],['🛡️','اسكرينات وجرابات'],['🔌','شواحن وكابلات'],['🎧','سماعات وصوتيات'],['🔋','باور بانك'],['⌚','ساعات ذكية'],['🪒','مكن حلاقة وعناية شخصية'],['📡','إكسسوار الدش (ريسيفر، LNB، وصلات)'],['📹','كاميرات مراقبة'],['🧰','أدوات وعدد'],['〰️','أسلاك وكهرباء'],['💳','كروت شحن وخطوط'],['🔧','قطع غيار صيانة'],['🎮','ألعاب وإكسسوار جيمنج'],['🚗','إكسسوار عربيات']];
+const PAYS=[['cash','💵 نقدي'],['insta','⚡ انستا باي'],['wallet','📲 محفظة'],['credit','📝 آجل']];
+
+/* ---------- تقييم المستعمل: ماركات + ضريبة + قراءة صورة «حول» ---------- */
+const IPH={'iPhone 11':['A13','6.1" LCD','4G','Lightning','2019'],'iPhone 11 Pro':['A13','5.8" OLED','4G','Lightning','2019'],'iPhone 11 Pro Max':['A13','6.5" OLED','4G','Lightning','2019'],'iPhone 12':['A14','6.1" OLED','5G','Lightning · MagSafe','2020'],'iPhone 12 mini':['A14','5.4" OLED','5G','Lightning · MagSafe','2020'],'iPhone 12 Pro':['A14','6.1" OLED','5G','Lightning · MagSafe','2020'],'iPhone 12 Pro Max':['A14','6.7" OLED','5G','Lightning · MagSafe','2020'],'iPhone 13':['A15','6.1" OLED','5G','Lightning · MagSafe','2021'],'iPhone 13 mini':['A15','5.4" OLED','5G','Lightning · MagSafe','2021'],'iPhone 13 Pro':['A15','6.1" OLED 120Hz','5G','Lightning · MagSafe','2021'],'iPhone 13 Pro Max':['A15','6.7" OLED 120Hz','5G','Lightning · MagSafe','2021'],'iPhone 14':['A15','6.1" OLED','5G','Lightning · MagSafe','2022'],'iPhone 14 Plus':['A15','6.7" OLED','5G','Lightning · MagSafe','2022'],'iPhone 14 Pro':['A16','6.1" OLED 120Hz','5G','Lightning · Dynamic Island','2022'],'iPhone 14 Pro Max':['A16','6.7" OLED 120Hz','5G','Lightning · Dynamic Island','2022'],'iPhone 15':['A16','6.1" OLED','5G','USB-C · Dynamic Island','2023'],'iPhone 15 Plus':['A16','6.7" OLED','5G','USB-C · Dynamic Island','2023'],'iPhone 15 Pro':['A17 Pro','6.1" OLED 120Hz','5G','USB-C · تيتانيوم','2023'],'iPhone 15 Pro Max':['A17 Pro','6.7" OLED 120Hz','5G','USB-C · تيتانيوم','2023'],'iPhone 16':['A18','6.1" OLED','5G','USB-C · زرار الكاميرا','2024'],'iPhone 16 Plus':['A18','6.7" OLED','5G','USB-C · زرار الكاميرا','2024'],'iPhone 16 Pro':['A18 Pro','6.3" OLED 120Hz','5G','USB-C · زرار الكاميرا','2024'],'iPhone 16 Pro Max':['A18 Pro','6.9" OLED 120Hz','5G','USB-C · زرار الكاميرا','2024'],'iPhone SE 2022':['A15','4.7" LCD','5G','Lightning · Touch ID','2022']};
+let OCRLOAD=null;
+function loadTess(){if(window.Tesseract)return Promise.resolve();if(OCRLOAD)return OCRLOAD;OCRLOAD=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=ok;s.onerror=()=>no(new Error('مكتبة القراءة ماتحمّلتش — اتأكد من النت'));document.head.appendChild(s)});return OCRLOAD}
+function parseAbout(t){const T=ND(t).replace(/[|]/g,'I'),o={};const one=re=>{const m=T.match(re);return m?m[1].trim():''};
+ const flat=T.replace(/(\d)[ \-]+(?=\d)/g,'$1'),imei=(flat.match(/IMEI[^\d]{0,12}(\d{15})/i)||flat.match(/\b(\d{15})\b/)||[])[1];if(imei)o.imei=imei;
+ const model=one(/Model\s*Name\s*[:\-]?\s*([^\n]+)/i)||one(/\bModel\s*[:\-]\s*([A-Za-z0-9 +\-]+)/i);if(model)o.model=model.replace(/\s{2,}.*/,'').trim();
+ const cap=T.match(/(?:Capacity|Storage|Internal storage)\s*[:\-]?\s*(\d{1,4})\s*(GB|TB)/i);if(cap)o.storage=cap[2].toUpperCase()==='TB'?String(+cap[1]*1024):cap[1];
+ const ram=one(/\bRAM\s*[:\-]?\s*(\d{1,2})\s*GB/i);if(ram)o.ram=ram;
+ const ios=one(/(?:Software\s*Version|iOS(?:\s*Version)?|Android\s*version)\s*[:\-]?\s*([\d.]+)/i);if(ios)o.os=ios;
+ const bat=one(/Maximum\s*Capacity\s*[:\-]?\s*(\d{2,3})\s*%/i)||one(/Battery\s*Health[^\d]{0,20}(\d{2,3})\s*%/i);if(bat)o.batt=bat;
+ const ser=one(/Serial\s*Number\s*[:\-]?\s*([A-Z0-9]{8,14})/i);if(ser)o.serial=ser;
+ const cyc=one(/Cycle\s*Count\s*[:\-]?\s*(\d{1,4})/i);if(cyc)o.cycles=cyc;
+ if(/iphone|ipad/i.test(o.model||T))o.brand='Apple (آيفون)';return o}
+async function readAbout(file){if(!file)return;const box=$('ph6Ocr');if(box)box.innerHTML='<div class="ph-res">⏳ بيقرا الصورة… (أول مرة بيحمّل المكتبة، دقيقة)</div>';
+ try{await loadTess();const r=await Tesseract.recognize(file,'eng');const o=parseAbout(r.data.text||'');const got=Object.keys(o).length;
+  const set=(k,v)=>{try{mkPH.set(k,v)}catch(e){}};
+  if(o.brand)set('brand',o.brand);if(o.model)set('model',o.model);if(o.storage&&['32','64','128','256','512','1024'].includes(o.storage))set('storage',o.storage);if(o.ram)set('ram',o.ram);if(o.batt)set('batt',o.batt);if(o.imei)set('imei',o.imei);if(o.cycles)set('cycles',o.cycles);
+  const spec=IPH[o.model]||IPH[Object.keys(IPH).find(k=>norm(o.model||'').startsWith(norm(k)))];
+  window.__ph6About={o,spec,text:r.data.text};
+  if(typeof mkPH.re==='function')await mkPH.re();
+  const b2=$('ph6Ocr');if(b2)b2.innerHTML=aboutCard(o,spec,got)}catch(e){if(box)box.innerHTML='<div class="ph-res" style="background:#fdecec">'+H(e.message||'ماقدرتش أقرا الصورة')+'</div>'}}
+function aboutCard(o,spec,got){if(!got)return '<div class="ph-res" style="background:#fff4e0">ماقدرتش ألاقي بيانات في الصورة — صوّر شاشة «حول» (Settings ← General ← About) واضحة وكاملة، أو اكتب البيانات يدوي.</div>';
+ return `<div class="ph-res"><b>✅ قريت من الصورة:</b><div style="margin-top:6px;line-height:2">${[['الجهاز',o.model],['المساحة',o.storage&&o.storage+' GB'],['الرام',o.ram&&o.ram+' GB'],['النظام',o.os],['البطارية',o.batt&&o.batt+'٪'],['IMEI',o.imei],['السيريال',o.serial],['الشحنات',o.cycles]].filter(x=>x[1]).map(([l,v])=>`<span class="kt-chip" style="display:inline-block;background:#f3ead6;border-radius:99px;padding:2px 10px;margin:2px">${l}: <b dir="ltr">${H(v)}</b></span>`).join('')}</div>
+ ${spec?`<div style="margin-top:8px;padding:8px 10px;border-radius:10px;background:#eef6f7"><b>📋 إمكانيات الموديل:</b> معالج <b>${spec[0]}</b> · شاشة ${spec[1]} · ${spec[2]} · ${spec[3]} · سنة ${spec[4]}</div>`:''}
+ <small style="display:block;margin-top:6px;color:var(--muted)">اتأكد من الأرقام قدام الجهاز قبل ما تعتمد التقييم — القراءة من الصورة مش دايماً ١٠٠٪. البيانات اتحطت في الخانات تحت.</small></div>`}
+function enhanceUsed(){const p=$('phUsed');if(!p||$('ph6Used'))return;const first=p.querySelector('.ph-card');if(!first)return;
+ // قايمة ماركات
+ const bi=[...p.querySelectorAll('input')].find(i=>(i.getAttribute('oninput')||'').includes("'brand'"));
+ if(bi){bi.setAttribute('list','ph6Brands');bi.placeholder='اختار الماركة أو اكتب';if(!$('ph6Brands')){const dl=document.createElement('datalist');dl.id='ph6Brands';dl.innerHTML=PHONE_BRANDS.map(b=>`<option value="${H(b)}">`).join('');document.body.appendChild(dl)}}
+ const tax=`<div class="ph-card" id="ph6Used" style="border:2px solid #b08328"><b>📷 اقرا بيانات الجهاز من صورة</b><p style="margin:4px 0 8px;font-size:14px;color:var(--muted)">ادخل على الجهاز: <b>الإعدادات ← عام ← حول (About)</b> وصوّر الشاشة، وارفعها هنا — السيستم بيقرا الموديل والمساحة والـIMEI والبطارية ويعرف إمكانيات الجهاز.</p>
+ <label class="primary" style="display:inline-block;cursor:pointer;padding:10px 16px;border-radius:12px">📷 ارفع صورة «حول الجهاز»<input type="file" accept="image/*" hidden onchange="mkPH6.about(this.files[0])"></label>
+ <div id="ph6Ocr" style="margin-top:8px"></div>
+ <hr style="border:0;border-top:1px dashed var(--border,#ddd);margin:12px 0">
+ <b>🧾 الضريبة (الجمارك) — هل الجهاز مسدّد؟</b><p style="margin:4px 0 8px;font-size:14px;color:var(--muted)">التحقق بيتم من <b>الجهاز القومي لتنظيم الاتصالات</b> (تطبيق «تليفوني» أو موقعه الرسمي) بالـ IMEI — مفيش طريقة أخرى رسمية. السيستم بيجهزلك الرقم:</p>
+ <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="secondary" onclick="mkPH6.copyImei()">📋 انسخ الـIMEI</button><button class="secondary" onclick="mkPH6.taxHelp()">❓ إزاي أتحقق</button></div></div>`;
+ first.insertAdjacentHTML('beforebegin',tax)}
+function copyImei(){const v=(document.querySelector('#phUsed input[oninput*="\'imei\'"]')||{}).value||'';if(!v)return tst('اكتب الـIMEI الأول');navigator.clipboard&&navigator.clipboard.writeText(v).then(()=>tst('✔ اتنسخ — الصقه في تطبيق تليفوني'))}
+function taxHelp(){openModal(`${head('🧾 التحقق من ضريبة الموبايل')}<ol style="line-height:2.1;padding-inline-start:20px"><li>اطلب من صاحب الجهاز يكتب <b dir="ltr">*#06#</b> في الاتصال — هيظهر الـIMEI (١٥ رقم).</li><li>افتح تطبيق <b>«تليفوني»</b> التابع للجهاز القومي لتنظيم الاتصالات (أو موقع الجهاز الرسمي).</li><li>اختار «استعلام عن جهاز» واكتب الـIMEI.</li><li>هتظهر حالة الجهاز: مسدّد / عليه رسوم / متوقف.</li><li>سجّل النتيجة هنا في خانة «حالة الضريبة» — السيستم هيخصم الرسوم من التقييم، ويرفض الجهاز لو متوقف.</li></ol><small style="color:var(--muted)">التطبيق الرسمي ممكن يتغير اسمه أو شكله — ابحث باسم «الجهاز القومي لتنظيم الاتصالات» في متجر التطبيقات.</small>`)}
+
+/* ---------- ✕ في كل شاشة + إخفاء عروض الأسعار ---------- */
+function xBtns(){document.querySelectorAll('main .page').forEach(pg=>{if(!pg.id||pg.id==='dashboard')return;const tr=pg.querySelector('.title-row');if(!tr||tr.querySelector('.ph6-x'))return;const b=document.createElement('button');b.className='ph6-x';b.type='button';b.textContent='✕';b.title='رجوع للرئيسية';b.onclick=()=>{if(typeof showPage==='function')showPage('dashboard')};tr.insertBefore(b,tr.firstChild)})}
+function hideQuotes(){document.querySelectorAll('[data-page="quotes"]').forEach(b=>{b.style.display='none'});document.querySelectorAll('#dashboard [onclick*="quote"],#dashboard [onclick*="Quote"]').forEach(b=>{b.style.display='none'})}
+
+/* ---------- الأقسام: أصناف + ماركات + ستوك + مقارنة ---------- */
+let MP6=null,CAT6='',BR6='',Q6='';
+const prods=()=>(DB().products||[]);
+async function mkt(){if(!MP6)MP6=await getS('market_prices',{});return MP6}
+function bestMarket(p){const L=(MP6||{})[p.code||p.id]||[];return L.filter(o=>o.p>0).sort((a,b)=>a.p-b.p)[0]||null}
+async function renderCats(){const box=$('phCats');if(!box)return;await mkt();const P=prods(),by={};P.forEach(p=>{const c=p.cat||'بدون قسم';(by[c]=by[c]||{n:0,q:0,v:0,low:0});by[c].n++;by[c].q+=+p.qty||0;by[c].v+=(+p.qty||0)*(+p.cost||0);if((+p.qty||0)<=(+p.min||0))by[c].low++});
+ const names=[...CATS6.map(c=>c[1]),...Object.keys(by).filter(k=>!CATS6.some(c=>c[1]===k))],ic=k=>(CATS6.find(c=>c[1]===k)||['🗂️'])[0];
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>🗂️ أقسام المحل</h1><p>دوس على القسم تلاقي أصنافه وماركاته وستوكه</p></div></div>
+ <div class="ph6-grid">${names.map(k=>{const s=by[k]||{n:0,q:0,v:0,low:0};return `<div class="ph6-tile" onclick="mkPH6.cat(${JSON.stringify(k).replace(/"/g,'&quot;')})"><b>${ic(k)}</b>${H(k.replace(/\s*\(.*\)/,''))}<div style="font-size:12px;font-weight:600;color:var(--muted)">${s.n} صنف · ${Math.round(s.q)} قطعة${adm()&&s.v?'<br>'+M(s.v):''}</div>${s.low?`<div style="color:#b45309;font-size:12px">⚠️ ${s.low} قرب يخلص</div>`:''}</div>`}).join('')}</div>`}
+function catView(c){CAT6=c;BR6='';Q6='';drawCat()}
+function drawCat(){const c=CAT6,P=prods().filter(p=>(p.cat||'بدون قسم')===c),brands=BR[c]||[],q=norm(Q6);
+ let L=P.filter(p=>(!BR6||norm(p.name).includes(norm(BR6.replace(/\s*\(.*\)/,''))))&&(!q||norm(p.name).includes(q)||norm(p.code).includes(q)));
+ openModal(`${head('🗂️ '+H(c.replace(/\s*\(.*\)/,'')))}
+ <div style="padding:2px"><div>${brands.map(b=>`<span class="ph6-chip ${BR6===b?'on':''}" onclick="mkPH6.brand(${JSON.stringify(b).replace(/"/g,'&quot;')})">${H(b)}</span>`).join('')}${BR6?`<span class="ph6-chip" onclick="mkPH6.brand('')">✕ الكل</span>`:''}</div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><input id="ph6Q" placeholder="🔎 دوّر في القسم" value="${H(Q6)}" style="flex:1;min-width:140px" oninput="mkPH6.q(this.value)"><button class="primary" onclick="mkPH6.add()">➕ صنف</button><button class="secondary" onclick="mkPH6.bulk()">📥 ستوك دفعة واحدة</button></div>
+ <div class="table-wrap"><table><thead><tr><th>الصنف</th><th>الكمية</th>${adm()?'<th>شراء</th>':''}<th>بيع</th><th>السوق</th></tr></thead><tbody>${L.slice(0,150).map(p=>{const bm=bestMarket(p),ex=bm&&adm()&&+p.cost>bm.p*1.02;return `<tr><td><b>${H(p.name)}</b><br><small style="color:var(--muted)">${H(p.code||'')}</small></td><td style="${(+p.qty||0)<=(+p.min||0)?'color:#b45309;font-weight:800':''}">${+p.qty||0}</td>${adm()?`<td>${M(p.cost||0)}</td>`:''}<td>${M(p.price||0)}</td><td>${bm?`<small style="${ex?'color:#b33;font-weight:800':''}">${M(bm.p)}<br>${H(bm.s)}${ex?' ⚠️ أرخص':''}</small>`:'<small style="color:var(--muted)">—</small>'}</td></tr>`}).join('')||`<tr><td colspan="5"><div class="empty">القسم فاضي — دوس «➕ صنف» أو سطّب الأصناف الجاهزة</div></td></tr>`}</tbody></table></div></div>`)}
+let _q6;
+function addItem(){const c=CAT6,brands=BR[c]||[];
+ openModal(`${head('➕ صنف في '+H(c.replace(/\s*\(.*\)/,'')))}<div class="form">
+ <div class="field"><label>الماركة</label><select id="aiB"><option value="">— من غير —</option>${brands.map(b=>`<option>${H(b)}</option>`).join('')}</select></div>
+ <div class="field"><label>اسم الصنف / الموديل</label><input id="aiN" list="aiNL" placeholder="اكتب أو اختار"><datalist id="aiNL">${prods().filter(p=>p.cat===c).map(p=>`<option value="${H(p.name)}">`).join('')}</datalist></div>
+ <div class="field"><label>الكمية الحالية</label><input id="aiQ" inputmode="decimal" value="0"></div>${adm()?'<div class="field"><label>سعر الشراء</label><input id="aiC" inputmode="decimal"></div>':''}<div class="field"><label>سعر البيع</label><input id="aiP" inputmode="decimal"></div>
+ <div class="modal-foot"><button class="primary" id="aiGo">حفظ</button><button class="secondary" onclick="mkPH6.cat(CAT6_)">رجوع</button></div></div>`);window.CAT6_=c;
+ $('aiGo').onclick=async()=>{const b=$('aiB').value.replace(/\s*\(.*\)/,''),n=$('aiN').value.trim();if(!n)return tst('اكتب اسم الصنف');await upsertRows([{name:(b&&!norm(n).includes(norm(b))?b+' ':'')+n,cat:c,qty:num($('aiQ').value),cost:adm()?num(($('aiC')||{}).value):undefined,price:num($('aiP').value)}]);catView(c)}}
+async function upsertRows(rows){const A=api();if(typeof db==='undefined'||!db.products)return tst('السيستم لسه بيحمّل');const ids=[],adj=[];
+ rows.forEach(r=>{let p=db.products.find(x=>norm(x.name)===norm(r.name)&&(x.cat||'')===(r.cat||x.cat||''))||db.products.find(x=>norm(x.name)===norm(r.name));
+  if(!p){p={id:crypto.randomUUID(),code:typeof nextCode==='function'?nextCode():'',barcode:'',name:r.name,cat:r.cat||'',unit:'قطعة',qty:0,price:0,cost:0,min:1};db.products.push(p)}
+  if(r.price!=null&&!isNaN(r.price)&&r.price!==0)p.price=r.price;if(r.cost!=null&&!isNaN(r.cost)&&r.cost!==0)p.cost=r.cost;if(r.cat)p.cat=r.cat;
+  if(r.qty!=null&&!isNaN(r.qty)&&+r.qty!==+p.qty)adj.push([p.id,r.qty]);ids.push(p.id)});
+ try{if(typeof window.save==='function')window.save();if(A&&A.syncNow)await A.syncNow();for(const [id,q] of adj){if(A&&A.rpc)await A.rpc('mk_adjust_stock',{p_id:id,p_qty:q,p_note:'ستوك من شاشة الأقسام'})}if(A&&A.refreshProducts)await A.refreshProducts(ids);if(A&&A.done)A.done()}catch(e){tst('حصلت مشكلة: '+((A&&A.errMsg)?A.errMsg(e):e.message))}
+ tst('✔ اتحفظ '+rows.length+' صنف')}
+function bulk(){const c=CAT6,P=prods().filter(p=>(p.cat||'بدون قسم')===c);
+ openModal(`${head('📥 ستوك '+H(c.replace(/\s*\(.*\)/,'')))}<p style="margin-top:0;font-size:14px;color:var(--muted)">اكتب الكمية${adm()?' وسعر الشراء':''} والبيع لكل صنف، أو الصق قايمة (سطر لكل صنف: <b>الاسم | العدد | شراء | بيع</b>).</p>
+ <div class="table-wrap" style="max-height:46vh;overflow:auto"><table><thead><tr><th>الصنف</th><th>عدد</th>${adm()?'<th>شراء</th>':''}<th>بيع</th></tr></thead><tbody>${P.slice(0,120).map((p,i)=>`<tr data-i="${i}"><td>${H(p.name)}</td><td><input style="width:64px" inputmode="decimal" value="${+p.qty||0}"></td>${adm()?`<td><input style="width:78px" inputmode="decimal" value="${+p.cost||''}"></td>`:''}<td><input style="width:78px" inputmode="decimal" value="${+p.price||''}"></td></tr>`).join('')}</tbody></table></div>
+ <div class="field" style="margin-top:8px"><label>أو الصق قايمة</label><textarea id="blT" rows="4" placeholder="ماكينة Kemei 2026 | 6 | 180 | 260"></textarea></div><button class="primary" id="blGo">💾 احفظ الكل</button> <button class="secondary" onclick="mkPH6.cat(CAT6_)">رجوع</button>`);window.CAT6_=c;
+ $('blGo').onclick=async()=>{const rows=[];document.querySelectorAll('tr[data-i]').forEach(tr=>{const p=P[+tr.dataset.i],inp=tr.querySelectorAll('input'),q=num(inp[0].value);const o={name:p.name,cat:c,qty:q};if(adm()){o.cost=num(inp[1].value);o.price=num(inp[2].value)}else o.price=num(inp[1].value);
+   if(q!==(+p.qty||0)||(o.cost&&o.cost!==+p.cost)||(o.price&&o.price!==+p.price))rows.push(o)});
+  ($('blT').value||'').split('\n').forEach(l=>{const a=ND(l).split(/[|،,\t]/).map(x=>x.trim());if(a[0]&&a.length>=2)rows.push({name:a[0],cat:c,qty:num(a[1]),cost:adm()?num(a[2]):undefined,price:num(adm()?a[3]:a[2])})});
+  if(!rows.length)return tst('مفيش تغيير');await upsertRows(rows);catView(c)}}
+
+/* ---------- 🛒 بيع إكسسوار (قسم ← صنف ← دفع) ---------- */
+let CART=[],SELC='';
+function sellStart(){CART=[];SELC='';drawSell(0)}
+function drawSell(step){
+ const cartH=CART.length?`<div class="ph6-cart"><b>🛒 السلة</b>${CART.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;padding:3px 0"><span style="flex:1">${H(x.name)} × ${x.q}</span><b>${M(x.q*x.p)}</b><button class="secondary" style="padding:2px 8px" onclick="CART_.splice(${i},1);mkPH6.sell(${CART.length>1?1:0})">✕</button></div>`).join('')}<div style="text-align:end;font-weight:900;font-size:18px">${M(CART.reduce((a,x)=>a+x.q*x.p,0))}</div></div>`:'';window.CART_=CART;
+ if(step===0){openModal(`${head('🛒 بيع إكسسوار — اختار القسم')}<div class="ph6-grid">${CATS6.filter(c=>!/موبايلات/.test(c[1])).map(c=>`<div class="ph6-tile" onclick="mkPH6.sc(${JSON.stringify(c[1]).replace(/"/g,'&quot;')})"><b>${c[0]}</b>${H(c[1].replace(/\s*\(.*\)/,''))}</div>`).join('')}</div>${cartH}${CART.length?`<button class="primary" style="margin-top:8px;width:100%" onclick="mkPH6.pay()">💰 الدفع</button>`:''}`);return}
+ if(step===1){const P=prods().filter(p=>p.cat===SELC);openModal(`${head('🛒 '+H(SELC.replace(/\s*\(.*\)/,'')))}
+  <input id="slQ" placeholder="🔎 اكتب اسم المنتج أو الماركة" oninput="mkPH6.slq(this.value)" style="width:100%;margin-bottom:6px"><div id="slL">${slList(P,'')}</div>
+  <div class="ph6-cart" style="border-style:solid"><b>مش في القايمة؟ اكتبه يدوي</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><input id="slN" placeholder="اسم المنتج" style="flex:2;min-width:120px"><input id="slP" inputmode="decimal" placeholder="السعر" style="flex:1;min-width:70px"><button class="secondary" onclick="mkPH6.slManual()">أضف</button></div></div>${cartH}
+  <div style="display:flex;gap:6px;margin-top:8px"><button class="secondary" onclick="mkPH6.sell(0)">↩ الأقسام</button>${CART.length?`<button class="primary" style="flex:1" onclick="mkPH6.pay()">💰 الدفع</button>`:''}</div>`)}}
+function slList(P,q){q=norm(q);const L=P.filter(p=>!q||norm(p.name).includes(q)||norm(p.code).includes(q)).slice(0,40);return L.map(p=>`<div class="wp-row" style="cursor:pointer" onclick="mkPH6.slAdd('${p.id}')"><div style="flex:1"><b>${H(p.name)}</b><br><small style="color:var(--muted)">متاح ${+p.qty||0}</small></div><b>${M(p.price||0)}</b><span class="primary" style="padding:4px 10px;border-radius:10px">➕</span></div>`).join('')||'<div class="empty">مفيش أصناف — اكتب المنتج يدوي تحت أو سطّب الأصناف من «الأقسام»</div>'}
+function pay(){const tot=CART.reduce((a,x)=>a+x.q*x.p,0);
+ openModal(`${head('💰 الدفع — '+M(tot))}<div class="form"><div class="field"><label>طريقة الدفع</label><div id="pyM" style="display:flex;gap:6px;flex-wrap:wrap">${PAYS.map(([k,l],i)=>`<button type="button" class="${i?'secondary':'primary'}" data-m="${k}" onclick="document.querySelectorAll('#pyM button').forEach(b=>b.className='secondary');this.className='primary';window.PYM_='${k}';document.getElementById('pyPw').style.display=${k==='credit'?"''":"'none'"}">${l}</button>`).join('')}</div></div>
+ <div class="field"><label>اسم العميل ${'(لازم لو آجل)'}</label><input id="pyN" list="pyNL"><datalist id="pyNL">${(DB().contacts||[]).filter(c=>c.type==='عميل').slice(0,500).map(c=>`<option value="${H(c.name)}">`).join('')}</datalist></div>
+ <div class="field" id="pyPw" style="display:none"><label>المدفوع دلوقتي</label><input id="pyP" inputmode="decimal" value="0"></div>
+ <div class="modal-foot"><button class="primary" id="pyGo">✔ تسجيل البيع</button><button class="secondary" onclick="mkPH6.sell(1)">رجوع</button></div></div>`);window.PYM_='cash';
+ $('pyGo').onclick=async()=>{const m=window.PYM_||'cash',per=($('pyN').value||'').trim();if(m==='credit'&&!per)return tst('اكتب اسم العميل');const paid=m==='credit'?Math.min(tot,num($('pyP').value)):tot;
+  await postSale(CART.map(x=>({product_id:x.id||null,name:x.name,qty:x.q,price:x.p})),per,paid,'الدفع: '+(PAYS.find(p=>p[0]===m)||[0,m])[1].replace(/^\S+\s/,'')+' · بيع إكسسوار')}}
+async function postSale(items,person,paid,note){const A=api();if(!A||!A.rpc)return tst('السيستم لسه بيحمّل');
+ try{const body={kind:'sale',date:(typeof isoToday==='function'?isoToday():today()),person,phone:'',addr:'',note,ship:0,paid,source:'',items};const r=await A.rpc('mk_save_invoice',{p:body});
+  try{await A.refreshInvoices([r.id]);await A.refreshProducts(items.map(x=>x.product_id).filter(Boolean));if(A.done)A.done()}catch(e){}
+  closeModal();CART=[];tst('✔ تم تسجيل البيع '+(r.no||''));const rows=(DB().sales||[]).filter(x=>x.gid===r.id);if(rows[0]&&typeof openInvoiceModal==='function')openInvoiceModal(rows[0].id);return r}
+ catch(e){tst((A.errMsg?A.errMsg(e):e.message)||'حصلت مشكلة')}}
+
+/* ---------- 🔄 بدل ---------- */
+function exchange(){const S=(DB().sales||[]).filter(r=>!r.ship&&r.pid).slice(0,200);
+ openModal(`${head('🔄 بدل — العميل رجّع حاجة وخد غيرها')}<p style="margin-top:0;font-size:14px;color:var(--muted)">اختار اللي رجّعه، بعدين اللي خده بدله. السيستم بيرجّع القطعة للمخزن، ويسجّل فاتورة بالجديد، ويحسبلك الفرق.</p>
+ <div class="field"><label>🔎 دوّر على فاتورة / عميل / صنف</label><input id="exQ" oninput="mkPH6.exq(this.value)"></div><div id="exL" style="max-height:40vh;overflow:auto">${exList(S,'')}</div>`)}
+function exList(S,q){q=norm(q);const L=S.filter(r=>!q||norm(r.product).includes(q)||norm(r.person).includes(q)||norm(r.no).includes(q)).slice(0,30);return L.map(r=>`<div class="wp-row" style="cursor:pointer" onclick="mkPH6.exPick('${r.id}')"><div style="flex:1"><b>${H(r.product)}</b> × ${r.qty}<br><small style="color:var(--muted)">${H(r.no||'')} · ${H(r.person||'—')} · ${H(r.date||'')}</small></div><b>${M(r.price)}</b></div>`).join('')||'<div class="empty">مفيش فواتير مطابقة</div>'}
+let EX=null;
+function exPick(id){const r=(DB().sales||[]).find(x=>x.id===id);if(!r)return;EX={r,q:Math.min(1,r.qty)||1,np:null,nq:1,np_price:0};drawEx()}
+function drawEx(){const E=EX,r=E.r,np=E.np,val=(+r.price||0)*E.q,newT=np?E.nq*(+E.np_price||0):0,diff=newT-val;
+ openModal(`${head('🔄 تفاصيل البدل')}<div class="form"><div class="ph-res" style="margin:0 0 8px"><b>رجّع:</b> ${H(r.product)} × <input id="exRq" inputmode="decimal" style="width:60px;display:inline-block" value="${E.q}" oninput="EX_.q=Math.min(${r.qty},+this.value||1)"> من ${r.qty} — بقيمة ${M(val)}</div>
+ <div class="field"><label>اللي خده بدله</label><input id="exN" list="exNL" placeholder="🔎 اكتب اسم الصنف" value="${H(np?np.name:'')}" onchange="mkPH6.exNew(this.value)"><datalist id="exNL">${prods().slice(0,1500).map(p=>`<option value="${H(p.name)}">`).join('')}</datalist></div>
+ ${np?`<div class="kt-row" style="display:flex;gap:6px"><div class="field"><label>العدد</label><input inputmode="decimal" value="${E.nq}" oninput="EX_.nq=+this.value||1;mkPH6.exRe()"></div><div class="field"><label>السعر</label><input inputmode="decimal" value="${E.np_price}" oninput="EX_.np_price=+this.value||0;mkPH6.exRe()"></div></div>
+ <div id="exDiff" style="font-size:19px;font-weight:900;margin:8px 0;color:${diff>=0?'#0b6b45':'#b33'}">${diff>0?'العميل يدفع فرق: '+M(diff):diff<0?'ترجّعله: '+M(-diff):'من غير فرق'}</div>
+ <div class="field"><label>طريقة دفع الفرق</label><select id="exM">${PAYS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>`:''}
+ ${adm()?'':'<div style="color:#b33;font-weight:700">البدل بيعمله المدير (بيرجّع القطعة للمخزن).</div>'}
+ <div class="modal-foot"><button class="primary" id="exGo" ${np&&adm()?'':'disabled'}>✔ تنفيذ البدل</button><button class="secondary" onclick="mkPH6.exchange()">رجوع</button></div></div>`);window.EX_=EX;
+ $('exGo').onclick=async()=>{const A=api();if(!A)return;const b=$('exGo');b.disabled=true;b.textContent='⏳';
+  try{await A.rpc('mk_save_return',{p:{product_id:r.pid,qty:E.q,price:r.price,type:'sale',person:r.person||'',note:'بدل — فاتورة '+(r.no||'')}});
+   const paid=Math.max(0,newT-val);const m=($('exM')||{}).value||'cash';
+   await postSale([{product_id:np.id,name:np.name,qty:E.nq,price:E.np_price}],r.person||'',paid,`🔄 بدل: رجّع ${r.product} × ${E.q} (${M(val)}) — فرق ${diff>0?'دفعه ':'رُدّ '}${M(Math.abs(diff))} (${(PAYS.find(p=>p[0]===m)||[0,m])[1].replace(/^\S+\s/,'')})`)}
+  catch(e){b.disabled=false;b.textContent='✔ تنفيذ البدل';tst((A.errMsg?A.errMsg(e):e.message)||'حصلت مشكلة')}}}
+
+/* ---------- 💳 كروت وخدمات + مكن الشحن ---------- */
+const OPS=[['📱','كارت فودافون',[5,10,15,20,25,50,100]],['📱','كارت اتصالات',[5,10,15,20,25,50,100]],['📱','كارت أورنج',[5,10,15,20,25,50,100]],['📱','كارت WE',[5,10,15,20,25,50,100]],['⚡','شحن رصيد خط',[10,20,30,50,100]],['🌐','باقة / إنترنت',[50,100,150,200,300]],['🧾','دفع فاتورة',[]],['💡','عداد كهرباء / مياه / غاز',[]],['🎮','شدّات / لعبة',[50,100,200,500]],['🏦','تحويل / إيداع محفظة',[]]];
+let CD=null;
+async function loadCd(){if(!CD)CD=await getS('ph_cards',{machines:[{n:'فوري',b:0},{n:'أمان',b:0}],log:[],fee:{}});if(!CD.machines)CD.machines=[];if(!CD.log)CD.log=[];if(!CD.fee)CD.fee={};return CD}
+async function renderCards(){const box=$('phCards');if(!box)return;await loadCd();const t=today(),L=CD.log.filter(x=>x.day===t),tot=L.reduce((a,x)=>a+x.amt,0),fee=L.reduce((a,x)=>a+(x.fee||0),0);
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>💳 كروت وخدمات الشحن</h1><p>دوسة واحدة لكل عملية: كارت، شحن، فاتورة — والمكنة بتخصم رصيدها لوحدها</p></div></div>
+ <div class="ph6-grid" style="margin-bottom:10px"><div class="ph6-tile"><small>النهارده</small><b style="font-size:20px">${M(tot)}</b><small>${L.length} عملية</small></div><div class="ph6-tile"><small>عمولتك</small><b style="font-size:20px;color:#0b6b45">${M(fee)}</b></div>${CD.machines.map((m,i)=>`<div class="ph6-tile" onclick="mkPH6.cdTop(${i})"><small>مكنة ${H(m.n)}</small><b style="font-size:20px;color:${m.b<100?'#b33':'inherit'}">${M(m.b)}</b><small>دوس تزوّد الرصيد</small></div>`).join('')}<div class="ph6-tile" onclick="mkPH6.cdMach()"><b>➕</b>مكنة جديدة</div></div>
+ <div class="ph6-grid">${OPS.map((o,i)=>`<div class="ph6-tile" onclick="mkPH6.cdOp(${i})"><b>${o[0]}</b>${o[1]}</div>`).join('')}</div>
+ <div class="ph-card" style="margin-top:12px"><b>آخر العمليات</b>${CD.log.slice(-15).reverse().map(x=>`<div class="wp-row">${x.shot?`<img src="${x.shot}">`:''}<div style="flex:1"><b>${H(x.op)}</b> ${M(x.amt)}<br><small style="color:var(--muted)">${H(x.day)} · ${H(x.mach||'')}${x.cust?' · '+H(x.cust):''}${x.fee?' · عمولة '+M(x.fee):''}</small></div></div>`).join('')||'<div class="empty">لسه مفيش</div>'}</div>`}
+function cdOp(i){const o=OPS[i];openModal(`${head(o[0]+' '+o[1])}<div class="form"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${o[2].map(v=>`<button type="button" class="secondary" onclick="document.getElementById('cdA').value=${v};mkPH6.cdFee(${i})">${v}</button>`).join('')}</div>
+ <div class="field"><label>المبلغ اللي العميل دفعه</label><input id="cdA" inputmode="decimal" style="font-size:22px;font-weight:800" oninput="mkPH6.cdFee(${i})"></div>
+ <div class="field"><label>عمولتك (ج) <small>— بتتسجل لوحدها لو حطيت نسبة</small></label><input id="cdF" inputmode="decimal" value="${CD.fee[o[1]]!=null&&CD.fee[o[1]]<1?'':''}"><small id="cdFp" style="color:var(--muted)">النسبة المحفوظة: ${CD.fee[o[1]]!=null?CD.fee[o[1]]+'%':'—'}</small></div>
+ <div class="field"><label>نسبة العمولة % (تتحفظ للعملية دي)</label><input id="cdPct" inputmode="decimal" value="${CD.fee[o[1]]??''}" oninput="mkPH6.cdFee(${i})"></div>
+ <div class="field"><label>من مكنة</label><select id="cdM"><option value="">— من غير —</option>${CD.machines.map((m,j)=>`<option value="${j}">${H(m.n)} (${M(m.b)})</option>`).join('')}</select></div>
+ <div class="field"><label>العميل (اختياري)</label><input id="cdC"></div>
+ <label class="secondary" style="display:inline-block;cursor:pointer;padding:8px 12px;border-radius:10px">📷 صورة الإيصال / السكرينة<input type="file" accept="image/*" hidden onchange="mkPH6.cdShot(this.files[0])"></label><div id="cdS"></div>
+ <div class="modal-foot"><button class="primary" id="cdGo">✔ سجّل</button></div></div>`);window.CDSHOT_=null;
+ $('cdGo').onclick=async()=>{const a=num($('cdA').value);if(!a)return tst('اكتب المبلغ');const pct=num($('cdPct').value),f=num($('cdF').value)||Math.round(a*pct)/100,mi=$('cdM').value;CD.fee[o[1]]=pct||CD.fee[o[1]];
+  if(mi!==''){const m=CD.machines[+mi];m.b=(+m.b||0)-a}CD.log.push({op:o[1],amt:a,fee:f,day:today(),at:new Date().toISOString(),mach:mi!==''?CD.machines[+mi].n:'',cust:$('cdC').value.trim(),shot:window.CDSHOT_||''});CD.log=CD.log.slice(-1500);
+  if(await putS('ph_cards',CD)){closeModal();tst('✔ اتسجل');renderCards()}}}
+function cdFee(i){const o=OPS[i],a=num(($('cdA')||{}).value),p=num(($('cdPct')||{}).value);if($('cdF')&&p&&a)$('cdF').value=Math.round(a*p)/100}
+async function cdShot(f){if(!f)return;const u=URL.createObjectURL(f),im=await new Promise(ok=>{const i=new Image();i.onload=()=>ok(i);i.src=u}),k=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);window.CDSHOT_=c.toDataURL('image/jpeg',.55);const el=$('cdS');if(el)el.innerHTML=`<img src="${window.CDSHOT_}" style="max-width:120px;border-radius:10px;margin-top:6px">`}
+function cdMach(){openModal(`${head('➕ مكنة شحن جديدة')}<div class="form"><div class="field"><label>الاسم</label><input id="mcN" list="mcNL" placeholder="فوري / أمان / مصاري / بي"><datalist id="mcNL">${['فوري','أمان','مصاري','بي (Bee)','ماستر كارد','خدماتي','يلا باي'].map(x=>`<option value="${x}">`).join('')}</datalist></div><div class="field"><label>الرصيد الحالي</label><input id="mcB" inputmode="decimal"></div><button class="primary" id="mcGo">حفظ</button></div>`);
+ $('mcGo').onclick=async()=>{const n=$('mcN').value.trim();if(!n)return;CD.machines.push({n,b:num($('mcB').value)});if(await putS('ph_cards',CD)){closeModal();renderCards()}}}
+function cdTop(i){const m=CD.machines[i];const v=prompt('زوّد رصيد مكنة '+m.n+' بكام؟ (الرصيد دلوقتي '+m.b+')');const a=num(v);if(!a)return;m.b=(+m.b||0)+a;putS('ph_cards',CD).then(()=>renderCards())}
+
+/* ---------- 👨‍🔧 الفنيين وحسابهم ---------- */
+let REP6=null,TP=null,TM=today().slice(0,7);
+const monthKey=d=>{const t=ND(String(d||'')),m=t.match(/(\d{1,2})\D+(\d{1,2})\D+(\d{4})/);return m?m[3]+'-'+String(m[2]).padStart(2,'0'):''};
+const techCut=r=>{const parts=+r.parts||0,price=+r.price||0,pct=+r.techPct||0;return pct>0?Math.max(0,Math.round((price-parts)*pct)/100):(+r.labor||0)};
+async function renderTech(){const box=$('phTech');if(!box)return;REP6=await getS('ph_repairs',[]);TP=await getS('ph_techpay',{});
+ const by={};
+ REP6.filter(r=>r.tech&&['ok','out'].includes(r.st)).forEach(r=>{const key=monthKey(r.outAt||r.at)||TM;if(key!==TM)return;const t=by[r.tech]=by[r.tech]||{n:0,rev:0,parts:0,cut:0,ext:0};t.n++;t.rev+=+r.price||0;t.parts+=+r.parts||0;t.cut+=techCut(r);if(/برّه|بره/.test(r.place||''))t.ext++});
+ const shop=Object.values(by).reduce((a,t)=>a+t.rev-t.parts-t.cut,0);
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>👨‍🔧 الفنيين وحسابهم</h1><p>كل فني: كام جهاز صلّحه، إيراده، حصته من الربح، والمدفوع له — وانت كسبت كام</p></div></div>
+ <div style="display:flex;gap:6px;align-items:center;margin-bottom:10px"><input type="month" value="${TM}" onchange="mkPH6.tm(this.value)" style="width:auto"><b>ربح المحل من الصيانة: <span style="color:#0b6b45">${M(shop)}</span></b></div>
+ ${Object.entries(by).map(([n,t])=>{const paid=((TP[n]||{})[TM])||0,rest=t.cut-paid;return `<div class="ph-card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="font-size:17px;flex:1">👨‍🔧 ${H(n)}</b><span>${t.n} جهاز${t.ext?' ('+t.ext+' برّه)':''}</span></div>
+  <div style="line-height:2;margin-top:4px">إيراد <b>${M(t.rev)}</b> · قطع <b>${M(t.parts)}</b> · حصة الفني <b>${M(t.cut)}</b> · اتدفع <b>${M(paid)}</b> · <b style="color:${rest>0?'#b45309':'#0b6b45'}">${rest>0?'باقي له '+M(rest):'مسدّد'}</b> · ربحك <b style="color:#0b6b45">${M(t.rev-t.parts-t.cut)}</b></div>
+  <button class="primary" style="margin-top:6px" onclick="mkPH6.techPay(${JSON.stringify(n).replace(/"/g,'&quot;')})">💵 قبّض الفني</button></div>`}).join('')||'<div class="empty">مفيش أجهزة اتصلّحت الشهر ده — سجّل اسم الفني في تذكرة الصيانة وحط نسبته.</div>'}`}
+async function techPay(n){const v=prompt('كام دفعت لـ '+n+' ؟');const a=num(v);if(!a)return;TP[n]=TP[n]||{};TP[n][TM]=(+TP[n][TM]||0)+a;if(await putS('ph_techpay',TP)){tst('✔ اتسجل');renderTech()}}
+
+/* ---------- الصفحات والقايمة ---------- */
+function addPage(id){if($(id))return;const ref=$('products');if(!ref)return;const sec=document.createElement(ref.tagName.toLowerCase());sec.id=id;sec.className='page';ref.parentNode.appendChild(sec)}
+function addNav(id,ic,label){const nav=document.querySelector('aside .nav');if(nav&&!nav.querySelector(`[data-page="${id}"]`))nav.insertAdjacentHTML('beforeend',`<button data-page="${id}" onclick="showPage('${id}')"><span style="font-size:17px;width:20px;text-align:center">${ic}</span> <span>${label}</span></button>`)}
+function tiles(){const a=document.querySelector('.ph-hero .ph-acts');if(!a||a.querySelector('[data-p6]'))return;a.insertAdjacentHTML('beforeend',`<button data-p6 onclick="mkPH6.sell(0)"><b>🛒</b>بيع إكسسوار</button><button data-p6 onclick="mkPH6.exchange()"><b>🔄</b>بدل</button><button data-p6 onclick="showPage('phCards')"><b>💳</b>كروت وشحن</button><button data-p6 onclick="showPage('phTech')"><b>👨‍🔧</b>الفنيين</button>`)}
+function init(){addPage('phCards');addPage('phTech');addNav('phCards','💳','كروت وخدمات الشحن');addNav('phTech','👨‍🔧','الفنيين وحسابهم');tiles();xBtns();hideQuotes();enhanceUsed()}
+if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const r=_sp.apply(this,arguments);setTimeout(()=>{try{if(id==='phCats')renderCats();if(id==='phCards')renderCards();if(id==='phTech')renderTech();if(id==='phUsed')enhanceUsed()}catch(e){}},90);return r}}
+new MutationObserver(()=>{try{init()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
+window.mkPH6={about:readAbout,copyImei,taxHelp,cat:catView,brand:b=>{BR6=BR6===b?'':b;drawCat()},q:v=>{Q6=v;clearTimeout(_q6);_q6=setTimeout(()=>{drawCat();const i=$('ph6Q');if(i){i.focus();i.setSelectionRange(Q6.length,Q6.length)}},300)},add:addItem,bulk,
+ sell:s=>drawSell(s),sc:c=>{SELC=c;drawSell(1)},slq:v=>{const el=$('slL');if(el)el.innerHTML=slList(prods().filter(p=>p.cat===SELC),v)},
+ slAdd:id=>{const p=prods().find(x=>x.id===id);if(!p)return;const q=+prompt('العدد؟','1')||0;if(q<=0)return;CART.push({id:p.id,name:p.name,q,p:+p.price||0});drawSell(1)},
+ slManual:()=>{const n=($('slN').value||'').trim(),p=num($('slP').value);if(!n||!p)return tst('اكتب الاسم والسعر');CART.push({id:null,name:n,q:1,p});drawSell(1)},pay,
+ exchange,exq:v=>{const el=$('exL');if(el)el.innerHTML=exList((DB().sales||[]).filter(r=>!r.ship&&r.pid).slice(0,200),v)},exPick,
+ exNew:v=>{const p=prods().find(x=>x.name===v);if(p){EX.np=p;EX.np_price=+p.price||0;drawEx()}},exRe:()=>{const E=EX,v=(+E.r.price||0)*E.q,t=E.nq*E.np_price,d=t-v,el=$('exDiff');if(el){el.style.color=d>=0?'#0b6b45':'#b33';el.textContent=d>0?'العميل يدفع فرق: '+M(d):d<0?'ترجّعله: '+M(-d):'من غير فرق'}},
+ cdOp,cdFee,cdShot,cdMach,cdTop,tm:v=>{TM=v||TM;renderTech()},techPay};
 })();
 </script>
 
