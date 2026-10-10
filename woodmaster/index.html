@@ -2841,5 +2841,12 @@ boot();
 </script>
 <!-- /WM-CLOUD -->
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script id="upd-ver">const UPD_VER='202610100234';(function(){let last=0,shown=false;
+async function check(){if(shown||Date.now()-last<60000)return;last=Date.now();
+ try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text(),m=t.match(/const UPD_VER='([^']+)'/);
+  if(m&&m[1]!==UPD_VER){shown=true;const b=document.createElement('button');b.textContent='🔄 في نسخة جديدة من البرنامج — اضغط هنا للتحديث';
+   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:50%;transform:translateX(-50%);z-index:2147483000;background:#159447;color:#fff;border:0;border-radius:99px;padding:12px 18px;font:800 15px Cairo,Tahoma,sans-serif;box-shadow:0 6px 18px #0004;max-width:92vw;cursor:pointer';
+   b.onclick=async()=>{b.textContent='⏳ جاري التحديث...';try{if(window.wmPush)await wmPush()}catch(e){}try{if('serviceWorker' in navigator)for(const r of await navigator.serviceWorker.getRegistrations())await r.update();if(window.caches)for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.replace(location.pathname+'?v='+Date.now()+location.hash)};document.body.appendChild(b)}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});window.addEventListener('focus',check);setInterval(check,5*60000);setTimeout(check,4000)})();</script>
 </body>
 </html>
