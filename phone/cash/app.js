@@ -1070,7 +1070,11 @@ async function gateAct(a, x) { const c = sbc(), em = val('gE').trim(), pw = val(
     if (a === 'newpass') { if (pw.length < 6) return gx('كلمة السر ٦ حروف على الأقل'); if (pw !== val('gW2')) return gx('الكلمتين مش زي بعض'); const r = await c.auth.updateUser({ password: pw }); if (r.error) throw r.error; RECOV = false; toast('اتغيرت كلمة السر', 'g'); return gateNext(); }
   } catch (e) { err(e); } }
 /* الرقم السري للجهاز (بعد الدخول بالحساب) */
-async function pinLock() { if ($('#lockS') || !ME) return; LOCKED = true; const key = (ME.email || ME.name || '').toLowerCase(), m = await dbGet('meta', 'pin'); let rec = m && m.v && m.v.key === key ? m.v : null, pin = '', pin1 = '';
+try { if (new URLSearchParams(location.search).get('m') === '1') sessionStorage.setItem('ph_m', '1'); } catch (e) {}
+async function pinLock() { if ($('#lockS') || !ME) return;
+  /* جاي من سيستم فون الرئيسي (داخل بالحساب وبالرقم بتاعه) — مفيش داعي لرقم سري تاني */
+  try { if (sessionStorage.getItem('ph_m') === '1') { LOCKED = false; USER = { id: (ME.email || ME.name || '').toLowerCase(), name: ME.name, role: ME.role }; paint(); armIdle(); return; } } catch (e) {}
+  LOCKED = true; const key = (ME.email || ME.name || '').toLowerCase(), m = await dbGet('meta', 'pin'); let rec = m && m.v && m.v.key === key ? m.v : null, pin = '', pin1 = '';
   const d = document.createElement('div'); d.className = 'lock'; d.id = 'lockS'; document.body.appendChild(d);
   const draw = msg => { d.innerHTML = `<div class="bx"><div class="cs-logo">${LOGO}</div><h2 style="margin:10px 0 0">${H(ME.name || BRAND)}</h2><div class="muted" style="font-size:13px">${H(ME.org_name || '')}</div><p style="margin:10px 0 4px;font-weight:700">${rec ? 'اكتب الرقم السري' : pin1 ? 'اكتبه تاني للتأكيد' : 'اختار رقم سري للجهاز ده (٤–٨ أرقام)'}</p>
     <div class="dots">${[0, 1, 2, 3, 4, 5].map(i => `<i class="${i < pin.length ? 'f' : ''}"></i>`).join('')}</div><div class="pin">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button data-k="${n}">${n}</button>`).join('')}<button data-k="del">${ic('undo')}</button><button data-k="0">0</button><button data-k="ok" style="background:var(--pri);color:#fff">${ic('check')}</button></div>
