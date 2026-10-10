@@ -1070,10 +1070,11 @@ async function gateAct(a, x) { const c = sbc(), em = val('gE').trim(), pw = val(
     if (a === 'newpass') { if (pw.length < 6) return gx('كلمة السر ٦ حروف على الأقل'); if (pw !== val('gW2')) return gx('الكلمتين مش زي بعض'); const r = await c.auth.updateUser({ password: pw }); if (r.error) throw r.error; RECOV = false; toast('اتغيرت كلمة السر', 'g'); return gateNext(); }
   } catch (e) { err(e); } }
 /* الرقم السري للجهاز (بعد الدخول بالحساب) */
-try { if (new URLSearchParams(location.search).get('m') === '1') sessionStorage.setItem('ph_m', '1'); } catch (e) {}
+try { if (new URLSearchParams(location.search).get('m') === '1' && !location.hash) location.hash = '#wallets'; } catch (e) {}
 async function pinLock() { if ($('#lockS') || !ME) return;
-  /* جاي من سيستم فون الرئيسي (داخل بالحساب وبالرقم بتاعه) — مفيش داعي لرقم سري تاني */
-  try { if (sessionStorage.getItem('ph_m') === '1') { LOCKED = false; USER = { id: (ME.email || ME.name || '').toLowerCase(), name: ME.name, role: ME.role }; paint(); armIdle(); return; } } catch (e) {}
+  /* ملغي: مفيش رقم سري تاني للمحافظ — الدخول بالحساب بس (السيستم الرئيسي بيحمي الجهاز) */
+  LOCKED = false; USER = { id: (ME.email || ME.name || '').toLowerCase(), name: ME.name, role: ME.role }; paint(); armIdle(); return;
+  /* eslint-disable-next-line no-unreachable */
   LOCKED = true; const key = (ME.email || ME.name || '').toLowerCase(), m = await dbGet('meta', 'pin'); let rec = m && m.v && m.v.key === key ? m.v : null, pin = '', pin1 = '';
   const d = document.createElement('div'); d.className = 'lock'; d.id = 'lockS'; document.body.appendChild(d);
   const draw = msg => { d.innerHTML = `<div class="bx"><div class="cs-logo">${LOGO}</div><h2 style="margin:10px 0 0">${H(ME.name || BRAND)}</h2><div class="muted" style="font-size:13px">${H(ME.org_name || '')}</div><p style="margin:10px 0 4px;font-weight:700">${rec ? 'اكتب الرقم السري' : pin1 ? 'اكتبه تاني للتأكيد' : 'اختار رقم سري للجهاز ده (٤–٨ أرقام)'}</p>
