@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-p6';
+const APP_VER='2026-10-10-p7';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5597,112 +5597,6 @@ function inject(){if(!adm())return;const pur=$('purchases');if(pur){const tr=pur
 new MutationObserver(()=>{try{inject()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
 setTimeout(()=>{if(adm())load().then(inject)},3000);
 window.mkPW={open,q:setQ,only:()=>{ONLY=!ONLY;draw()},item,add,del,paste,parse,saveParsed};
-})();
-</script>
-
-<style>
-#kits .kt-card{background:var(--card,#fff);border:1px solid var(--border,#e3e8ea);border-radius:16px;padding:14px;margin-bottom:10px}
-#kits .kt-slot{border:1px solid var(--border,#e3e8ea);border-radius:12px;padding:10px;margin:8px 0;background:var(--bg,#fafafa)}
-#kits .kt-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-top:6px}#kits .kt-row>div{flex:1;min-width:110px}
-.kt-chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;background:#eef6f7;color:#b08328;margin:2px}
-.kt-need{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--border,#e3e8ea)}
-</style>
-<script>
-/* =====================================================================
-   🧩 الأطقم والتركيبات — طقم = مجموعة أصناف بتشتريها لوحدها وتبيعها مع بعض
-   · الصنف ممكن يتقسم (علبة فيها ٢ دلفة → بيع دلفة واحدة بياخد نص علبة)
-   · الكمية بتتغير بعدد الدلف (٢ / ٣ / ٤…) والمكوّن الثابت بياخد قد إيه لكل طقم
-   · مكوّن ليه أكتر من صنف يتختار وقت البيع (أي نوع / أي مقاس / خليط)
-   · البيع بيطلع فاتورة بيع عادية بمكونات الطقم (المخزن والتكلفة والربح مظبوطين)
-   البيانات في mk_settings key 'kits' (من غير SQL جديد)
-   ===================================================================== */
-(function(){
-const SBc=()=>window.mkSB,$=id=>document.getElementById(id),adm=()=>!window.mkT_user||window.mkT_user.role==='admin';
-const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ND=v=>String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));const num=v=>{const n=parseFloat(ND(v).replace(/[,٬\s]/g,''));return isNaN(n)?0:n};
-const M=n=>typeof money==='function'?money(n):(Math.round(+n||0)).toLocaleString('ar-EG')+' ج.م';
-const tst=m=>typeof toast==='function'?toast(m):alert(m);
-const head=t=>`<div class="modal-head"><h2>${t}</h2><button class="close" onclick="closeModal()"><svg class="i"><use href="#i-x"/></svg></button></div>`;
-const r3=n=>Math.round((+n||0)*1000)/1000;
-const fq=n=>{n=r3(n);const w=Math.floor(n),f=r3(n-w);if(!f)return String(w);if(f===.5)return w?w+' ونص':'نص';if(f===.25)return w?w+' وربع':'ربع';return String(n)};
-const P=()=>(typeof db!=='undefined'&&db.products)||[];
-const pid=id=>P().find(p=>p.id===id);
-const lab=p=>p?(p.code?p.code+' — ':'')+p.name:'(صنف اتمسح)';
-let K=null,ED=null,SALE=null;
-async function load(){try{const r=await SBc().from('mk_settings').select('value').eq('key','kits').maybeSingle();K=Array.isArray(r.data&&r.data.value)?r.data.value:[]}catch(e){K=[]}return K}
-async function persist(){const r=await SBc().from('mk_settings').upsert([{key:'kits',value:K,updated_at:new Date().toISOString()}],{onConflict:'key'});if(r.error){tst('ماتحفظش: '+(r.error.message||''));return false}return true}
-/* ---- الحسابات ---- */
-const need=(s,n)=>s.mode==='fixed'?(+s.qty||0):(+s.qty||0)/(+s.per||1)*n;           // الكمية المطلوبة من وحدة المخزن
-const stockOf=s=>(s.products||[]).reduce((a,id)=>a+Math.max(0,+(pid(id)||{}).qty||0),0);
-function maxN(k){let m=Infinity;k.slots.forEach(s=>{const st=stockOf(s);if(s.mode==='fixed'){if(st<(+s.qty||0))m=0}else{const c=(+s.qty||0)/(+s.per||1);if(c>0)m=Math.min(m,Math.floor(r3(st/c+1e-9)))}});return m===Infinity?'∞':m}
-function priceOf(k,n){let t=0;k.slots.forEach(s=>{const p=pid((s.products||[])[0]);if(p)t+=need(s,n)*(+p.price||0)});return Math.round(t)}
-/* ---- الشاشة ---- */
-function ensure(){if($('kits'))return;const ref=$('products');if(!ref)return;const sec=document.createElement(ref.tagName.toLowerCase());sec.id='kits';sec.className='page';ref.parentNode.appendChild(sec);
- const nav=document.querySelector('aside .nav');if(nav&&!nav.querySelector('[data-page="kits"]'))nav.insertAdjacentHTML('beforeend',`<button data-page="kits" onclick="showPage('kits')"><span style="font-size:17px;width:20px;text-align:center">🧩</span> <span>الأطقم والتركيبات</span></button>`)}
-async function render(){const box=$('kits');if(!box)return;box.innerHTML='<div style="padding:30px;text-align:center;color:#8a979c">⏳</div>';await load();
- box.innerHTML=`<div class="title-row"><div class="title"><h1>🧩 الأطقم والتركيبات</h1><p>طقم الجرار والبالتة وغيرهم: بتشتري المكوّنات لوحدها وتبيعها مع بعض، والمخزن بيتخصم من كل مكوّن لوحده</p></div><div class="btnrow"><button class="primary" onclick="mkKT.edit()">➕ طقم جديد</button></div></div>
- ${K.map((k,i)=>{const mx=maxN(k);return `<div class="kt-card"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:17px;flex:1">${H(k.name)}</b><span class="kt-chip">${k.slots.length} مكوّن</span>${k.param?`<span class="kt-chip" style="background:#fff4e0;color:#a66a00">بيتغير بـ ${H(k.param)}</span>`:''}</div>
-  <div style="margin:6px 0;font-size:14px;line-height:1.9">${k.slots.map(s=>`• <b>${H(s.label)}</b>: ${s.mode==='fixed'?fq(s.qty)+' لكل طقم':fq(s.qty)+' لكل '+(+s.per>1?s.per+' ':'')+H(k.param||'وحدة')}${(s.products||[]).length>1?` <span class="kt-chip">اختيار من ${s.products.length} صنف</span>`:`<small style="color:var(--muted)"> — ${H(lab(pid((s.products||[])[0])))}</small>`}`).join('<br>')}</div>
-  <div style="font-size:14px">المتاح يكفي ${mx==='∞'?'—':'لحد <b>'+mx+'</b> '+H(k.param||'طقم')}</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="primary" onclick="mkKT.sell(${i})">💰 بيع طقم</button><button class="secondary" onclick="mkKT.edit(${i})">✏️ تعديل</button><button class="secondary danger" onclick="mkKT.del(${i})">🗑️</button></div></div>`}).join('')||'<div class="empty">لسه مفيش أطقم — دوس «طقم جديد». مثال: طقم جرار دولاب = عود ألمنيوم + علبة لوازم (٢ دلفة).</div>'}`}
-/* ---- محرر الطقم ---- */
-function edit(i){ED=i!=null?JSON.parse(JSON.stringify(K[i])):{name:'',param:'دلفة',def:2,slots:[{label:'',mode:'fixed',qty:1,per:1,products:[]}]};KT_ED._i=i;drawEd()}
-function drawEd(){const k=ED;
- openModal(`${head(k._i!=null?'✏️ '+H(k.name):'➕ طقم جديد')}<div class="form">
- <div class="field"><label>اسم الطقم</label><input value="${H(k.name)}" placeholder="مثلاً: طقم جرار دولاب قطاع" oninput="KT_ED.name=this.value"></div>
- <div class="kt-row"><div class="field"><label>بيتباع بعدد إيه؟</label><input value="${H(k.param)}" placeholder="دلفة" oninput="KT_ED.param=this.value"></div><div class="field"><label>العدد الافتراضي</label><input inputmode="numeric" value="${H(k.def)}" oninput="KT_ED.def=mkKT.n(this.value)||1"></div></div>
- ${k.slots.map((s,j)=>`<div class="kt-slot"><div class="kt-row" style="margin-top:0"><div style="flex:2"><label>المكوّن</label><input value="${H(s.label)}" placeholder="مثلاً: عود الألمنيوم / علبة اللوازم / البالتة" oninput="KT_ED.slots[${j}].label=this.value"></div>${k.slots.length>1?`<button class="secondary danger" style="flex:0 0 auto" onclick="KT_ED.slots.splice(${j},1);mkKT.re()">✕</button>`:''}</div>
-  <div class="kt-row"><div><label>كميته</label><select onchange="KT_ED.slots[${j}].mode=this.value;mkKT.re()"><option value="fixed" ${s.mode==='fixed'?'selected':''}>ثابتة لكل طقم</option><option value="param" ${s.mode==='param'?'selected':''}>بتتغير بعدد الـ ${H(k.param||'وحدة')}</option></select></div>
-  <div><label>${s.mode==='fixed'?'كام وحدة مخزن لكل طقم':'بياخد (وحدة مخزن)'}</label><input inputmode="decimal" value="${H(s.qty)}" oninput="KT_ED.slots[${j}].qty=mkKT.n(this.value)"></div>
-  ${s.mode==='param'?`<div><label>لكل كام ${H(k.param||'وحدة')}</label><input inputmode="numeric" value="${H(s.per)}" oninput="KT_ED.slots[${j}].per=mkKT.n(this.value)||1"></div>`:''}</div>
-  ${s.mode==='param'&&(+s.per||1)>1?`<small style="color:var(--muted)">يعني الصنف ده بيتباع بالوحدة وفيه ${s.per} ${H(k.param||'وحدة')} — لو بعت واحدة بيخصم ${fq((+s.qty||0)/(+s.per||1))} وحدة</small>`:''}
-  <div style="margin-top:6px"><label>الأصناف المسموحة (لو أكتر من واحد: بتختار وقت البيع)</label>${(s.products||[]).map((id,x)=>`<span class="kt-chip">${H(lab(pid(id)))} <a style="cursor:pointer;color:#b33" onclick="KT_ED.slots[${j}].products.splice(${x},1);mkKT.re()">✕</a></span>`).join('')}
-  <input list="ktPL" placeholder="🔎 دوّر على صنف واضغطه" style="margin-top:4px" onchange="mkKT.addP(${j},this.value);this.value=''"></div></div>`).join('')}
- <datalist id="ktPL">${P().slice(0,3000).map(p=>`<option value="${H(lab(p))}">`).join('')}</datalist>
- <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="secondary" onclick="KT_ED.slots.push({label:'',mode:'fixed',qty:1,per:1,products:[]});mkKT.re()">➕ مكوّن</button><button class="primary" onclick="mkKT.save()">💾 حفظ الطقم</button></div></div>`)}
-function addP(j,v){const s=KT_ED.slots[j];const p=P().find(x=>lab(x)===v)||P().find(x=>x.code&&v.startsWith(x.code+' '));if(!p)return;if(!s.products.includes(p.id))s.products.push(p.id);if(!s.label)s.label=p.name;drawEd()}
-async function save(){const k=ED;if(!k.name.trim())return tst('اكتب اسم الطقم');if(k.slots.some(s=>!(s.products||[]).length||!(+s.qty>0)))return tst('كل مكوّن لازم يبقى فيه صنف وكمية');const i=k._i;delete k._i;k.id=k.id||Date.now().toString(36);if(i!=null)K[i]=k;else K.push(k);if(await persist()){closeModal();tst('✔ اتحفظ الطقم');render()}}
-async function del(i){if(!confirm('تمسح الطقم ده؟ (الأصناف والمخزن مش هيتأثروا)'))return;K.splice(i,1);if(await persist())render()}
-/* ---- بيع طقم ---- */
-function sell(i){const k=K[i];SALE={k,n:+k.def||1,person:'',phone:'',paid:'',total:'',rows:k.slots.map(s=>(s.products||[]).length>1?[{pid:s.products[0],q:null}]:[{pid:s.products[0],q:null}])};drawSale()}
-function plan(){const S=KT_SALE,out=[];S.k.slots.forEach((s,j)=>{const req=r3(need(s,S.n)),rows=S.rows[j];
- if((s.products||[]).length<2){out.push({slot:s,pid:s.products[0],q:req,req});return}
- const typed=r=>r.q!=null&&r.q!==''&&!isNaN(parseFloat(ND(r.q))),val=r=>parseFloat(ND(r.q))||0;
- const typedSum=rows.reduce((a,r)=>a+(typed(r)?val(r):0),0),rest=Math.max(0,req-typedSum),firstBlank=rows.findIndex(r=>!typed(r));
- rows.forEach((r,x)=>{const q=typed(r)?val(r):(x===firstBlank?rest:0);out.push({slot:s,pid:r.pid,q:r3(q),req,rowIx:x})})});return out}
-function drawSale(){const S=SALE,k=S.k,pl=plan(),mx=maxN(k);
- const lines=pl.filter(x=>x.q>0).map(x=>({p:pid(x.pid),q:x.q})),sum=lines.reduce((a,x)=>a+x.q*(+(x.p||{}).price||0),0),tot=S.total!==''?num(S.total):Math.round(sum);
- const short=[];const byP={};lines.forEach(x=>{if(x.p)byP[x.p.id]=(byP[x.p.id]||0)+x.q});Object.entries(byP).forEach(([id,q])=>{const p=pid(id);if(p&&q>(+p.qty||0)+1e-9)short.push(`${p.name}: المطلوب ${fq(q)} والمتاح ${fq(+p.qty||0)}`)});
- const sums=k.slots.map((s,j)=>{if((s.products||[]).length<2)return 0;const req=r3(need(s,S.n)),got=pl.filter(x=>x.slot===s).reduce((a,x)=>a+x.q,0);return r3(got-req)});
- openModal(`${head('💰 بيع '+H(k.name))}<div class="form">
- <div class="kt-row"><div class="field"><label>عدد الـ ${H(k.param||'طقم')}</label><input inputmode="numeric" value="${H(S.n)}" style="font-size:20px;font-weight:800" oninput="KT_SALE.n=mkKT.n(this.value)||1;KT_SALE.rows=KT_SALE.rows.map(r=>r.map(y=>({pid:y.pid,q:null})));mkKT.reS()"></div><div class="field"><label>المتاح يكفي</label><input readonly value="${mx==='∞'?'—':mx}"></div></div>
- ${k.slots.map((s,j)=>{const req=r3(need(s,S.n)),rows=S.rows[j],multi=(s.products||[]).length>1;
-  return `<div class="kt-slot"><b>${H(s.label)}</b> <span class="kt-chip">المطلوب ${fq(req)}</span>
-  ${multi?rows.map((r,x)=>`<div class="kt-row"><div style="flex:2"><select onchange="KT_SALE.rows[${j}][${x}].pid=this.value;mkKT.reS()">${s.products.map(id=>{const p=pid(id);return `<option value="${id}" ${id===r.pid?'selected':''}>${H(p?p.name:'؟')} (متاح ${fq(+(p||{}).qty||0)})</option>`}).join('')}</select></div><div><input inputmode="decimal" placeholder="${x===0&&rows.length===1?fq(req):'الكمية'}" value="${r.q==null?'':H(r.q)}" oninput="KT_SALE.rows[${j}][${x}].q=this.value;mkKT.reS(1)"></div>${rows.length>1?`<button class="secondary danger" style="flex:0 0 auto" onclick="KT_SALE.rows[${j}].splice(${x},1);mkKT.reS()">✕</button>`:''}</div>`).join('')+`<button class="secondary" style="margin-top:6px" onclick="KT_SALE.rows[${j}].push({pid:'${s.products[0]}',q:''});mkKT.reS()">➕ نوع/مقاس تاني</button>${sums[j]!==0?`<div style="color:#b33;font-weight:700;margin-top:4px">الكميات ${sums[j]>0?'زيادة':'ناقصة'} ${fq(Math.abs(sums[j]))} عن المطلوب</div>`:''}`
-  :`<div style="font-size:14px;margin-top:4px">${H(lab(pid(s.products[0])))} — هيتخصم ${fq(req)} (متاح ${fq(+(pid(s.products[0])||{}).qty||0)})</div>`}</div>`}).join('')}
- ${short.length?`<div style="background:#fdecec;color:#b33;border-radius:10px;padding:8px 10px;margin:8px 0;font-weight:700">⚠️ ناقص في المخزن:<br>${short.map(H).join('<br>')}</div>`:''}
- <div class="kt-row"><div class="field"><label>اسم العميل</label><input list="ktCL" value="${H(S.person)}" oninput="KT_SALE.person=this.value"><datalist id="ktCL">${((typeof db!=='undefined'&&db.contacts)||[]).filter(c=>c.type==='عميل').slice(0,800).map(c=>`<option value="${H(c.name)}">`).join('')}</datalist></div><div class="field"><label>موبايل</label><input inputmode="tel" value="${H(S.phone)}" oninput="KT_SALE.phone=this.value"></div></div>
- <div class="kt-row"><div class="field"><label>سعر الطقم النهائي (سيبه فاضي = مجموع الأسعار ${M(Math.round(sum))})</label><input inputmode="decimal" value="${H(S.total)}" oninput="KT_SALE.total=this.value;mkKT.reS(1)"></div><div class="field"><label>المدفوع (فاضي = كله)</label><input inputmode="decimal" value="${H(S.paid)}" oninput="KT_SALE.paid=this.value"></div></div>
- <div style="font-size:20px;font-weight:900;margin:6px 0">الإجمالي: ${M(tot)}</div>
- <button class="primary" id="ktGo" onclick="mkKT.go()">✔ سجّل البيع</button></div>`)}
-let _rt;function reS(soft){if(soft){clearTimeout(_rt);_rt=setTimeout(drawSale,500)}else drawSale()}
-async function go(){const S=SALE,k=S.k,pl=plan().filter(x=>x.q>0);if(!pl.length)return tst('مفيش كميات');
- for(const sl of S.k.slots){if((sl.products||[]).length<2)continue;const want=r3(need(sl,S.n)),got=r3(pl.filter(x=>x.slot===sl).reduce((a,x)=>a+x.q,0));if(Math.abs(got-want)>0.001)return tst('كميات «'+sl.label+'» مش مطابقة للمطلوب ('+fq(want)+')')}
- const agg={};pl.forEach(x=>{agg[x.pid]=(agg[x.pid]||0)+x.q});const items=Object.entries(agg).map(([id,q])=>({id,q:r3(q),p:pid(id)}));
- const sum=items.reduce((a,x)=>a+x.q*(+(x.p||{}).price||0),0),tot=S.total!==''?num(S.total):Math.round(sum),f=sum>0?tot/sum:1;
- const lines=items.map(x=>({product_id:x.id,name:(x.p?x.p.name:'')+'',qty:x.q,price:Math.round((+(x.p||{}).price||0)*f*100)/100}));
- const t2=Math.round(lines.reduce((a,x)=>a+x.qty*x.price,0)*100)/100,paid=S.paid===''?t2:num(S.paid);
- if(paid>t2+0.001)return tst('المدفوع أكبر من الإجمالي');if(t2-paid>0.001&&!S.person.trim())return tst('اكتب اسم العميل عشان نسجل الباقي عليه');
- const btn=$('ktGo');if(btn){btn.disabled=true;btn.textContent='⏳ بيسجّل…'}
- const body={kind:'sale',date:(typeof isoToday==='function'?isoToday():new Date().toISOString().slice(0,10)),person:S.person.trim(),phone:S.phone.trim(),addr:'',note:'🧩 '+k.name+' × '+S.n+' '+(k.param||''),ship:0,paid:t2>0?paid:0,source:'',items:lines};
- try{const api=window.mkT&&mkT.api;if(!api||!api.rpc)throw new Error('السيستم لسه بيحمّل');const r=await api.rpc('mk_save_invoice',{p:body});
-  try{await api.refreshInvoices([r.id]);await api.refreshProducts(lines.map(x=>x.product_id));if(api.done)api.done()}catch(e){}
-  closeModal();tst('✔ تم تسجيل البيع '+(r.no||''));const rows=((typeof db!=='undefined'&&db.sales)||[]).filter(x=>x.gid===r.id);if(rows[0]&&typeof openInvoiceModal==='function')openInvoiceModal(rows[0].id);render()
- }catch(e){if(btn){btn.disabled=false;btn.textContent='✔ سجّل البيع'}tst((api=>api&&api.errMsg?api.errMsg(e):(e.message||'حصلت مشكلة'))(window.mkT&&mkT.api))}}
-if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const r=_sp.apply(this,arguments);if(id==='kits')setTimeout(()=>{try{render()}catch(e){}},30);return r}}
-new MutationObserver(()=>{try{if(adm())ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
-window.mkKT={n:num,edit,re:()=>drawEd(),addP,save,del,sell,reS,go};
-Object.defineProperty(window,'KT_ED',{get:()=>ED,configurable:true});Object.defineProperty(window,'KT_SALE',{get:()=>SALE,configurable:true});
 })();
 </script>
 
