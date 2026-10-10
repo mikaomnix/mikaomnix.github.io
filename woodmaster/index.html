@@ -2494,6 +2494,236 @@ const _set4=V.set;V.set=()=>_set4().replace('البيانات محفوظة في 
 GG('النظام')[2].unshift(['brand','palette','هوية الشركة والمظهر']);
 G.forEach(g=>g[2].forEach(n=>TT[n[0]]=n[2]));
 /* ===================== /WOODMASTER PRO 4 ===================== */
+/* ===================== WOODMASTER PRO 5 — استوديو التصميم 3D + الأبواب + المعاينات ===================== */
+/* تصميم مطبخ قابل للتعديل (2D احترافي + 3D + مسقط) بقواعد التصميم العالمية · حاسبة أبواب كاملة · معاينات بالغرف والفتحات والنقط · طلب الإكسسوار من ميكانيزم */
+Object.assign(IC,{studio:'M3 3h18v18H3zM3 9h18M9 21V9',door:'M5 3h12v18H5zM17 4l2 1v14l-2 1M14 12h.01',survey:'M9 3h6l1 2h3v16H5V5h3zM9 13l2 2 4-4',rot:'M21 12a9 9 0 11-3-6.7M21 4v5h-5',layers3:'M12 2l9 5-9 5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5',bulb:'M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z'});
+['designs','surveys','doorjobs'].forEach(k=>{if(!Array.isArray(S.d[k]))S.d[k]=[]});
+S.cfg.acc=Object.assign({name:'ميكانيزم',phone:'01119199659'},S.cfg.acc||{});
+G.splice(4,0,['التصميم والمعاينة','#0b6e99',[['studio','studio','استوديو التصميم 3D'],['doors','door','حاسبة الأبواب'],['survey','survey','المعاينات']]]);
+G.forEach(g=>g[2].forEach(n=>TT[n[0]]=n[2]));Object.assign(PAR,{design:'studio',svedit:'survey'});Object.assign(TT,{design:'تصميم مطبخ',svedit:'معاينة'});
+const loadJS=src=>new Promise((ok,no)=>{if(document.querySelector(`script[src="${src}"]`))return ok();const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('مكتبة الـ3D ماتحمّلتش — اتأكد من النت'));document.head.appendChild(s)});
+const accWa=t=>waTo(S.cfg.acc.phone,t);
+
+/* ---------- كتالوج الوحدات والأنماط ---------- */
+const UT={low:['وحدة','أدراج','حوض','بوتاجاز','فرن تحت الرخامة','غسالة صحون','غسالة هدوم','ركنة','ركنة سحرية','كارجو','مفتوح'],up:['علوي','شفاط','زجاج','رف مفتوح','ركنة','فوق التلاجة'],tall:['دولاب طويل','تلاجة','فرن وميكرويف','كارجو طويل']};
+const STY={
+ 'مودرن أبيض مطفي':{front:'#f4f2ee',body:'#ffffff',top:'#e7e3dc',handle:'gola',hc:'#8b8b8b',wall:'#ece7df',floor:'#bfa98d',plinth:'#d8d4cc',door:'flat'},
+ 'كلاسيك خشب جوز':{front:'#7a4f2c',body:'#f3eadf',top:'#d9cbb5',handle:'knob',hc:'#c9971f',wall:'#f1e7d6',floor:'#9b7b58',plinth:'#5a3a20',door:'shaker'},
+ 'رمادي وخشب':{front:'#6b7075',body:'#f2f2f2',top:'#2f2f2f',handle:'bar',hc:'#1f1f1f',wall:'#eeeeea',floor:'#b89c7d',plinth:'#3a3a3a',door:'flat'},
+ 'كحلي ودهبي':{front:'#1e3a5f',body:'#f4f4f4',top:'#f1ede4',handle:'bar',hc:'#c9971f',wall:'#f0ece4',floor:'#c4ab8a',plinth:'#16304f',door:'shaker'},
+ 'أسود فخم':{front:'#1f1f1f',body:'#2a2a2a',top:'#d8d2c6',handle:'gola',hc:'#c9a24c',wall:'#e9e4dc',floor:'#6d5a48',plinth:'#111111',door:'flat'},
+ 'أخضر زيتوني':{front:'#5d6b45',body:'#f5f2ea',top:'#efe9dc',handle:'knob',hc:'#b08d3c',wall:'#f2ede2',floor:'#b59a78',plinth:'#4b5737',door:'shaker'},
+ 'بيج دافي':{front:'#d9c7ad',body:'#fbf7f0',top:'#7b6a58',handle:'bar',hc:'#6b5a46',wall:'#f4eee4',floor:'#a88a66',plinth:'#bfae95',door:'flat'},
+ 'هاي جلوس أبيض':{front:'#ffffff',body:'#ffffff',top:'#1f1f1f',handle:'push',hc:'#cccccc',wall:'#e8ecef',floor:'#9ea3a8',plinth:'#e5e5e5',door:'flat',gloss:1},
+ 'سكاندنافي فاتح':{front:'#e9e2d6',body:'#ffffff',top:'#c9a97f',handle:'bar',hc:'#b88a52',wall:'#f6f3ee',floor:'#d6bf9d',plinth:'#e9e2d6',door:'flat'},
+ 'تيراكوتا':{front:'#b5654a',body:'#fbf5ef',top:'#efe7dc',handle:'knob',hc:'#2b2b2b',wall:'#f3ebe1',floor:'#a7896a',plinth:'#8f4f39',door:'shaker'}};
+const HANDLES={gola:'جولا (مقبض مخفي)',bar:'مقبض طولي',knob:'زرار',push:'من غير مقبض (Push)'};
+const DSD={lowH:72,dep:58,upH:70,upD:32,gap:60,ceil:270,leg:10,tallH:220,topT:4};
+let DS={cur:null,tab:'3d',three:null};
+const dsGet=()=>D('designs').find(x=>x.id==DS.cur);
+const isTall=t=>UT.tall.includes(t),isDoorless=t=>['أدراج','مفتوح','غسالة صحون','غسالة هدوم','فرن تحت الرخامة'].includes(t);
+function dsNew(walls,layout,name){const a=D('designs'),d={id:nid(a),name:name||('تصميم '+(a.length+1)),created:today(),layout:layout||(walls.length>=3?'U':walls.length==2?'L':'line'),walls,dims:Object.assign({},DSD),styleName:'مودرن أبيض مطفي',style:Object.assign({},STY['مودرن أبيض مطفي']),proj:'',notes:''};a.unshift(d);save();return d}
+function dsFromKit(){const R=ktCalc();const walls=R.walls.map(w=>({len:w.len,low:w.low.map(u=>({t:u.corner?'ركنة':u.t,w:u.w})),up:w.up.map(u=>({t:u.corner?'ركنة':u.t,w:u.w})),tall:w.tall.map(u=>({t:u.t,w:u.w}))}));
+ // الركنة مكانها آخر الحيطة (عند التقاء الحيطتين)، والحيطان اللي بعدها بتبدأ بعد عمق الصف
+ const lay=walls.length>=3?'U':walls.length==2?'L':'line',dep=+KT.dep||58;
+ walls.forEach((w,i)=>{['low','up'].forEach(k=>{const ci=w[k].findIndex(u=>u.t==='ركنة');if(ci===0&&i<walls.length-1)w[k].push(w[k].shift())});
+  if(i>0&&lay!=='line'){const fit=(arr,extra)=>{let sum=arr.reduce((a,u)=>a+u.w,0)+extra;while(sum>w.len&&arr.length){const u=arr[arr.length-1],cut=Math.min(u.w,sum-w.len);u.w-=cut;sum-=cut;if(u.w<30){sum-=u.w;arr.pop()}}};fit(w.low,dep+w.tall.reduce((a,u)=>a+u.w,0));fit(w.up,Math.max(dep,+KT.upD||32)+w.tall.reduce((a,u)=>a+u.w,0))}});
+ // البوتاجاز تحت الشفاط
+ walls.forEach(w=>{const off=w.tall.reduce((a,u)=>a+u.w,0);let x=off,hx=-1;w.up.forEach(u=>{if(u.t==='شفاط')hx=x;x+=u.w});if(hx<0)return;let lx=off;for(const u of w.low){if(lx<=hx&&hx<lx+u.w&&u.t==='وحدة'){u.t='بوتاجاز';break}lx+=u.w}});
+ if(!walls.some(w=>w.low.some(u=>u.t==='بوتاجاز'))){for(const w of walls){const u=w.low.find(u=>u.t==='وحدة'&&u.w>=60);if(u){u.t='بوتاجاز';break}}}
+ // الشفاط فوق البوتاجاز بالظبط
+ walls.forEach(w=>{const off=w.tall.reduce((a,u)=>a+u.w,0);let lx=off,hc=-1;for(const u of w.low){if(u.t==='بوتاجاز'){hc=lx+u.w/2;break}lx+=u.w}if(hc<0)return;let ux=off,tgt=null;for(const u of w.up){if(ux<=hc&&hc<ux+u.w)tgt=u;ux+=u.w}if(tgt&&tgt.t!=='ركنة'){w.up.forEach(u=>{if(u.t==='شفاط')u.t='علوي'});tgt.t='شفاط'}});
+ const d=dsNew(walls,null,'مطبخ '+String(KT.walls).replace(/\s/g,''));Object.assign(d.dims,{lowH:+KT.lowH||72,dep:+KT.dep||58,upH:+KT.upH||70,upD:+KT.upD||32});save();DS.cur=d.id;nav('design')}
+
+/* ---------- الهندسة: مكان كل وحدة ---------- */
+function dsPlace(d){const D2=d.dims,out=[],walls=[];let ox=0,oz=0,rot=0;
+ d.walls.forEach((w,i)=>{if(d.layout==='par'&&i===1){ox=w.len;oz=D2.dep*2+120;rot=Math.PI}
+  if(d.layout==='island'&&i===d.walls.length-1&&i>0){const a=d.walls[0].len;ox=(a-w.len)/2;oz=D2.dep+110;rot=0;walls.push({i,ox,oz,rot,len:w.len,island:1});let x=0;w.low.forEach((u,k)=>{out.push({wi:i,kind:'low',k,t:u.t,w:u.w,x});x+=u.w});return}
+  const start=(i>0&&(d.layout==='L'||d.layout==='U'))?D2.dep:0;walls.push({i,ox,oz,rot,len:w.len,start});
+  let x=start;w.tall.forEach((u,k)=>{out.push({wi:i,kind:'tall',k,t:u.t,w:u.w,x});x+=u.w});const lx=x;
+  w.low.forEach((u,k)=>{out.push({wi:i,kind:'low',k,t:u.t,w:u.w,x});x+=u.w});let ux=(i>0&&(d.layout==='L'||d.layout==='U'))?Math.max(lx,D2.upD+(lx-start)):lx;
+  w.up.forEach((u,k)=>{out.push({wi:i,kind:'up',k,t:u.t,w:u.w,x:ux});ux+=u.w});
+  if(d.layout==='L'||d.layout==='U'){ox+=w.len*Math.cos(rot);oz-=w.len*Math.sin(rot);rot-=Math.PI/2}});
+ return {items:out,walls}}
+const toWorld=(W,x,z)=>({X:W.ox+x*Math.cos(W.rot)+z*Math.sin(W.rot),Z:W.oz-x*Math.sin(W.rot)+z*Math.cos(W.rot)});
+
+/* ---------- قواعد التصميم والاقتراحات ---------- */
+function dsTips(d){const T=[],D2=d.dims,P=dsPlace(d),it=P.items,find=t=>it.filter(u=>u.t===t),W=P.walls,pos=u=>{const w=W.find(x=>x.i===u.wi),dz=u.kind==='up'?D2.upD/2:D2.dep/2,p=toWorld(w,u.x+u.w/2,dz);return p};
+ d.walls.forEach((w,i)=>{const Wd=W.find(x=>x.i===i)||{start:0},run=(Wd.start||0)+w.tall.reduce((a,u)=>a+u.w,0)+w.low.reduce((a,u)=>a+u.w,0),left=w.len-run;
+  if(left<0)T.push(['r',`حيطة ${i+1}: الوحدات زيادة ${-left} سم عن طول الحيطة — صغّر وحدة أو شيلها`]);else if(left>=30)T.push(['y',`حيطة ${i+1}: فاضل ${left} سم — ممكن تضيف وحدة ${Math.floor(left/5)*5} أو رف مفتوح`]);else if(left>0)T.push(['b',`حيطة ${i+1}: فاضل ${left} سم — يتقفل بفلر (حشوة) لون الضلف`]);
+  const ul=w.up.reduce((a,u)=>a+u.w,0)+w.tall.reduce((a,u)=>a+u.w,0)+(Wd.start||0);if(ul>w.len+1)T.push(['r',`حيطة ${i+1}: العلوي أطول من الحيطة بـ ${ul-w.len} سم`])});
+ const sink=find('حوض')[0],hob=find('بوتاجاز')[0],fr=find('تلاجة')[0];
+ if(!sink)T.push(['r','مفيش حوض في التصميم — ضيف وحدة «حوض» (أفضل تحت الشباك أو قريب من مصدر المية)']);
+ if(!hob)T.push(['r','مفيش بوتاجاز — ضيف وحدة «بوتاجاز» 60 أو 90 وفوقها شفاط']);
+ if(!fr)T.push(['y','مفيش مكان للتلاجة — ضيف دولاب «تلاجة» (عرض 70–90) في آخر الصف']);
+ if(sink&&hob&&fr){const a=pos(sink),b=pos(hob),c=pos(fr),dd=(p,q)=>Math.hypot(p.X-q.X,p.Z-q.Z)/100,s1=dd(a,b),s2=dd(b,c),s3=dd(c,a),sum=s1+s2+s3;
+  T.push([sum>=4&&sum<=7.9?'g':'y',`مثلث الشغل (حوض ↔ بوتاجاز ↔ تلاجة) = ${sum.toFixed(1)} م ${sum<4?'— ضيق، الحركة هتبقى زحمة (المثالي 4–7.9 م)':sum>7.9?'— واسع، هتمشي كتير (المثالي 4–7.9 م)':'— ممتاز ✓'}`]);
+  [[s1,'الحوض والبوتاجاز'],[s2,'البوتاجاز والتلاجة'],[s3,'التلاجة والحوض']].forEach(([s,n])=>{if(s<1.2)T.push(['y',`المسافة بين ${n} ${s.toFixed(1)} م — الأحسن 1.2 م على الأقل`]);if(s>2.7)T.push(['y',`المسافة بين ${n} ${s.toFixed(1)} م — الأحسن ماتزيدش عن 2.7 م`])})}
+ if(hob){const w=d.walls[hob.wi],L=w.low,k=hob.k,prev=L[k-1],next=L[k+1],tl=w.tall.length;if((!prev&&!tl&&hob.x<=((W.find(x=>x.i===hob.wi)||{}).start||0)+1)||(!next))T.push(['y','البوتاجاز جنب نهاية الصف — سيب 30 سم رخامة على الأقل على الجنبين عشان الأمان ومكان الحلل']);if(k===0&&tl)T.push(['r','البوتاجاز لازق في الدولاب الطويل/التلاجة — خطر حرارة، بعّده بوحدة 30 سم على الأقل']);
+  const hood=it.find(u=>u.kind==='up'&&u.wi===hob.wi&&u.t==='شفاط'&&u.x<hob.x+hob.w&&u.x+u.w>hob.x);if(!hood)T.push(['y','مفيش شفاط فوق البوتاجاز — خلّي وحدة العلوي اللي فوقه «شفاط»']);else if(hood.w<hob.w)T.push(['y','الشفاط أضيق من البوتاجاز — الأفضل يبقى قده أو أعرض'])}
+ if(sink){const w=d.walls[sink.wi],L=w.low,n=[L[sink.k-1],L[sink.k+1]].filter(Boolean);if(!n.some(u=>u.t!=='ركنة'&&u.t!=='ركنة سحرية'&&u.w>=40))T.push(['y','الحوض محتاج رخامة فاضية 45–60 سم جنبه لتنشيف المواعين']);if(it.some(u=>u.t==='غسالة صحون')&&!n.some(u=>u.t==='غسالة صحون'))T.push(['y','غسالة الصحون الأفضل تبقى جنب الحوض على طول (توصيل المية والصرف)'])}
+ if(!it.some(u=>u.t==='أدراج'))T.push(['y','مفيش أدراج — حط وحدة أدراج جنب البوتاجاز للحلل والمعالق']);
+ if(it.some(u=>u.t==='ركنة'))T.push(['b','الركنة العادية مساحتها ضايعة — جرّب «ركنة سحرية» أو كاروسيل']);
+ const free=D2.ceil-(D2.leg+D2.lowH+D2.topT+D2.gap+D2.upH);if(free>=25)T.push(['b',`فوق العلوي فاضل ${free} سم للسقف — ارفع العلوي لـ ${Math.min(110,D2.upH+Math.floor((free-5)/10)*10)} أو ضيف كرانيش/صف تخزين علوي`]);if(free<0)T.push(['r','العلوي أعلى من السقف — قلّل ارتفاعه أو المسافة فوق الرخامة']);
+ if(D2.gap<50)T.push(['y','المسافة بين الرخامة والعلوي أقل من 50 سم — هتخبط في العلوي، المعتاد 55–65']);if(D2.gap>70)T.push(['y','المسافة بين الرخامة والعلوي كبيرة — العلوي هيبقى صعب الوصول (المعتاد 55–65)']);
+ const topH=D2.leg+D2.lowH+D2.topT;if(topH<85||topH>95)T.push(['y',`ارتفاع سطح الرخامة ${topH} سم — المريح 88–92 سم`]);
+ it.forEach(u=>{if(u.w>100&&!isTall(u.t))T.push(['y',`وحدة ${u.t} عرضها ${u.w} — الأحسن تتقسم وحدتين (الضلف الكبيرة بتهبط)`]);if(u.w<25&&u.t!=='كارجو')T.push(['b',`وحدة ${u.w} سم ضيقة — خليها كارجو بهارات أو فلر`])});
+ T.push(['b','إضاءة LED تحت العلوي + بريزة كل 1.2 م على ارتفاع 110 سم فوق الرخامة'],['b','سيب مسافة 100–120 سم ممر قدام الوحدات، و90 سم على الأقل حوالين الجزيرة']);
+ return T}
+
+/* ---------- الرسم الاحترافي 2D (واجهة) ---------- */
+function dsElev(d,wi,sc){const D2=d.dims,s=d.style,P=dsPlace(d),it=P.items.filter(u=>u.wi===wi),w=d.walls[wi],Wd=P.walls.find(x=>x.i===wi)||{},L=Math.max(w.len,...it.map(u=>u.x+u.w)),H=D2.ceil;
+ const Y=v=>H-v,o=[],sh=s.door==='shaker',hc=s.hc,fr=s.front,ln='#2b3a40',m=12;
+ o.push(`<rect x="0" y="0" width="${L}" height="${H}" fill="${s.wall}"/>`);
+ const t0=D2.leg+D2.lowH+D2.topT;if(!Wd.island)for(let yy=t0;yy<t0+D2.gap;yy+=10)for(let xx=0;xx<L;xx+=20)o.push(`<rect x="${xx+(Math.floor((yy-t0)/10)%2?10:0)}" y="${Y(yy+10)}" width="20" height="10" fill="none" stroke="#00000012" stroke-width=".5"/>`);
+ o.push(`<rect x="0" y="${H}" width="${L}" height="8" fill="${s.floor}"/>`);
+ const handle=(x,y,wd,ht,pos)=>{if(s.handle==='gola')return `<rect x="${x+2}" y="${y+1}" width="${wd-4}" height="2.4" fill="#00000055"/>`;if(s.handle==='push')return '';if(s.handle==='knob'){const cx=pos==='l'?x+5:pos==='r'?x+wd-5:x+wd/2,cy=pos==='top'?y+6:pos==='bot'?y+ht-6:y+ht/2;return `<circle cx="${cx}" cy="${cy}" r="1.6" fill="${hc}"/>`}
+  if(pos==='top'||pos==='bot'||pos==='c')return `<rect x="${x+wd/2-8}" y="${pos==='bot'?y+ht-7:pos==='c'?y+ht/2-1:y+5}" width="16" height="1.8" rx=".9" fill="${hc}"/>`;return `<rect x="${pos==='l'?x+3:x+wd-4.8}" y="${y+ht/2-8}" width="1.8" height="16" rx=".9" fill="${hc}"/>`};
+ const panel=(x,y,wd,ht,pos)=>`<rect x="${x+.3}" y="${y+.3}" width="${wd-.6}" height="${ht-.6}" rx="1" fill="${fr}" stroke="${ln}" stroke-width=".5"/>${sh&&wd>18&&ht>18?`<rect x="${x+5}" y="${y+5}" width="${wd-10}" height="${ht-10}" fill="none" stroke="#0000002a" stroke-width=".7"/>`:''}${s.gloss?`<path d="M${x+3} ${y+ht-3}L${x+wd*.45} ${y+3}" stroke="#ffffff99" stroke-width="3"/>`:''}${handle(x,y,wd,ht,pos)}`;
+ const doors=(x,y,wd,ht,up)=>{if(wd>=80){return panel(x,y,wd/2,ht,up?'bot':'r')+panel(x+wd/2,y,wd/2,ht,up?'bot':'l')}return panel(x,y,wd,ht,up?'bot':'l')};
+ it.forEach(u=>{const x=u.x;
+  if(u.kind==='tall'){const y=Y(D2.leg+D2.tallH),ht=D2.tallH;o.push(`<rect x="${x}" y="${y}" width="${u.w}" height="${ht}" fill="${s.body}" stroke="${ln}" stroke-width=".6"/>`);
+   if(u.t==='تلاجة'){o.push(`<rect x="${x+2}" y="${y+2}" width="${u.w-4}" height="${ht-4}" rx="2" fill="#dfe3e6" stroke="#9aa5ab"/><line x1="${x+2}" x2="${x+u.w-2}" y1="${y+ht*.38}" y2="${y+ht*.38}" stroke="#9aa5ab"/><rect x="${x+u.w-8}" y="${y+ht*.2}" width="2" height="22" fill="#7d8a90"/><rect x="${x+u.w-8}" y="${y+ht*.45}" width="2" height="30" fill="#7d8a90"/>`)}
+   else if(u.t==='فرن وميكرويف'){o.push(panel(x,y,u.w,ht*.3,'bot')+`<rect x="${x+3}" y="${y+ht*.3}" width="${u.w-6}" height="${ht*.18}" rx="2" fill="#222"/><rect x="${x+8}" y="${y+ht*.3+4}" width="${u.w-16}" height="${ht*.18-8}" fill="#3a4a52"/><rect x="${x+3}" y="${y+ht*.5}" width="${u.w-6}" height="${ht*.22}" rx="2" fill="#222"/><rect x="${x+8}" y="${y+ht*.5+5}" width="${u.w-16}" height="${ht*.22-14}" fill="#3a4a52"/>`+panel(x,y+ht*.74,u.w,ht*.26,'top'))}
+   else o.push(panel(x,y,u.w,ht*.36,'bot')+panel(x,y+ht*.36,u.w,ht*.64,'top'));
+   o.push(`<rect x="${x}" y="${Y(D2.leg)}" width="${u.w}" height="${D2.leg}" fill="${s.plinth}"/>`)}
+  if(u.kind==='low'){const y=Y(D2.leg+D2.lowH),ht=D2.lowH;o.push(`<rect x="${x}" y="${y}" width="${u.w}" height="${ht}" fill="${s.body}" stroke="${ln}" stroke-width=".6"/>`);
+   if(u.t==='أدراج'){o.push(panel(x,y,u.w,ht*.22,'c')+panel(x,y+ht*.22,u.w,ht*.36,'c')+panel(x,y+ht*.58,u.w,ht*.42,'c'))}
+   else if(u.t==='فرن تحت الرخامة'){o.push(panel(x,y,u.w,ht*.18,'c')+`<rect x="${x+2}" y="${y+ht*.2}" width="${u.w-4}" height="${ht*.78}" rx="2" fill="#1d1d1d"/><rect x="${x+7}" y="${y+ht*.3}" width="${u.w-14}" height="${ht*.5}" fill="#34444c"/><rect x="${x+10}" y="${y+ht*.24}" width="${u.w-20}" height="2" fill="#bbb"/>`)}
+   else if(u.t==='غسالة صحون'){o.push(panel(x,y,u.w,ht,'top')+`<rect x="${x+3}" y="${y+2}" width="${u.w-6}" height="4" fill="#00000030"/>`)}
+   else if(u.t==='غسالة هدوم'){o.push(`<rect x="${x+2}" y="${y+2}" width="${u.w-4}" height="${ht-4}" rx="3" fill="#eef1f3" stroke="#9aa5ab"/><circle cx="${x+u.w/2}" cy="${y+ht*.58}" r="${Math.min(u.w,ht)*.28}" fill="#cfd8dc" stroke="#7d8a90" stroke-width="1.5"/>`)}
+   else if(u.t==='مفتوح'){o.push(`<rect x="${x+2}" y="${y+2}" width="${u.w-4}" height="${ht-4}" fill="#00000010"/><line x1="${x+2}" x2="${x+u.w-2}" y1="${y+ht/2}" y2="${y+ht/2}" stroke="${ln}" stroke-width=".6"/>`)}
+   else if(u.t==='بوتاجاز'){o.push(panel(x,y,u.w,ht*.2,'c')+panel(x,y+ht*.2,u.w,ht*.8,'top')+[.25,.5,.75].map(f=>`<circle cx="${x+u.w*f}" cy="${y+ht*.1}" r="1.8" fill="#333"/>`).join(''))}
+   else o.push(doors(x,y,u.w,ht,false));
+   o.push(`<rect x="${x}" y="${Y(D2.leg)}" width="${u.w}" height="${D2.leg}" fill="${s.plinth}"/>`)}
+  if(u.kind==='up'){const y=Y(D2.leg+D2.lowH+D2.topT+D2.gap+D2.upH),ht=D2.upH;
+   if(u.t==='شفاط'){o.push(`<path d="M${x+u.w*.3} ${Y(D2.ceil)} L${x+u.w*.7} ${Y(D2.ceil)} L${x+u.w*.7} ${y+ht*.55} L${x+u.w} ${y+ht} L${x} ${y+ht} L${x+u.w*.3} ${y+ht*.55}Z" fill="#c7ccd0" stroke="#8b969c" stroke-width=".7"/><rect x="${x}" y="${y+ht-4}" width="${u.w}" height="4" fill="#9aa5ab"/>`);return}
+   o.push(`<rect x="${x}" y="${y}" width="${u.w}" height="${ht}" fill="${s.body}" stroke="${ln}" stroke-width=".6"/>`);
+   if(u.t==='رف مفتوح'){for(let k=1;k<3;k++)o.push(`<line x1="${x}" x2="${x+u.w}" y1="${y+ht*k/3}" y2="${y+ht*k/3}" stroke="${ln}" stroke-width="1.2"/>`)}
+   else if(u.t==='زجاج'){const half=u.w>=80;[0,1].slice(0,half?2:1).forEach(k=>{const xx=x+(half?k*u.w/2:0),ww=half?u.w/2:u.w;o.push(`<rect x="${xx+.3}" y="${y+.3}" width="${ww-.6}" height="${ht-.6}" fill="${fr}" stroke="${ln}" stroke-width=".5"/><rect x="${xx+5}" y="${y+5}" width="${ww-10}" height="${ht-10}" fill="#bcd8e2aa"/>`+handle(xx,y,ww,ht,'bot'))})}
+   else o.push(doors(x,y,u.w,ht,true))}});
+ if(!Wd.island){const tops=it.filter(u=>u.kind==='low');if(tops.length){const a=Math.min(...tops.map(u=>u.x)),b=Math.max(...tops.map(u=>u.x+u.w));o.push(`<rect x="${a-1}" y="${Y(t0)}" width="${b-a+2}" height="${D2.topT}" fill="${s.top}" stroke="#00000030" stroke-width=".5"/>`);
+  const sk=tops.find(u=>u.t==='حوض');if(sk)o.push(`<path d="M${sk.x+sk.w/2-2} ${Y(t0)} v-14 q0 -6 6 -6 h6" fill="none" stroke="#9aa5ab" stroke-width="2.2" stroke-linecap="round"/>`)}}
+ else{const tops=it;if(tops.length){const a=Math.min(...tops.map(u=>u.x)),b=Math.max(...tops.map(u=>u.x+u.w));o.push(`<rect x="${a-10}" y="${Y(t0)}" width="${b-a+20}" height="${D2.topT}" fill="${s.top}"/>`)}}
+ // أبعاد
+ const dimY=H+22;it.filter(u=>u.kind!=='up').forEach(u=>o.push(`<line x1="${u.x}" x2="${u.x+u.w}" y1="${dimY}" y2="${dimY}" stroke="#5b6b73" stroke-width=".6" marker-start="url(#da)" marker-end="url(#da)"/><text x="${u.x+u.w/2}" y="${dimY-3}" font-size="7" text-anchor="middle" fill="#0F2A37" font-family="Cairo">${u.w}</text>`));
+ o.push(`<line x1="0" x2="${w.len}" y1="${dimY+16}" y2="${dimY+16}" stroke="#0F2A37" stroke-width=".8" marker-start="url(#da)" marker-end="url(#da)"/><text x="${w.len/2}" y="${dimY+13}" font-size="9" font-weight="700" text-anchor="middle" fill="#0F2A37" font-family="Cairo">${Wd.island?'الجزيرة':'حيطة '+(wi+1)}: ${w.len} سم</text>`);
+ const hx=-14;[[0,D2.leg+D2.lowH+D2.topT,'الرخامة'],[D2.leg+D2.lowH+D2.topT,D2.leg+D2.lowH+D2.topT+D2.gap,''],[D2.leg+D2.lowH+D2.topT+D2.gap,D2.leg+D2.lowH+D2.topT+D2.gap+D2.upH,'']].forEach(([a,b])=>o.push(`<line x1="${hx}" x2="${hx}" y1="${Y(a)}" y2="${Y(b)}" stroke="#5b6b73" stroke-width=".6" marker-start="url(#da)" marker-end="url(#da)"/><text x="${hx-3}" y="${(Y(a)+Y(b))/2}" font-size="7" text-anchor="end" fill="#0F2A37" font-family="Cairo">${b-a}</text>`));
+ return `<svg viewBox="-46 -6 ${L+60} ${H+56}" style="width:100%;max-height:${sc||420}px;background:#fff;border-radius:14px;border:1px solid var(--line)"><defs><marker id="da" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0 0L5 2.5 0 5z" fill="#5b6b73"/></marker></defs>${o.join('')}</svg>`}
+
+/* ---------- المسقط (من فوق) + مثلث الشغل ---------- */
+function dsPlan(d){const D2=d.dims,P=dsPlace(d),o=[],pts=[];let mnx=0,mnz=0,mxx=0,mxz=0;const add=(X,Z)=>{mnx=Math.min(mnx,X);mxx=Math.max(mxx,X);mnz=Math.min(mnz,Z);mxz=Math.max(mxz,Z)};
+ const poly=(W,x,z,w,dp)=>{const c=[[x,z],[x+w,z],[x+w,z+dp],[x,z+dp]].map(([a,b])=>toWorld(W,a,b));c.forEach(p=>add(p.X,p.Z));return c.map(p=>p.X.toFixed(1)+','+p.Z.toFixed(1)).join(' ')};
+ P.walls.forEach(W=>{if(W.island)return;const a=toWorld(W,0,-6),b=toWorld(W,W.len,-6);add(a.X,a.Z);add(b.X,b.Z);o.push(`<line x1="${a.X}" y1="${a.Z}" x2="${b.X}" y2="${b.Z}" stroke="#0F2A37" stroke-width="12" stroke-linecap="square"/>`)});
+ P.items.forEach(u=>{const W=P.walls.find(x=>x.i===u.wi),dp=u.kind==='up'?D2.upD:D2.dep,col=u.kind==='tall'?'#d9e7ea':u.kind==='up'?'none':'#f3efe8';
+  o.push(`<polygon points="${poly(W,u.x,0,u.w,dp)}" fill="${col}" stroke="${u.kind==='up'?'#8aa':'#5b6b73'}" stroke-width="${u.kind==='up'?1:1.2}" ${u.kind==='up'?'stroke-dasharray="5 4"':''}/>`);
+  const c=toWorld(W,u.x+u.w/2,dp/2);if(u.kind!=='up'){let sym='';if(u.t==='حوض')sym=`<rect x="${c.X-u.w*.3}" y="${c.Z-dp*.25}" width="${u.w*.6}" height="${dp*.5}" rx="6" fill="#cfe3ea" stroke="#5b8a99"/>`;else if(u.t==='بوتاجاز')sym=[[-1,-1],[1,-1],[-1,1],[1,1]].map(([a,b])=>`<circle cx="${c.X+a*u.w*.2}" cy="${c.Z+b*dp*.2}" r="${Math.min(u.w,dp)*.11}" fill="none" stroke="#333" stroke-width="1.5"/>`).join('');else if(u.t==='تلاجة')sym=`<text x="${c.X}" y="${c.Z+4}" font-size="11" text-anchor="middle" font-family="Cairo" fill="#0b4e57">تلاجة</text>`;else sym=`<text x="${c.X}" y="${c.Z+3}" font-size="8" text-anchor="middle" font-family="Cairo" fill="#5b6b73">${u.w}</text>`;o.push(sym)}
+  if(['حوض','بوتاجاز','تلاجة'].includes(u.t))pts.push([u.t,c])});
+ const g=t=>(pts.find(p=>p[0]===t)||[])[1];const A=g('حوض'),B=g('بوتاجاز'),Cc=g('تلاجة');if(A&&B&&Cc){o.push(`<polygon points="${[A,B,Cc].map(p=>p.X+','+p.Z).join(' ')}" fill="#c9971f22" stroke="#c9971f" stroke-width="2" stroke-dasharray="8 5"/>`);[[A,B],[B,Cc],[Cc,A]].forEach(([p,q])=>o.push(`<text x="${(p.X+q.X)/2}" y="${(p.Z+q.Z)/2}" font-size="11" font-weight="700" text-anchor="middle" fill="#8a6200" font-family="Cairo">${(Math.hypot(p.X-q.X,p.Z-q.Z)/100).toFixed(2)} م</text>`))}
+ const pad=30;return `<svg viewBox="${mnx-pad} ${mnz-pad} ${mxx-mnx+pad*2} ${mxz-mnz+pad*2+40}" style="width:100%;max-height:420px;background:repeating-linear-gradient(0deg,#f7fafa,#f7fafa 19px,#eef3f4 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,#eef3f4 20px);border-radius:14px;border:1px solid var(--line)">${o.join('')}</svg>`}
+
+/* ---------- 3D (three.js) ---------- */
+async function ds3D(d,el){el.innerHTML='<div class="empty">⏳ بيحمّل الـ3D…</div>';
+ try{await loadJS('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');await loadJS('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js')}catch(e){el.innerHTML=`<div class="empty">${esc(e.message)}</div>`;return}
+ if(DS.three){try{DS.three.stop()}catch(e){}}
+ const T3=window.THREE,D2=d.dims,s=d.style,P=dsPlace(d),k=.01,W0=el.clientWidth||600,H0=Math.max(320,Math.min(560,W0*.72));el.innerHTML='';
+ const r=new T3.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));r.setSize(W0,H0);r.shadowMap.enabled=true;r.shadowMap.type=T3.PCFSoftShadowMap;el.appendChild(r.domElement);r.domElement.style.borderRadius='14px';
+ const sc=new T3.Scene();sc.background=new T3.Color('#eef2f3');const cam=new T3.PerspectiveCamera(45,W0/H0,.05,100);
+ sc.add(new T3.HemisphereLight(0xffffff,0x8a7a66,.75));const sun=new T3.DirectionalLight(0xffffff,.75);sun.position.set(3,6,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sc.add(sun);
+ const mat=(c,o)=>new T3.MeshStandardMaterial(Object.assign({color:c,roughness:s.gloss?.18:.62,metalness:0},o||{}));const M={body:mat(s.body),front:mat(s.front),top:mat(s.top,{roughness:.35}),plinth:mat(s.plinth),hc:mat(s.hc,{metalness:.6,roughness:.3}),steel:mat('#c9ced2',{metalness:.7,roughness:.3}),dark:mat('#1d1d1d',{roughness:.3}),glass:mat('#9cc3d0',{transparent:true,opacity:.45}),wall:mat(s.wall,{roughness:.95}),floor:mat(s.floor,{roughness:.8})};
+ const grp=new T3.Group();sc.add(grp);
+ const box=(w,h,dp,m,x,y,z,parent)=>{const g=new T3.Mesh(new T3.BoxGeometry(w*k,h*k,dp*k),m);g.position.set(x*k,y*k,z*k);g.castShadow=true;g.receiveShadow=true;(parent||grp).add(g);return g};
+ let mnx=1e9,mxx=-1e9,mnz=1e9,mxz=-1e9;
+ P.walls.forEach(W=>{const wg=new T3.Group();wg.position.set(W.ox*k,0,W.oz*k);wg.rotation.y=W.rot;grp.add(wg);
+  if(!W.island){box(W.len,D2.ceil,4,M.wall,W.len/2,D2.ceil/2,-2,wg).castShadow=false}
+  const its=P.items.filter(u=>u.wi===W.i);
+  its.forEach(u=>{const x=u.x+u.w/2;const handle=(cx,cy,cz,vert,len)=>{if(s.handle==='push')return;if(s.handle==='knob'){const m2=new T3.Mesh(new T3.SphereGeometry(1.4*k,12,12),M.hc);m2.position.set(cx*k,cy*k,(cz+1.4)*k);wg.add(m2);return}if(s.handle==='gola')return;box(vert?1.4:len,vert?len:1.4,1.6,M.hc,cx,cy,cz+1.4,wg)};
+   const fronts=(x0,y0,w,h,z,up,split)=>{const n=split?split:(w>=80?2:1),fw=w/n;for(let i=0;i<n;i++){const cx=x0+fw*i+fw/2;box(fw-.4,h-.4,1.8,M.front,cx,y0+h/2,z+.9,wg);if(s.door==='shaker'){box(fw-10,h-10,.6,mat(s.front,{roughness:.8}),cx,y0+h/2,z+1.9,wg)}
+     if(s.handle==='gola'){box(fw-.4,1.6,.8,M.dark,cx,up?y0+1:y0+h-1,z+2.2,wg)}else handle(n===2?(i===0?x0+fw-4:x0+fw+4):x0+fw-4,up?y0+5:y0+h/2,z+1.8,true,14)}};
+   if(u.kind==='low'){const y0=D2.leg,h=D2.lowH,dp=D2.dep;box(u.w-.2,D2.leg,dp-6,M.plinth,x,D2.leg/2,(dp-6)/2-1,wg);box(u.w-.2,h,dp-2,M.body,x,y0+h/2,(dp-2)/2,wg);const z=dp-2;
+    if(u.t==='أدراج'){[[0,.42],[.42,.36],[.78,.22]].forEach(([a,b])=>{box(u.w-.4,h*b-.4,1.8,M.front,x,y0+h*a+h*b/2,z+.9,wg);if(s.handle==='gola')box(u.w-.4,1.6,.8,M.dark,x,y0+h*(a+b)-1,z+2.2,wg);else handle(x,y0+h*(a+b)-5,z+1.8,false,16)})}
+    else if(u.t==='فرن تحت الرخامة'){box(u.w-.4,h*.18,1.8,M.front,x,y0+h-h*.09,z+.9,wg);box(u.w-2,h*.8,1.6,M.dark,x,y0+h*.4,z+.9,wg);box(u.w-12,h*.45,.4,M.glass,x,y0+h*.42,z+1.9,wg)}
+    else if(u.t==='غسالة هدوم'){box(u.w-.6,h-.6,1.6,mat('#eef1f3'),x,y0+h/2,z+.9,wg);const ring=new T3.Mesh(new T3.TorusGeometry(Math.min(u.w,h)*.24*k,1.6*k,10,32),M.steel);ring.position.set(x*k,(y0+h*.45)*k,(z+2)*k);wg.add(ring)}
+    else if(u.t==='مفتوح'){box(u.w-4,1.8,dp-6,M.body,x,y0+h/2,(dp-6)/2,wg)}
+    else fronts(u.x,y0,u.w,h,z,false);
+    const ty=D2.leg+D2.lowH+D2.topT/2;box(u.w+(W.island?0:0),D2.topT,dp+2,M.top,x,ty,(dp+2)/2,wg);
+    if(u.t==='حوض'){box(u.w*.6,.6,dp*.5,M.steel,x,ty+D2.topT/2+.1,dp*.45,wg);const ft=new T3.Mesh(new T3.CylinderGeometry(1*k,1*k,26*k,10),M.steel);ft.position.set(x*k,(ty+15)*k,8*k);wg.add(ft);box(1.6,1.6,14,M.steel,x,ty+27,14,wg)}
+    if(u.t==='بوتاجاز'){box(u.w*.85,.8,dp*.72,M.dark,x,ty+D2.topT/2+.2,dp*.5,wg);[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>{const c=new T3.Mesh(new T3.CylinderGeometry(u.w*.08*k,u.w*.08*k,.8*k,20),M.steel);c.position.set((x+a*u.w*.2)*k,(ty+D2.topT/2+.8)*k,(dp*.5+b*dp*.16)*k);wg.add(c)})}
+    mnx=Math.min(mnx,u.x);mxx=Math.max(mxx,u.x+u.w)}
+   if(u.kind==='up'){const y0=D2.leg+D2.lowH+D2.topT+D2.gap,h=D2.upH,dp=D2.upD;
+    if(u.t==='شفاط'){box(u.w,4,dp+14,M.steel,x,y0+h-2,(dp+14)/2,wg);const ch=new T3.Mesh(new T3.BoxGeometry(u.w*.36*k,(D2.ceil-y0-h+4)*k,dp*.6*k),M.steel);ch.position.set(x*k,((y0+h+D2.ceil)/2)*k,dp*.35*k);wg.add(ch);return}
+    box(u.w-.2,h,dp-2,M.body,x,y0+h/2,(dp-2)/2,wg);const z=dp-2;
+    if(u.t==='رف مفتوح'){[1,2].forEach(i=>box(u.w-2,1.8,dp-4,M.front,x,y0+h*i/3,(dp-4)/2,wg))}else if(u.t==='زجاج'){const n=u.w>=80?2:1,fw=u.w/n;for(let i=0;i<n;i++){const cx=u.x+fw*i+fw/2;box(fw-.4,h-.4,1,M.front,cx,y0+h/2,z+.5,wg);box(fw-10,h-10,1.2,M.glass,cx,y0+h/2,z+1,wg)}}else fronts(u.x,y0,u.w,h,z,true)}
+   if(u.kind==='tall'){const h=D2.tallH,dp=D2.dep;box(u.w-.2,D2.leg,dp-6,M.plinth,x,D2.leg/2,(dp-6)/2-1,wg);box(u.w-.2,h,dp,M.body,x,D2.leg+h/2,dp/2,wg);
+    if(u.t==='تلاجة'){box(u.w-2,h-2,2,M.steel,x,D2.leg+h/2,dp+1,wg);box(u.w-2,.6,2.4,M.dark,x,D2.leg+h*.62,dp+1.2,wg);box(1.6,30,2,M.dark,u.x+u.w-6,D2.leg+h*.75,dp+3,wg);box(1.6,40,2,M.dark,u.x+u.w-6,D2.leg+h*.4,dp+3,wg)}
+    else if(u.t==='فرن وميكرويف'){fronts(u.x,D2.leg+h*.72,u.w,h*.28,dp,false,1);box(u.w-2,h*.2,1.6,M.dark,x,D2.leg+h*.6,dp+.8,wg);box(u.w-2,h*.18,1.6,M.dark,x,D2.leg+h*.38,dp+.8,wg);fronts(u.x,D2.leg,u.w,h*.28,dp,false,1)}
+    else{fronts(u.x,D2.leg,u.w,h*.38,dp,false,1);fronts(u.x,D2.leg+h*.38,u.w,h*.62,dp,true,1)}}});
+  const b=new T3.Box3().setFromObject(wg);mnx=Math.min(mnx,b.min.x/k);mxx=Math.max(mxx,b.max.x/k);mnz=Math.min(mnz,b.min.z/k);mxz=Math.max(mxz,b.max.z/k)});
+ const cx=(mnx+mxx)/2,cz=(mnz+mxz)/2,span=Math.max(mxx-mnx,mxz-mnz,200);
+ const fl=new T3.Mesh(new T3.PlaneGeometry((span+400)*k,(span+400)*k),M.floor);fl.rotation.x=-Math.PI/2;fl.position.set(cx*k,0,cz*k);fl.receiveShadow=true;sc.add(fl);
+ cam.position.set((cx+span*.15)*k,(D2.ceil*.75)*k,(cz+span*1.05+150)*k);const ctl=new T3.OrbitControls(cam,r.domElement);ctl.target.set(cx*k,(D2.lowH+20)*k,cz*k);ctl.enableDamping=true;ctl.maxPolarAngle=Math.PI*.49;ctl.minDistance=.8;ctl.maxDistance=12;ctl.update();
+ let run=true;const loop=()=>{if(!run)return;ctl.update();r.render(sc,cam);requestAnimationFrame(loop)};loop();
+ DS.three={stop:()=>{run=false;r.dispose()},shot:()=>{r.render(sc,cam);return r.domElement.toDataURL('image/png')},view:v=>{const dist=span*1.05+150;if(v==='front')cam.position.set(cx*k,(D2.lowH+60)*k,(cz+dist)*k);if(v==='top')cam.position.set(cx*k,(dist*1.5)*k,(cz+1)*k);if(v==='iso')cam.position.set((cx+dist*.7)*k,(D2.ceil)*k,(cz+dist*.8)*k);ctl.update()}}}
+
+/* ---------- المواصفات والكميات ---------- */
+function dsSpec(d){const D2=d.dims,it=dsPlace(d).items;let doors=0,drawers=0,hinges=0,legs=0,shelves=0,handles=0,low=0,up=0,tall=0,gola=0;const hingeOf=h=>h<=95?2:h<=160?3:4;
+ it.forEach(u=>{if(u.kind==='low'){low+=u.w;legs+=4;if(u.t==='أدراج'){drawers+=3;handles+=3}else if(!isDoorless(u.t)&&u.t!=='بوتاجاز'){const n=u.w>=80?2:1;doors+=n;hinges+=n*hingeOf(D2.lowH);handles+=n;if(u.t!=='حوض')shelves++}else if(u.t==='بوتاجاز'){drawers+=1;doors+=1;hinges+=2;handles+=2}}
+  if(u.kind==='up'&&u.t!=='شفاط'){up+=u.w;if(u.t!=='رف مفتوح'){const n=u.w>=80?2:1;doors+=n;hinges+=n*hingeOf(D2.upH);handles+=n}shelves+=D2.upH>=85?2:1}
+  if(u.kind==='tall'){tall++;legs+=4;if(u.t!=='تلاجة'){doors+=2;hinges+=hingeOf(D2.tallH*.38)+hingeOf(D2.tallH*.62);handles+=2;shelves+=4}}});
+ if(d.style.handle==='gola'){gola=Math.ceil((low+up)/100*1.1);handles=0}if(d.style.handle==='push')handles=0;
+ const c=S.cfg.kit,price=Math.round(low/100*c.lowP+up/100*c.upP+tall*c.tallP);return {doors,drawers,hinges,legs,shelves,handles,gola,lowM:low/100,upM:up/100,tall,top:Math.ceil(low/10)/10,slides:drawers,price}}
+function dsAccMsg(d){const q=dsSpec(d),H=HANDLES[d.style.handle];return `السلام عليكم ${S.cfg.acc.name} 👋\nطلب إكسسوار مطبخ من ${S.cfg.name}${d.proj?' — مشروع '+d.proj:''}:\n• مفصلات ${d.style.handle==='push'?'Push (ضغط)':'هيدروليك'}: ${q.hinges}\n• مجاري أدراج ${Math.max(25,Math.floor((d.dims.dep-6)/5)*5)} سم: ${q.slides} جوز\n${q.handles?`• مقابض (${H}): ${q.handles}\n`:''}${q.gola?`• بروفيل جولا: ${q.gola} متر\n`:''}• رجول: ${q.legs}\n• كعوب رف: ${q.shelves*4}\n${dsPlace(d).items.some(u=>u.t==='ركنة سحرية')?'• ركنة سحرية: 1\n':''}${dsPlace(d).items.filter(u=>u.t==='كارجو'||u.t==='كارجو طويل').length?`• كارجو: ${dsPlace(d).items.filter(u=>u.t==='كارجو'||u.t==='كارجو طويل').length}\n`:''}${dsPlace(d).items.some(u=>u.t==='شفاط')?'• شفاط (المقاس حسب الوحدة)\n':''}محتاجين الأسعار والمتاح 🙏`}
+
+/* ---------- الشاشات ---------- */
+V.studio=()=>{const L=D('designs');return `<h1><span>${ic('studio')} استوديو التصميم 3D</span><span class="row" style="flex:0 0 auto"><button onclick="dsNewUI()">${ic('plus')}تصميم جديد</button><button class="s" onclick="dsFromKit()">${ic('kitchen')}من حاسبة المطبخ</button></span></h1>
+ <div class="hero" style="padding:16px 20px"><b style="font-size:16px">صمّم المطبخ بالمقاس: رسم واجهات احترافي، عرض 3D تلفّه بإيدك، مسقط من فوق بمثلث الشغل، ١٠ أنماط جاهزة، وكل وحدة تتعدّل — والسيستم بيراجع التصميم بقواعد التصميم العالمية ويقترح عليك.</b></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${L.map(d=>`<div class="card" style="cursor:pointer;padding:10px" onclick="DS.cur=${d.id};nav('design')">${dsElev(d,0,150)}<div class="row" style="margin-top:8px"><b style="flex:1">${esc(d.name)}</b><span class="tag">${esc(d.styleName)}</span></div><small style="color:var(--mut)">${esc(d.created)} · ${d.walls.length} حيطة · ${{line:'مستقيم',L:'حرف L',U:'حرف U',par:'متوازي',island:'بجزيرة'}[d.layout]||''}${d.proj?' · '+esc(d.proj):''}</small></div>`).join('')||'<div class="empty">لسه مفيش تصاميم — ابدأ بتصميم جديد أو من حاسبة المطبخ</div>'}</div>`};
+function dsNewUI(){openM(`<h3 style="margin:0 0 8px">${ic('studio')} تصميم جديد</h3><label>شكل المطبخ</label><select id="dnL">${[['line','مستقيم (حيطة واحدة)'],['L','حرف L (حيطتين)'],['U','حرف U (٣ حيطان)'],['par','متوازي (حيطتين قصاد بعض)'],['island','بجزيرة في النص']].map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select>
+ <label>أطوال الحيطان (سم) — افصل بفاصلة</label><input id="dnW" value="360, 240" inputmode="decimal"><label>اسم التصميم</label><input id="dnN" placeholder="مثلاً: مطبخ أ. محمد"><label>النمط</label><select id="dnS">${Object.keys(STY).map(k=>`<option>${k}</option>`).join('')}</select>
+ <div class="row" style="margin-top:12px"><button onclick="dsCreate()">${ic('check')}ابدأ التصميم</button></div>`)}
+function dsCreate(){const lay=$('#dnL').value;let W=ndg($('#dnW').value).split(/[,،\s]+/).map(Number).filter(x=>x>0);if(!W.length)return toast('اكتب طول حيطة واحدة على الأقل','r');const need={line:1,L:2,U:3,par:2,island:2}[lay];while(W.length<need)W.push(lay==='island'?Math.min(240,W[0]*.6):240);W=W.slice(0,lay==='line'?1:lay==='U'?3:2);
+ const walls=W.map((len,i)=>{const isl=lay==='island'&&i===1,base=(i>0&&(lay==='L'||lay==='U'))?DSD.dep:0,r=ktSplit(len-base);const low=r.u.map(w=>({t:'وحدة',w})),up=isl?[]:r.u.map(w=>({t:'علوي',w}));return {len,low,up,tall:[]}});
+ const w0=walls[0];if(w0.low[0])w0.low[0].t='حوض';const mid=Math.floor(w0.low.length/2);if(w0.low[mid]&&mid>0){w0.low[mid].t='بوتاجاز';if(w0.up[mid])w0.up[mid].t='شفاط'}if(w0.low[mid+1])w0.low[mid+1].t='أدراج';
+ const lastW=walls[lay==='island'?0:walls.length-1];if(lastW.low.length>2){const u=lastW.low.pop();lastW.up.pop();lastW.tall.push({t:'تلاجة',w:u.w>=60?Math.max(70,u.w):70})}
+ const d=dsNew(walls,lay,$('#dnN').value.trim());const st=$('#dnS').value;d.styleName=st;d.style=Object.assign({},STY[st]);save();closeM();DS.cur=d.id;nav('design')}
+V.design=()=>{const d=dsGet();if(!d)return '<div class="empty">التصميم مش موجود — <a onclick="nav(\'studio\')" style="cursor:pointer;color:var(--pri)">ارجع للاستوديو</a></div>';const T=dsTips(d),q=dsSpec(d),bad=T.filter(t=>t[0]==='r').length,warn=T.filter(t=>t[0]==='y').length;
+ const tab=(k,l)=>`<button class="${DS.tab===k?'':'s'}" onclick="DS.tab='${k}';dsRe()">${l}</button>`;
+ return `<h1><span>${ic('studio')} <input value="${esc(d.name)}" style="font:inherit;font-weight:800;border:0;background:transparent;width:min(60vw,320px)" onchange="dsGet().name=this.value;save()"></span><span class="row" style="flex:0 0 auto"><button class="s" onclick="nav('studio')">${ic('studio')}كل التصاميم</button></span></h1>
+ <div class="row" style="gap:6px;margin-bottom:10px">${tab('3d','🧊 3D')}${tab('2d','📐 الواجهات')}${tab('plan','🗺️ المسقط')}${tab('spec','📋 المواصفات والسعر')}</div>
+ <div class="card" style="padding:10px" id="dsView"></div>
+ <div class="card"><b>${ic('palette')} النمط والألوان</b><div class="chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${Object.keys(STY).map(k=>`<button class="${d.styleName===k?'':'s'}" style="min-height:34px;padding:4px 10px" onclick="dsStyle('${k}')"><i style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${STY[k].front};border:1px solid #0002;vertical-align:middle;margin-inline-end:4px"></i>${k}</button>`).join('')}</div>
+ <div class="row" style="margin-top:8px">${[['front','لون الضلف'],['body','لون الجسم'],['top','الرخامة'],['wall','الحيطة'],['floor','الأرضية'],['hc','لون المقبض']].map(([k,l])=>`<div style="flex:0 0 120px"><label>${l}</label><input type="color" value="${d.style[k]}" oninput="dsGet().style['${k}']=this.value;dsGet().styleName='مخصص';save();dsRe(1)"></div>`).join('')}
+ <div><label>المقبض</label><select onchange="dsGet().style.handle=this.value;save();dsRe(1)">${Object.entries(HANDLES).map(([k,l])=>`<option value="${k}" ${d.style.handle===k?'selected':''}>${l}</option>`).join('')}</select></div><div><label>شكل الضلفة</label><select onchange="dsGet().style.door=this.value;save();dsRe(1)"><option value="flat" ${d.style.door!=='shaker'?'selected':''}>سادة (مودرن)</option><option value="shaker" ${d.style.door==='shaker'?'selected':''}>بإطار (كلاسيك/شيكر)</option></select></div></div></div>
+ <div class="card"><b>${ic('ruler')} المقاسات</b><div class="row" style="margin-top:6px">${[['lowH','ارتفاع السفلي'],['dep','عمق السفلي'],['upH','ارتفاع العلوي'],['upD','عمق العلوي'],['gap','بين الرخامة والعلوي'],['ceil','ارتفاع السقف'],['tallH','الدولاب الطويل'],['leg','الرجول']].map(([k,l])=>`<div style="flex:0 0 110px"><label>${l}</label><input inputmode="decimal" value="${d.dims[k]}" oninput="dsGet().dims['${k}']=+ndg(this.value)||0;save();dsRe(1)"></div>`).join('')}
+ <div><label>شكل المطبخ</label><select onchange="dsGet().layout=this.value;save();dsRe(1)">${[['line','مستقيم'],['L','حرف L'],['U','حرف U'],['par','متوازي'],['island','بجزيرة (آخر حيطة = الجزيرة)']].map(([k,l])=>`<option value="${k}" ${d.layout===k?'selected':''}>${l}</option>`).join('')}</select></div></div></div>
+ <div id="dsWalls">${dsWallsUI(d)}</div>
+ <div class="card"><b>${ic('bulb')} مراجعة التصميم والاقتراحات</b> ${bad?`<span class="tag r">${bad} مشكلة</span>`:''}${warn?` <span class="tag y">${warn} تنبيه</span>`:''}<div id="dsTips" style="margin-top:8px">${dsTipsHtml(T)}</div></div>
+ <div class="card"><div class="row"><button onclick="dsShare()">${ic('wa')}ابعت التصميم للعميل</button><button class="s" onclick="dsPrint()">${ic('print')}طباعة / PDF</button><button class="s" onclick="accWa(dsAccMsg(dsGet()))">${ic('send')}اطلب الإكسسوار من ${esc(S.cfg.acc.name)}</button><button class="s" onclick="dsLink()">${ic('link')}اربطه بمشروع</button><button class="d" onclick="ask('حذف التصميم ده؟',()=>{S.d.designs=D('designs').filter(x=>x.id!==${d.id});save();nav('studio')})">${ic('trash')}</button></div></div>`};
+V.design.after=()=>dsView();
+const dsTipsHtml=T=>T.map(([l,m])=>`<div class="alert" style="margin:4px 0;padding:8px 10px;border-radius:10px;background:${l==='r'?'#FFE4E8':l==='y'?'#FEF3C7':l==='g'?'#e3f4ec':'#eef5f8'};color:${l==='r'?'#9b1c31':l==='y'?'#92400E':l==='g'?'#0b6b45':'#0b4e57'};font-size:13.5px;font-weight:600">${l==='r'?'⛔':l==='y'?'⚠️':l==='g'?'✅':'💡'} ${esc(m)}</div>`).join('');
+function dsWallsUI(d){return d.walls.map((w,i)=>{const isl=d.layout==='island'&&i===d.walls.length-1&&i>0;const row=(kind,l)=>`<div style="margin-top:6px"><small style="color:var(--mut);font-weight:700">${l}</small><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">${(w[kind]||[]).map((u,k)=>`<button class="s" style="min-height:34px;padding:3px 9px;font-size:13px" onclick="dsUnit(${i},'${kind}',${k})">${esc(u.t)} <b>${u.w}</b></button>`).join('')}<button style="min-height:34px;padding:3px 10px" onclick="dsAdd(${i},'${kind}')">${ic('plus')}</button></div></div>`;
+ const run=w.tall.reduce((a,u)=>a+u.w,0)+w.low.reduce((a,u)=>a+u.w,0)+((i>0&&(d.layout==='L'||d.layout==='U'))?d.dims.dep:0),left=w.len-run;
+ return `<div class="card"><div class="row" style="align-items:center"><b style="flex:0 0 auto">${isl?'🏝️ الجزيرة':'حيطة '+(i+1)}</b><div style="flex:0 0 120px"><input inputmode="decimal" value="${w.len}" onchange="dsGet().walls[${i}].len=+ndg(this.value)||w.len;save();dsRe()"></div><span class="tag ${left<0?'r':left>=30?'y':''}">${left<0?'زيادة '+(-left)+' سم':left?'فاضل '+left+' سم':'مظبوطة ✓'}</span><span style="flex:1"></span>${d.walls.length>1?`<button class="d" style="min-height:32px;padding:2px 8px" onclick="ask('حذف الحيطة دي؟',()=>{dsGet().walls.splice(${i},1);save();dsRe()})">${ic('trash')}</button>`:''}</div>
+ ${isl?'':row('tall','دواليب طويلة')}${row('low',isl?'وحدات الجزيرة':'السفلي')}${isl?'':row('up','العلوي')}</div>`}).join('')+`<button class="s" style="margin-bottom:12px" onclick="dsGet().walls.push({len:240,low:[{t:'وحدة',w:60}],up:[{t:'علوي',w:60}],tall:[]});save();dsRe()">${ic('plus')}ضيف حيطة</button>`}
+function dsUnit(i,kind,k){const d=dsGet(),u=d.walls[i][kind][k];openM(`<h3 style="margin:0 0 8px">تعديل وحدة</h3><label>النوع</label><select id="duT">${UT[kind].map(t=>`<option ${t===u.t?'selected':''}>${t}</option>`).join('')}</select><label>العرض (سم)</label><input id="duW" inputmode="decimal" value="${u.w}"><div class="chips" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${[30,40,45,50,60,70,80,90,100,120].map(v=>`<button class="s" style="min-height:30px;padding:2px 9px" onclick="$('#duW').value=${v}">${v}</button>`).join('')}</div>
+ <div class="row" style="margin-top:12px"><button onclick="const d=dsGet(),u=d.walls[${i}]['${kind}'][${k}];u.t=$('#duT').value;u.w=+ndg($('#duW').value)||u.w;save();closeM();dsRe()">${ic('check')}حفظ</button><button class="s" onclick="dsMove(${i},'${kind}',${k},-1)">→ قبلها</button><button class="s" onclick="dsMove(${i},'${kind}',${k},1)">بعدها ←</button><button class="s" onclick="const a=dsGet().walls[${i}]['${kind}'];a.splice(${k}+1,0,Object.assign({},a[${k}]));save();closeM();dsRe()">${ic('copy')}تكرار</button><button class="d" onclick="dsGet().walls[${i}]['${kind}'].splice(${k},1);save();closeM();dsRe()">${ic('trash')}</button></div>`)}
+function dsMove(i,kind,k,dir){const a=dsGet().walls[i][kind],j=k+dir;if(j<0||j>=a.length)return;[a[k],a[j]]=[a[j],a[k]];save();closeM();dsRe()}
+function dsAdd(i,kind){dsGet().walls[i][kind].push({t:UT[kind][0],w:60});save();dsRe();setTimeout(()=>dsUnit(i,kind,dsGet().walls[i][kind].length-1),50)}
+function dsStyle(k){const d=dsGet();d.styleName=k;d.style=Object.assign({},STY[k]);save();dsRe()}
+let _dsT;function dsRe(light){clearTimeout(_dsT);_dsT=setTimeout(()=>{if(LH!=='design')return;if(light){dsView();const d=dsGet(),t=$('#dsTips');if(t)t.innerHTML=dsTipsHtml(dsTips(d));return}const y=window.scrollY;go();window.scrollTo(0,y)},light?250:0)}
+function dsView(){const d=dsGet(),el=$('#dsView');if(!d||!el)return;if(DS.three&&DS.tab!=='3d'){try{DS.three.stop()}catch(e){}DS.three=null}
+ if(DS.tab==='3d'){el.innerHTML='<div id="ds3"></div><div class="row" style="margin-top:8px;gap:6px"><button class="s" onclick="DS.three&&DS.three.view(\'iso\')">🔄 منظور</button><button class="s" onclick="DS.three&&DS.three.view(\'front\')">⬛ من قدام</button><button class="s" onclick="DS.three&&DS.three.view(\'top\')">⬆️ من فوق</button><small style="color:var(--mut);align-self:center">لفّ بصباع واحد، قرّب بصباعين</small></div>';ds3D(d,$('#ds3'))}
+ else if(DS.tab==='2d')el.innerHTML=d.walls.map((w,i)=>dsElev(d,i)).join('<div style="height:10px"></div>');
+ else if(DS.tab==='plan')el.innerHTML=dsPlan(d)+'<p style="font-size:12px;color:var(--mut);margin:6px 0 0">المسقط من فوق — المتقطع = العلوي · المثلث الدهبي = مثلث الشغل (حوض ↔ بوتاجاز ↔ تلاجة)</p>';
+ else{const q=dsSpec(d);el.innerHTML=`<div class="grid">${KQ('ruler','سفلي',num(q.lowM.toFixed(2))+' م','#087f8c')}${KQ('ruler','علوي',num(q.upM.toFixed(2))+' م','#0b6e99')}${KQ('box','دواليب طويلة',num(q.tall),'#5b6b73')}${KQ('ruler','رخامة',num(q.top)+' م طولي','#b5476b')}</div><div class="grid">${KQ('wrench','مفصلات',num(q.hinges),'#c9971f')}${KQ('list','مجاري أدراج',num(q.slides)+' جوز','#c9971f')}${KQ('star',q.gola?'بروفيل جولا':'مقابض',q.gola?num(q.gola)+' م':num(q.handles),'#c9971f')}${KQ('cube','رجول',num(q.legs),'#c9971f')}${KQ('layers','رفوف',num(q.shelves),'#c9971f')}</div><div class="card" style="background:var(--soft)"><b>السعر التقديري: ${money(q.price)}</b><br><small>محسوب من أسعار المتر في «حاسبة المطبخ» (سفلي ${money(S.cfg.kit.lowP)} · علوي ${money(S.cfg.kit.upP)} · طويل ${money(S.cfg.kit.tallP)}) — النهائي بعد المعاينة واختيار الخامات</small></div>`}}
+function dsLink(){const d=dsGet();openM(`<h3 style="margin:0 0 8px">اربط التصميم بمشروع</h3>${projSel('dsP',d.proj)}<div class="row" style="margin-top:12px"><button onclick="dsGet().proj=$('#dsP').value;save();closeM();toast('اتربط','g');dsRe()">${ic('check')}حفظ</button></div>`)}
+async function dsImages(){const d=dsGet(),imgs=[];if(DS.three&&DS.tab==='3d')try{imgs.push(DS.three.shot())}catch(e){}
+ for(let i=0;i<d.walls.length;i++){const svg=dsElev(d,i).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');const im=new Image();await new Promise(ok=>{im.onload=ok;im.onerror=ok;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});const c=document.createElement('canvas');c.width=1400;c.height=Math.round(1400*(im.height||600)/(im.width||1200))||800;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);try{x.drawImage(im,0,0,c.width,c.height)}catch(e){}imgs.push(c.toDataURL('image/png'))}
+ return imgs}
+async function dsShare(){const d=dsGet(),p=D('proj').find(x=>x.code==d.proj),c=p?cust(p.cid):{phone:''},q=dsSpec(d);const txt=`السلام عليكم${c.name&&c.name!=='—'?' يا '+c.name:''} 👋\nده تصميم مطبخك من ${S.cfg.name} (${d.styleName}):\n• ${d.walls.map(w=>w.len).join(' + ')} سم — ${{line:'مستقيم',L:'حرف L',U:'حرف U',par:'متوازي',island:'بجزيرة'}[d.layout]}\n• سفلي ${q.lowM.toFixed(2)} م · علوي ${q.upM.toFixed(2)} م${q.tall?' · '+q.tall+' دولاب طويل':''}\n• السعر التقديري: ${money(q.price)}\nالتصميم والسعر نهائيين بعد المعاينة 🙏`;
+ const imgs=await dsImages();try{const files=await Promise.all(imgs.map(async(u,i)=>{const b=await (await fetch(u)).blob();return new File([b],`تصميم-${i+1}.png`,{type:'image/png'})}));if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text:txt,title:d.name});return}}catch(e){if(e&&e.name==='AbortError')return}
+ imgs.forEach((u,i)=>{const a=document.createElement('a');a.href=u;a.download=`${d.name}-${i+1}.png`;document.body.appendChild(a);a.click();a.remove()});toast('اتنزّلت صور التصميم — ابعتها مع الرسالة','g');waTo(c.phone||'',txt)}
+async function dsPrint(){const d=dsGet(),q=dsSpec(d),imgs=await dsImages();openM(`<div class="doc">${docHead('تصميم مطبخ — '+esc(d.name),'')}${imgs.map(u=>`<img src="${u}" style="width:100%;border-radius:10px;border:1px solid #ddd;margin:6px 0">`).join('')}${dsPlan(d)}<table style="margin-top:10px"><tr><th>البند</th><th>التفاصيل</th></tr><tr><td>النمط</td><td>${esc(d.styleName)} · ${HANDLES[d.style.handle]} · ضلف ${d.style.door==='shaker'?'بإطار':'سادة'}</td></tr>${d.walls.map((w,i)=>`<tr><td>${d.layout==='island'&&i===d.walls.length-1&&i>0?'الجزيرة':'حيطة '+(i+1)} (${w.len} سم)</td><td>${[...w.tall.map(u=>'طويل: '+u.t+' '+u.w),...w.low.map(u=>u.t+' '+u.w),...w.up.map(u=>'علوي: '+u.t+' '+u.w)].map(esc).join('، ')}</td></tr>`).join('')}<tr><td>الإكسسوار</td><td>مفصلات ${q.hinges} · مجاري ${q.slides} · ${q.gola?'جولا '+q.gola+' م':'مقابض '+q.handles} · رجول ${q.legs}</td></tr><tr><td><b>السعر التقديري</b></td><td><b>${money(q.price)}</b></td></tr></table><p style="font-size:12px;color:var(--mut)">التصميم والأسعار تقديرية وتتحدد نهائياً بعد المعاينة واختيار الخامات والإكسسوارات.</p></div><div class="row noprint" style="margin-top:12px"><button class="s" onclick="dsShare()">${ic('wa')}ابعتها للعميل</button><button onclick="document.body.classList.add('pi');window.print();document.body.classList.remove('pi')">${ic('print')}طباعة / PDF</button><button class="s" onclick="closeM()">إغلاق</button></div>`,'xl')}
 go();if(!LSOK)setTimeout(()=>toast('التخزين مقفول هنا (معاينة التطبيق)، البيانات مش هتتحفظ. افتح السيستم من رابط الاستضافة.','r'),400);
 
 </script>
