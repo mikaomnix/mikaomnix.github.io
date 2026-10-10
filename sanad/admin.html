@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>إدارة سند</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#f4f8f9;--card:#fff;--ink:#0F2A37;--mut:#64808F;--line:#e1eaec;--pri:#087f8c;--gold:#c9971f;--bad:#F43F5E}
+*{box-sizing:border-box}body{margin:0;font-family:Cairo,Tahoma,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#087f8c,#0b4e57);color:#fff;padding:16px;border-bottom:4px solid var(--gold);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px;flex:1}header button{background:#ffffff22;color:#fff}
+main{max-width:1200px;margin:0 auto;padding:16px}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:7px 12px;cursor:pointer;background:var(--pri);color:#fff;font-size:13px}
+button.s{background:#e3f4f5;color:#0b4e57}button.d{background:#fde3e7;color:var(--bad)}button.g{background:#fff4dc;color:#9a6a00}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.k small{color:var(--mut);display:block}.k b{font-size:22px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.bar input{max-width:280px}.bar select{max-width:180px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:10px;align-items:center}
+.card .nm b{font-size:16px}.card small{color:var(--mut)}.tag{display:inline-block;border-radius:8px;padding:1px 9px;font-size:12px;font-weight:700}
+.t-trial{background:#fff4dc;color:#9a6a00}.t-active{background:#e3f4f5;color:#087f8c}.t-expired{background:#fde3e7;color:var(--bad)}.t-blocked{background:#333;color:#fff}.t-admin{background:#ece8fb;color:#6d5bb8}
+.acts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+#login{max-width:380px;margin:60px auto;background:#fff;border-radius:18px;padding:22px;border-top:5px solid var(--gold);box-shadow:0 20px 40px #0001}
+#login label{display:block;font-weight:700;font-size:13px;margin:8px 0 4px}#login button{width:100%;margin-top:12px;padding:11px}
+.err{color:var(--bad);font-weight:700;font-size:13px;min-height:18px;margin-top:6px}
+@media(max-width:760px){.card{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<header><h1>🛠️ إدارة اشتراكات سند</h1><button onclick="load()">↻ تحديث</button><button onclick="out()">خروج</button></header>
+<main id="app"></main>
+<script>
+const sb=supabase.createClient('https://rzvncstjattlklpdtkfn.supabase.co','sb_publishable_Molr1fCzsC-VbSgTFDXc5w_F1p0-Fcr',{auth:{persistSession:true,storageKey:'wm-admin-auth'}});
+const $=s=>document.querySelector(s),H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fd=d=>d?new Date(d).toLocaleDateString('ar-EG',{day:'numeric',month:'short',year:'numeric'}):'—',ago=d=>{if(!d)return 'عمره مادخل';const m=(Date.now()-new Date(d))/6e4;return m<60?'من '+Math.round(m)+' دقيقة':m<1440?'من '+Math.round(m/60)+' ساعة':'من '+Math.round(m/1440)+' يوم'};
+const ph=p=>{p=String(p||'').replace(/\D/g,'');if(p.startsWith('0'))p='2'+p;return p};
+let ROWS=[],Q='',F='all';
+const st=r=>r.blocked?'blocked':(r.paid_until&&new Date(r.paid_until)>new Date())?'active':(new Date(r.trial_end)>new Date())?'trial':'expired';
+const SL={trial:'تجربة',active:'مشترك',expired:'منتهي',blocked:'موقوف',admin:'أدمن'};
+const left=r=>{const e=st(r)==='active'?r.paid_until:r.trial_end;return Math.max(0,Math.ceil((new Date(e)-Date.now())/864e5))};
+function loginUI(msg){$('#app').innerHTML=`<div id="login"><b style="font-size:19px">دخول الأدمن</b><label>الإيميل</label><input id="le" type="email" dir="ltr"><label>كلمة السر</label><input id="lp" type="password" dir="ltr"><div class="err" id="lx">${H(msg||'')}</div><button id="lg">دخول</button></div>`;
+ $('#lp').onkeydown=e=>{if(e.key==='Enter')$('#lg').click()};$('#lg').onclick=async()=>{const r=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(r.error)return $('#lx').textContent=r.error.message;load()}}
+async function out(){await sb.auth.signOut();loginUI()}
+async function load(){const {data:{session}}=await sb.auth.getSession();if(!session)return loginUI();
+ const r=await sb.rpc('wm_admin_list');if(r.error)return loginUI(/not_admin/.test(r.error.message)?'الحساب ده مش أدمن':r.error.message);ROWS=r.data||[];draw()}
+function draw(){const c={all:ROWS.length,trial:0,active:0,expired:0,blocked:0};ROWS.forEach(r=>c[st(r)]++);
+ const now=Date.now(),new7=ROWS.filter(r=>now-new Date(r.created_at)<7*864e5).length,act7=ROWS.filter(r=>r.last_seen&&now-new Date(r.last_seen)<7*864e5).length,soon=ROWS.filter(r=>st(r)==='trial'&&left(r)<=2).length;
+ const L=ROWS.filter(r=>(F==='all'||st(r)===F||(F==='soon'&&st(r)==='trial'&&left(r)<=2))&&JSON.stringify(r).toLowerCase().includes(Q.toLowerCase()));
+ $('#app').innerHTML=`<div class="kpis"><div class="k"><small>كل الحسابات</small><b>${c.all}</b></div><div class="k"><small>مشتركين (فلوس)</small><b style="color:#087f8c">${c.active}</b></div><div class="k"><small>في التجربة</small><b style="color:#9a6a00">${c.trial}</b><small>${soon} تجربتهم بتخلص خلال يومين</small></div><div class="k"><small>منتهي / موقوف</small><b style="color:#F43F5E">${c.expired+c.blocked}</b></div><div class="k"><small>جداد آخر ٧ أيام</small><b>${new7}</b></div><div class="k"><small>نشطين آخر ٧ أيام</small><b>${act7}</b></div></div>
+ <div class="bar"><input placeholder="🔎 بحث بالاسم أو الإيميل أو الموبايل" value="${H(Q)}" oninput="Q=this.value;draw();this.focus();this.setSelectionRange(this.value.length,this.value.length)"><select onchange="F=this.value;draw()">${[['all','الكل'],['soon','تجربة بتخلص قريب'],['trial','تجربة'],['active','مشتركين'],['expired','منتهي'],['blocked','موقوف']].map(([k,l])=>`<option value="${k}" ${F===k?'selected':''}>${l}</option>`).join('')}</select></div>
+ ${L.map(r=>{const s=st(r);return `<div class="card"><div class="nm"><b>${H(r.shop||'—')}</b> <span class="tag t-${s}">${SL[s]}${s==='trial'||s==='active'?' · '+left(r)+' يوم':''}</span><br><small>${H(r.name||'')} · <span dir="ltr">${H(r.email)}</span>${r.phone?' · <span dir="ltr">'+H(r.phone)+'</span>':''}${r.city?' · '+H(r.city):''}${r.src==='play'?' · 📱 جوجل بلاي':''}</small>${r.note?`<br><small>📝 ${H(r.note)}</small>`:''}</div>
+  <div><small>اتسجل</small> ${fd(r.created_at)}<br><small>آخر دخول</small> ${ago(r.last_seen)}</div>
+  <div><small>المشاريع</small> <b>${r.projects||0}</b> · <small>العملاء</small> <b>${r.customers||0}</b> · <small>العروض</small> <b>${r.quotes||0}</b><br><small>${r.paid_until?'مدفوع لحد '+fd(r.paid_until):'التجربة لحد '+fd(r.trial_end)} · ${Math.round((r.bytes||0)/1024)} KB</small></div>
+  <div class="acts"><button onclick="setS('${r.owner}',30)">+ شهر</button><button onclick="setS('${r.owner}',90)">+ ٣ شهور</button><button onclick="setS('${r.owner}',365)">+ سنة</button><button class="g" onclick="trial('${r.owner}')">+ أيام تجربة</button>
+   ${r.phone?`<a href="https://wa.me/${ph(r.phone)}?text=${encodeURIComponent('أهلاً يا '+(r.name||'')+' 👋 معاك فريق سند — '+(s==='trial'?'إيه رأيك في التجربة لحد دلوقتي؟ لو محتاج مساعدة في أي حاجة إحنا معاك 🙏':s==='expired'?'التجربة خلصت وبياناتك محفوظة — تحب نفعّلك الاشتراك؟':'شكراً لاشتراكك 🙏'))}" target="_blank"><button class="s">💬</button></a>`:''}
+   <button class="s" onclick="note('${r.owner}')">📝</button><button class="s" onclick="setS('${r.owner}',null,${!r.blocked})">${r.blocked?'▶️ فك الإيقاف':'⏸ إيقاف'}</button><button class="s" onclick="setS('${r.owner}',0)" title="إلغاء الاشتراك المدفوع">↺</button><button class="d" onclick="del('${r.owner}','${H(r.email)}')">🗑️</button></div></div>`}).join('')||'<div class="k">مفيش نتايج.</div>'}`}
+async function setS(o,days,blocked){const r=await sb.rpc('wm_admin_set',{p_owner:o,p_days:days,p_blocked:blocked===undefined?null:blocked,p_note:null,p_until:null});if(r.error)return alert(r.error.message);load()}
+async function trial(o){const n=+prompt('كام يوم تجربة زيادة؟','7');if(!n)return;const r=await sb.rpc('wm_admin_trial',{p_owner:o,p_days:n});if(r.error)return alert(r.error.message);load()}
+async function note(o){const row=ROWS.find(x=>x.owner===o),n=prompt('ملاحظة:',row.note||'');if(n===null)return;const r=await sb.rpc('wm_admin_set',{p_owner:o,p_days:null,p_blocked:null,p_note:n,p_until:null});if(r.error)return alert(r.error.message);load()}
+async function del(o,em){if(prompt('اكتب «احذف» عشان تمسح اشتراك وبيانات '+em+' نهائياً')!=='احذف')return;const r=await sb.rpc('wm_admin_delete',{p_owner:o});if(r.error)return alert(r.error.message);load()}
+load();
+</script>
+</body>
+</html>
