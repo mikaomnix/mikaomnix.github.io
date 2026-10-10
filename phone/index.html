@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-p8';
+const APP_VER='2026-10-10-p9';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5780,6 +5780,150 @@ window.mkPH6={about:readAbout,copyImei,taxHelp,cat:catView,brand:b=>{BR6=BR6===b
  exchange,exq:v=>{const el=$('exL');if(el)el.innerHTML=exList((DB().sales||[]).filter(r=>!r.ship&&r.pid).slice(0,200),v)},exPick,
  exNew:v=>{const p=prods().find(x=>x.name===v);if(p){EX.np=p;EX.np_price=+p.price||0;drawEx()}},exRe:()=>{const E=EX,v=(+E.r.price||0)*E.q,t=E.nq*E.np_price,d=t-v,el=$('exDiff');if(el){el.style.color=d>=0?'#0b6b45':'#b33';el.textContent=d>0?'العميل يدفع فرق: '+M(d):d<0?'ترجّعله: '+M(-d):'من غير فرق'}},
  cdOp,cdFee,cdShot,cdMach,cdTop,tm:v=>{TM=v||TM;renderTech()},techPay};
+})();
+</script>
+
+<style>
+#phDay .dy-big{width:100%;min-height:64px;font-size:22px;font-weight:900;border-radius:18px;background:linear-gradient(135deg,#d4aa4f,#9c7020);color:#fff;border:0;box-shadow:0 10px 24px #9c702050;cursor:pointer;margin:6px 0 12px}
+#phDay .dy-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+#phDay .dy-k div{background:var(--card,#fff);border:1px solid var(--border,#eadfca);border-radius:14px;padding:10px;text-align:center}
+#phDay .dy-k small{display:block;color:var(--muted,#7b8a90)}#phDay .dy-k b{font-size:19px}
+.dy-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.dy-t{background:var(--card,#fff);border:1px solid var(--border,#eadfca);border-radius:16px;padding:14px 6px;text-align:center;cursor:pointer;font-weight:800;font-size:14px}
+.dy-t b{display:block;font-size:30px;margin-bottom:2px}
+.dy-c{display:inline-block;border:1px solid var(--border,#e4eaed);border-radius:99px;padding:6px 14px;margin:3px;cursor:pointer;background:var(--card,#fff);font-weight:700}
+.dy-c.on{background:#b08328;color:#fff;border-color:#b08328}
+.dy-r{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border,#eee);padding:9px 0}
+.dy-r .ic{font-size:24px;flex:0 0 34px;text-align:center}
+.dy-bar{height:10px;border-radius:9px;background:#0001;overflow:hidden}.dy-bar i{display:block;height:100%;background:linear-gradient(90deg,#d4aa4f,#7f5d17)}
+</style>
+<script>
+/* =====================================================================
+   فون سيستم — 📒 يومية الموبايلات (بديل يومية فون سيستم)
+   عملية ← الخدمة ← المبلغ والعمولة ← الدفع ← تتسجل · الربح والدرج والمكن لوحدهم · قفل اليوم
+   البيانات: mk_settings ph_ops_YYYY-MM (العمليات) · ph_cards (أرصدة المكن) · ph_opsclose (قفل اليوم) · ph_opsset (إعدادات)
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,$=id=>document.getElementById(id),adm=()=>!window.mkT_user||window.mkT_user.role==='admin';
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ND=v=>String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/٫/g,'.');const num=v=>{const n=parseFloat(ND(v).replace(/[,٬\s]/g,''));return isNaN(n)?0:n};
+const M=n=>typeof money==='function'?money(n):(Math.round((+n||0)*100)/100).toLocaleString('ar-EG')+' ج.م';
+const tst=m=>typeof toast==='function'?toast(m):alert(m);
+const head=t=>`<div class="modal-head"><h2>${t}</h2><button class="close" onclick="closeModal()">✕</button></div>`;
+const cairoNow=()=>new Date(new Date().toLocaleString('en-US',{timeZone:'Africa/Cairo'}));
+const todayISO=()=>{const d=cairoNow();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const me=()=>(window.mkT_user&&mkT_user.name)||'';
+async function getS(k,d){try{const r=await SBc().from('mk_settings').select('value').eq('key',k).maybeSingle();return (r.data&&r.data.value)||d}catch(e){return d}}
+async function putS(k,v){const r=await SBc().from('mk_settings').upsert([{key:k,value:v,updated_at:new Date().toISOString()}],{onConflict:'key'});if(r.error){tst('ماتحفظش — جرّب تاني');return false}return true}
+
+/* ---------- كتالوج الخدمات ---------- */
+// kind: card (هامش %) · recharge (فكّة/رصيد) · bill (فاتورة + رسم) · visa (سحب فيزا) · service (أجرة)
+const GR=[
+ {k:'cards',ic:'📱',n:'كروت شحن',kind:'card',items:['فودافون','اتصالات','أورنج','WE'],vals:[5,10,15,20,25,50,100,200]},
+ {k:'recharge',ic:'⚡',n:'شحن رصيد / فكّة',kind:'recharge',items:['فودافون','اتصالات','أورنج','WE','تحويل رصيد'],vals:[10,20,30,50,100,200]},
+ {k:'packs',ic:'🌐',n:'باقات وإنترنت',kind:'recharge',items:['باقة فودافون','باقة اتصالات','باقة أورنج','باقة WE','راوتر / نت منزلي','كارت إنترنت'],vals:[50,100,150,200,300,500]},
+ {k:'bills',ic:'🧾',n:'فواتير (فوري / أمان / مصاري)',kind:'bill',items:['كهرباء','مياه','غاز','تليفون أرضي','إنترنت أرضي WE','إنترنت أورنج','فاتورة فودافون','فاتورة اتصالات','فاتورة أورنج','فاتورة WE','اشتراك دش/قنوات','أقساط / جمعية','تعليم / مصروفات','ضرائب / مخالفات'],vals:[]},
+ {k:'meters',ic:'💡',n:'عدادات كارت (كهرباء/غاز/مياه)',kind:'bill',items:['عداد كهرباء كارت','عداد غاز كارت','عداد مياه كارت'],vals:[50,100,200,300,500]},
+ {k:'visa',ic:'🏧',n:'سحب من فيزا',kind:'visa',items:['سحب فيزا','سحب ميزة','سحب كريدت'],vals:[500,1000,2000,3000,5000]},
+ {k:'games',ic:'🎮',n:'ألعاب وكروت رقمية',kind:'card',items:['ببجي (شدّات)','فري فاير (جواهر)','Google Play','iTunes / Apple','PlayStation','Steam','Xbox','Netflix','Shahid','Spotify','Roblox'],vals:[100,200,300,500,1000]},
+ {k:'services',ic:'🔧',n:'خدمات الجهاز',kind:'service',items:['سوفتوير / فورمات','نقل بيانات','تحميل برامج','فتح قفل (للمالك)','تركيب اسكرينة / جراب','تنضيف جهاز','تفعيل خط','بدل فاقد / نقل خط','فتح شبكة / حساب','طباعة / تصوير / مستند'],vals:[20,30,50,100,150,200]},
+ {k:'accs',ic:'🛒',n:'بيع إكسسوار / جهاز',kind:'link',items:[],vals:[]},
+ {k:'cash',ic:'🏦',n:'كاش وتحويلات محافظ',kind:'link',items:[],vals:[]},
+ {k:'other',ic:'➕',n:'حاجة تانية',kind:'service',items:['أخرى'],vals:[]}];
+const PM=[['cash','💵 نقدي'],['insta','⚡ انستا باي'],['wallet','📲 محفظة'],['credit','📝 آجل']];
+let MON=todayISO().slice(0,7),DAY=todayISO(),OPS=null,CD=null,SET=null,TAB='ops',FLT='';
+const monthKey=d=>String(d).slice(0,7);
+async function loadMonth(m){OPS=await getS('ph_ops_'+m,[]);if(!Array.isArray(OPS))OPS=[];CD=await getS('ph_cards',{machines:[],log:[],fee:{}});if(!CD.machines)CD.machines=[];SET=await getS('ph_opsset',{margin:{},fee:{},target:0});if(!SET.margin)SET.margin={};if(!SET.fee)SET.fee={}}
+const dayOps=d=>OPS.filter(o=>o.day===d);
+const stats=L=>{const t={n:L.length,charge:0,profit:0,cash:0,visaOut:0,byG:{}};L.forEach(o=>{t.charge+=o.charge||0;t.profit+=o.profit||0;if(o.method==='cash'&&o.grp!=='visa')t.cash+=o.charge||0;if(o.grp==='visa')t.visaOut+=o.face||0;const g=t.byG[o.grp]=t.byG[o.grp]||{n:0,charge:0,profit:0};g.n++;g.charge+=o.charge||0;g.profit+=o.profit||0});t.drawer=t.cash-t.visaOut;return t};
+async function render(){const box=$('phDay');if(!box)return;if(DAY.slice(0,7)!==MON){MON=DAY.slice(0,7)}await loadMonth(MON);const L=dayOps(DAY),st=stats(L),fl=L.filter(o=>!FLT||o.grp===FLT).slice().reverse();
+ const closes=await getS('ph_opsclose',{}),cl=closes[DAY],prevK=Object.keys(closes).filter(d=>d<DAY).sort().pop(),openDef=prevK?closes[prevK].actual:'';
+ const tgt=+SET.target||0;
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>📒 يومية الموبايلات</h1><p>كل شغل المحل في مكان واحد: كروت، فواتير، سحب فيزا، خدمات — والربح والدرج بيتحسبوا لوحدهم</p></div></div>
+ <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="date" value="${DAY}" onchange="mkDY.day(this.value)" style="width:auto">${[['ops','العمليات'],['ins','تحليلات'],['rem','تذكيرات العملاء']].map(([k,l])=>`<button class="${TAB===k?'primary':'secondary'}" onclick="mkDY.tab('${k}')">${l}</button>`).join('')}</div>
+ <button class="dy-big" onclick="mkDY.start()">➕ عملية</button>
+ ${TAB==='ops'?`<div class="dy-k"><div><small>عمليات</small><b>${st.n}</b></div><div><small>المقبوض</small><b>${M(st.charge)}</b></div><div><small>ربحك</small><b style="color:#0b6b45">${M(st.profit)}</b></div><div><small>صافي حركة الدرج</small><b>${M(st.drawer)}</b></div></div>
+ ${tgt?`<div style="margin-bottom:10px"><small>هدف اليوم ${M(tgt)} — ${Math.min(100,Math.round(st.profit/tgt*100))}٪</small><div class="dy-bar"><i style="width:${Math.min(100,st.profit/tgt*100)}%"></i></div></div>`:''}
+ ${CD.machines.length?`<div style="margin-bottom:8px">${CD.machines.map((m,i)=>`<span class="dy-c" style="${m.b<200?'border-color:#b33;color:#b33':''}" onclick="mkDY.top(${i})">🏧 ${H(m.n)}: <b>${M(m.b)}</b> ➕</span>`).join('')}<span class="dy-c" onclick="mkDY.mach()">➕ مكنة</span></div>`:`<span class="dy-c" onclick="mkDY.mach()">➕ سجّل مكنة (فوري / أمان…)</span>`}
+ <div style="margin:6px 0"><span class="dy-c ${FLT===''?'on':''}" onclick="mkDY.flt('')">الكل</span>${GR.filter(g=>g.kind!=='link'&&st.byG[g.k]).map(g=>`<span class="dy-c ${FLT===g.k?'on':''}" onclick="mkDY.flt('${g.k}')">${g.ic} ${H(g.n.split(' (')[0])} (${st.byG[g.k].n})</span>`).join('')}</div>
+ <div class="ph-card" style="padding:4px 12px">${fl.map(o=>{const g=GR.find(x=>x.k===o.grp)||{ic:'🧾'};return `<div class="dy-r"><div class="ic">${g.ic}</div><div style="flex:1;min-width:0"><b>${H(o.svc)}</b>${o.val?' <small>'+H(o.val)+'</small>':''}<br><small style="color:var(--muted)">${H(String(o.at).slice(11,16))} · ${(PM.find(p=>p[0]===o.method)||[0,o.method])[1]}${o.mach?' · '+H(o.mach):''}${o.cust?' · '+H(o.cust):''}${o.by?' · '+H(o.by):''}${o.note?' · '+H(o.note):''}</small></div>${o.shot?`<img src="${o.shot}" onclick="mkDY.view('${o.id}')" style="width:38px;height:38px;object-fit:cover;border-radius:8px">`:''}<div style="text-align:end"><b>${M(o.charge)}</b><br><small style="color:#0b6b45">+${M(o.profit)}</small></div><button class="secondary" style="padding:3px 8px" onclick="mkDY.again('${o.id}')">↻</button>${adm()?`<button class="secondary danger" style="padding:3px 8px" onclick="mkDY.del('${o.id}')">🗑️</button>`:''}</div>`}).join('')||'<div class="empty">مفيش عمليات في اليوم ده — دوس «➕ عملية»</div>'}</div>
+ <div class="ph-card"><b>🔒 قفل اليوم</b>${cl?`<div style="margin-top:6px">اتقفل ${H(String(cl.at).slice(11,16))} بواسطة ${H(cl.by||'')}: الدرج الفعلي <b>${M(cl.actual)}</b> — المفروض <b>${M(cl.expected)}</b> — <b style="color:${Math.abs(cl.diff)<1?'#0b6b45':'#b33'}">${Math.abs(cl.diff)<1?'✔ مظبوط':'فرق '+M(cl.diff)}</b></div>`:`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><input id="dyOpen" inputmode="decimal" value="${H(openDef)}" placeholder="الدرج وقت الفتح (من أمس)" style="flex:1;min-width:140px"><input id="dyAct" inputmode="decimal" placeholder="الدرج فعلاً دلوقتي" style="flex:1;min-width:140px"><button class="primary" onclick="mkDY.close()">قفّل اليوم</button></div><small style="color:var(--muted)">المفروض = الدرج وقت الفتح + النقدي المقبوض − سحب الفيزا</small>`}
+  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="secondary" onclick="mkDY.report()">💬 ابعت تقرير اليوم لنفسي</button>${adm()?`<button class="secondary" onclick="mkDY.target()">🎯 هدف اليوم</button>`:''}</div></div>`
+ :TAB==='ins'?insights():reminders()}`}
+function insights(){const M2=OPS,byS={},byH={},byC={};M2.forEach(o=>{const s=byS[o.svc]=byS[o.svc]||{n:0,profit:0};s.n++;s.profit+=o.profit||0;const h=+(String(o.at).slice(11,13))||0;byH[h]=(byH[h]||0)+1;if(o.cust){const c=byC[o.cust]=byC[o.cust]||{n:0,charge:0};c.n++;c.charge+=o.charge||0}});
+ const top=Object.entries(byS).sort((a,b)=>b[1].profit-a[1].profit).slice(0,8),mxP=top[0]?top[0][1].profit:1,hrs=Object.entries(byH).sort((a,b)=>+a[0]-+b[0]),mxH=Math.max(1,...hrs.map(x=>x[1])),cs=Object.entries(byC).sort((a,b)=>b[1].charge-a[1].charge).slice(0,6),tot=stats(M2);
+ return `<div class="dy-k"><div><small>عمليات الشهر</small><b>${tot.n}</b></div><div><small>مقبوض</small><b>${M(tot.charge)}</b></div><div><small>ربح الشهر</small><b style="color:#0b6b45">${M(tot.profit)}</b></div></div>
+ <div class="ph-card"><b>🏆 أكتر خدمة بتكسّبك</b>${top.map(([n,s])=>`<div style="margin-top:8px"><div style="display:flex;justify-content:space-between"><span>${H(n)} <small>(${s.n})</small></span><b>${M(s.profit)}</b></div><div class="dy-bar"><i style="width:${s.profit/mxP*100}%"></i></div></div>`).join('')||'<div class="empty">لسه مفيش بيانات</div>'}</div>
+ <div class="ph-card"><b>⏰ ساعات الزحمة</b><div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-top:8px">${hrs.map(([h,n])=>`<div style="flex:1;text-align:center"><div style="height:${Math.max(4,n/mxH*70)}px;background:#b08328;border-radius:4px 4px 0 0"></div><small style="font-size:10px">${h}</small></div>`).join('')||'—'}</div></div>
+ <div class="ph-card"><b>👤 أكتر عملاء الشهر</b>${cs.map(([n,c])=>`<div class="dy-r"><div style="flex:1">${H(n)}</div><small>${c.n} عملية</small><b>${M(c.charge)}</b></div>`).join('')||'<div class="empty">سجّل اسم العميل في العمليات عشان يظهروا هنا</div>'}</div>`}
+function reminders(){const by={};OPS.filter(o=>o.cust&&o.grp==='bills').forEach(o=>{const k=o.cust+'|'+o.svc;(by[k]=by[k]||[]).push(o)});
+ const t=cairoNow().getDate(),L=Object.values(by).map(a=>{const l=a[a.length-1];return {o:l,d:+String(l.day).slice(8,10)}}).filter(x=>{const diff=x.d-t;return diff>=-1&&diff<=5});
+ return `<div class="ph-card"><b>🔔 عملاء فاتورتهم قربت</b><p style="margin:4px 0 8px;font-size:14px;color:var(--muted)">العملاء اللي دفعوا فاتورة في نفس الفترة الشهر اللي فات — ابعتلهم تذكير يجيلك يدفع عندك.</p>${L.map(({o,d})=>`<div class="dy-r"><div class="ic">🧾</div><div style="flex:1"><b>${H(o.cust)}</b><br><small style="color:var(--muted)">${H(o.svc)} — آخر مرة يوم ${d} بـ ${M(o.face||o.charge)}</small></div>${o.phone?`<button class="primary" style="padding:5px 10px" onclick="mkDY.remWa('${o.id}')">💬 ذكّره</button>`:'<small>مفيش رقم</small>'}</div>`).join('')||'<div class="empty">مفيش حد دلوقتي — اكتب اسم وموبايل العميل في عمليات الفواتير عشان التذكير يشتغل</div>'}</div>`}
+/* ---------- تسجيل عملية ---------- */
+let CUR=null;
+function start(){drawStart()}
+function drawStart(){openModal(`${head('➕ عملية — اختار الخدمة')}${recent()}<div class="dy-g">${GR.map(g=>`<div class="dy-t" onclick="mkDY.grp('${g.k}')"><b>${g.ic}</b>${H(g.n)}</div>`).join('')}</div>`)}
+function recent(){const R=[],seen=new Set();for(let i=OPS.length-1;i>=0&&R.length<5;i--){const o=OPS[i],k=o.grp+'|'+o.svc+'|'+(o.val||'');if(seen.has(k))continue;seen.add(k);R.push(o)}
+ return R.length?`<div style="margin-bottom:10px"><small style="color:var(--muted)">آخر الاستخدامات — دوسة واحدة:</small><div>${R.map(o=>`<span class="dy-c" onclick="mkDY.again('${o.id}')">${(GR.find(g=>g.k===o.grp)||{ic:'🧾'}).ic} ${H(o.svc)}${o.val?' '+H(o.val):''}</span>`).join('')}</div></div>`:''}
+function pickGrp(k){const g=GR.find(x=>x.k===k);if(!g)return;if(g.kind==='link'){closeModal();if(k==='accs'&&window.mkPH6)mkPH6.sell(0);else if(k==='cash')location.href='cash/?m=1';return}
+ CUR={g,svc:g.items.length===1?g.items[0]:'',face:'',charge:'',cost:'',method:'cash',mach:'',cust:'',phone:'',note:'',shot:'',pct:'',fee:''};if(CUR.svc)return drawForm();
+ openModal(`${head(g.ic+' '+H(g.n))}<div>${g.items.map(i=>`<span class="dy-c" style="font-size:16px;padding:10px 16px" onclick="mkDY.svc(${JSON.stringify(i).replace(/"/g,'&quot;')})">${H(i)}</span>`).join('')}</div><div style="margin-top:10px"><button class="secondary" onclick="mkDY.start()">↩ الخدمات</button></div>`)}
+function pickSvc(s){CUR.svc=s;const key=CUR.g.k+'|'+s;if(CUR.g.kind==='card')CUR.pct=SET.margin[key]??'';if(CUR.g.kind==='bill')CUR.fee=SET.fee[key]??'';if(CUR.g.kind==='visa')CUR.pct=SET.margin[key]??'2';drawForm()}
+function calc(){const c=CUR,f=num(c.face),k=c.g.kind;let charge=0,cost=0,profit=0,drawer=0;
+ if(k==='card'){charge=f;const mp=num(c.pct);cost=f-Math.round(f*mp)/100;profit=charge-cost}
+ else if(k==='recharge'){charge=num(c.charge)||f;cost=num(c.cost)||f;profit=charge-cost}
+ else if(k==='bill'){const fee=num(c.fee);charge=f+fee;cost=f;profit=fee}
+ else if(k==='visa'){const fee=Math.round(f*num(c.pct))/100;charge=f+fee;cost=Math.round(f*num(c.cost))/100;profit=fee-cost}
+ else{charge=num(c.charge)||f;cost=num(c.cost);profit=charge-cost}
+ return {charge,cost,profit}}
+function drawForm(){const c=CUR,g=c.g,k=g.kind,r=calc();
+ const chips=g.vals.length?`<div style="margin-bottom:6px">${g.vals.map(v=>`<span class="dy-c" onclick="CUR_.face='${v}';mkDY.upd(1)">${v}</span>`).join('')}</div>`:'';
+ openModal(`${head(g.ic+' '+H(c.svc))}<div class="form">
+ ${chips}<div class="field"><label>${k==='visa'?'المبلغ اللي هتسلّمه للعميل (كاش)':k==='bill'?'قيمة الفاتورة / الخدمة':k==='service'?'سعر الخدمة':k==='recharge'?'قيمة الشحن / الباقة':'قيمة الكارت'}</label><input id="dyF" inputmode="decimal" style="font-size:24px;font-weight:900" value="${H(c.face)}" oninput="CUR_.face=this.value;mkDY.upd()"></div>
+ ${k==='card'?`<div class="field"><label>هامش المحل % (بتشتريه بخصم كام؟)</label><input inputmode="decimal" value="${H(c.pct)}" oninput="CUR_.pct=this.value;mkDY.upd()"></div>`:''}
+ ${k==='bill'?`<div class="field"><label>رسم الخدمة اللي بتاخده من العميل</label><input inputmode="decimal" value="${H(c.fee)}" placeholder="مثلاً 5" oninput="CUR_.fee=this.value;mkDY.upd()"></div>`:''}
+ ${k==='visa'?`<div class="field"><label>عمولتك % على السحب</label><input inputmode="decimal" value="${H(c.pct)}" oninput="CUR_.pct=this.value;mkDY.upd()"></div><div class="field"><label>رسوم ماكينة الفيزا عليك %</label><input inputmode="decimal" value="${H(c.cost)}" placeholder="مثلاً 1" oninput="CUR_.cost=this.value;mkDY.upd()"></div>`:''}
+ ${k==='recharge'?`<div class="field"><label>العميل بيدفع كام</label><input inputmode="decimal" value="${H(c.charge)}" placeholder="${H(c.face||'')}" oninput="CUR_.charge=this.value;mkDY.upd()"></div><div class="field"><label>تكلفتك (اللي اتخصم من رصيدك)</label><input inputmode="decimal" value="${H(c.cost)}" placeholder="${H(c.face||'')}" oninput="CUR_.cost=this.value;mkDY.upd()"></div>`:''}
+ ${k==='service'?`<div class="field"><label>تكلفة (قطع / مصاريف) — لو فيه</label><input inputmode="decimal" value="${H(c.cost)}" oninput="CUR_.cost=this.value;mkDY.upd()"></div>`:''}
+ <div id="dyP" class="ph-res" style="margin:6px 0"></div>
+ <div class="field"><label>طريقة الدفع</label><div>${PM.map(([m,l])=>`<span class="dy-c ${c.method===m?'on':''}" onclick="CUR_.method='${m}';mkDY.upd(2)">${l}</span>`).join('')}</div></div>
+ ${(CD.machines||[]).length&&k!=='service'?`<div class="field"><label>من مكنة / رصيد</label><select onchange="CUR_.mach=this.value"><option value="">— من غير —</option>${CD.machines.map((m,i)=>`<option value="${i}" ${String(c.mach)===String(i)?'selected':''}>${H(m.n)} (${M(m.b)})</option>`).join('')}</select></div>`:''}
+ <div style="display:flex;gap:6px"><div class="field" style="flex:1"><label>اسم العميل (اختياري)</label><input value="${H(c.cust)}" oninput="CUR_.cust=this.value"></div><div class="field" style="flex:1"><label>موبايله (للتذكير)</label><input inputmode="tel" value="${H(c.phone)}" oninput="CUR_.phone=this.value"></div></div>
+ <div class="field"><label>ملاحظة / رقم العداد / رقم الحساب</label><input value="${H(c.note)}" oninput="CUR_.note=this.value"></div>
+ <label class="secondary" style="display:inline-block;cursor:pointer;padding:8px 12px;border-radius:10px">📷 صورة الإيصال / السكرينة<input type="file" accept="image/*" hidden onchange="mkDY.shot(this.files[0])"></label><div id="dyS">${c.shot?`<img src="${c.shot}" style="max-width:100px;border-radius:8px;margin-top:6px">`:''}</div>
+ <div class="modal-foot"><button class="primary" id="dyGo" style="font-size:18px;padding:12px 22px">✔ سجّل العملية</button><button class="secondary" onclick="mkDY.start()">↩</button></div></div>`);window.CUR_=CUR;upd();
+ $('dyGo').onclick=save}
+function upd(m){const r=calc(),c=CUR,el=$('dyP');if(el)el.innerHTML=`العميل يدفع: <b style="font-size:20px">${M(r.charge)}</b> · تكلفتك ${M(r.cost)} · ربحك <b style="color:${r.profit>=0?'#0b6b45':'#b33'}">${M(r.profit)}</b>${c.g.kind==='visa'?`<br><small>الدرج هينقص ${M(num(c.face))} — العميل بيسحب بالكارت ${M(r.charge)}</small>`:''}`;
+ if(m===1){const i=$('dyF');if(i)i.value=c.face}if(m===2)drawForm()}
+async function shot(f){if(!f)return;const u=URL.createObjectURL(f),im=await new Promise(ok=>{const i=new Image();i.onload=()=>ok(i);i.src=u}),k=Math.min(1,520/Math.max(im.width,im.height)),cv=document.createElement('canvas');cv.width=im.width*k;cv.height=im.height*k;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);CUR.shot=cv.toDataURL('image/jpeg',.55);const el=$('dyS');if(el)el.innerHTML=`<img src="${CUR.shot}" style="max-width:100px;border-radius:8px;margin-top:6px">`}
+async function save(){const c=CUR,f=num(c.face);if(!f&&c.g.kind!=='service'&&!num(c.charge))return tst('اكتب المبلغ');const r=calc();if(c.g.kind==='service'&&!r.charge)return tst('اكتب سعر الخدمة');
+ if(c.method==='credit'&&!c.cust.trim())return tst('اكتب اسم العميل عشان الآجل');
+ const day=todayISO(),now=cairoNow(),at=day+'T'+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+ const o={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),day,at,grp:c.g.k,svc:c.svc,val:f&&c.g.kind!=='service'?String(f):'',face:f,charge:r.charge,cost:r.cost,profit:r.profit,method:c.method,mach:'',cust:c.cust.trim(),phone:ND(c.phone).replace(/\D/g,''),note:c.note.trim(),shot:c.shot||'',by:me()};
+ if(c.mach!==''&&CD.machines[+c.mach]){const m=CD.machines[+c.mach];o.mach=m.n;m.b=(+m.b||0)-(c.g.kind==='visa'?0:r.cost)}
+ const key=c.g.k+'|'+c.svc;if(c.g.kind==='card'&&num(c.pct))SET.margin[key]=num(c.pct);if(c.g.kind==='bill'&&c.fee!=='')SET.fee[key]=num(c.fee);if(c.g.kind==='visa'&&num(c.pct))SET.margin[key]=num(c.pct);
+ const mo=monthKey(day);if(mo!==MON){MON=mo;await loadMonth(MON)}OPS.push(o);
+ const ok=await putS('ph_ops_'+MON,OPS);if(!ok){OPS.pop();return}await putS('ph_cards',CD);await putS('ph_opsset',SET);
+ closeModal();tst('✔ اتسجّلت — ربحك '+M(r.profit));DAY=day;render()}
+function again(id){const o=OPS.find(x=>x.id===id);if(!o)return;const g=GR.find(x=>x.k===o.grp);if(!g)return;CUR={g,svc:o.svc,face:o.face||'',charge:'',cost:'',method:o.method,mach:'',cust:'',phone:'',note:'',shot:'',pct:SET.margin[g.k+'|'+o.svc]??'',fee:SET.fee[g.k+'|'+o.svc]??''};
+ if(g.kind==='visa')CUR.cost='';drawForm()}
+async function del(id){if(!confirm('تمسح العملية دي؟'))return;OPS=OPS.filter(o=>o.id!==id);if(await putS('ph_ops_'+MON,OPS))render()}
+async function closeDay(){const v=$('dyAct');const a=num(v&&v.value);if(!v||v.value==='')return tst('اكتب الفلوس اللي في الدرج');const L=dayOps(DAY),st=stats(L);const op=num(($('dyOpen')||{}).value),exp=op+st.drawer;const C=await getS('ph_opsclose',{});C[DAY]={at:todayISO()+'T'+cairoNow().toTimeString().slice(0,5),by:me(),open:op,actual:a,expected:exp,diff:a-exp,n:st.n,profit:st.profit};if(await putS('ph_opsclose',C)){tst('✔ اتقفل اليوم');render()}}
+function reportTxt(){const L=dayOps(DAY),st=stats(L);let t=`📒 يومية ${DAY}\nعمليات: ${st.n} · مقبوض ${M(st.charge)} · ربح ${M(st.profit)}\nصافي حركة الدرج: ${M(st.drawer)}\n`;GR.forEach(g=>{const s=st.byG[g.k];if(s)t+=`\n${g.ic} ${g.n.split(' (')[0]}: ${s.n} عملية — ${M(s.charge)} — ربح ${M(s.profit)}`});if(CD.machines.length)t+='\n\nالمكن:\n'+CD.machines.map(m=>`• ${m.n}: ${M(m.b)}`).join('\n');return t}
+function report(){window.open('https://wa.me/?text='+encodeURIComponent(reportTxt()),'_blank')}
+function remWa(id){const o=OPS.find(x=>x.id===id);if(!o||!o.phone)return;const sh=(typeof db!=='undefined'&&db.settings&&db.settings.companyName)||'';let p=o.phone;if(p.startsWith('0'))p='2'+p;window.open('https://wa.me/'+p+'?text='+encodeURIComponent(`أهلاً ${o.cust} 👋\nقرّبت فاتورة ${o.svc} بتاعتك — تقدر تدفعها عندنا في ${sh} وتخلّصها في دقيقة 🙏`),'_blank')}
+async function target(){const v=prompt('هدف الربح اليومي (ج)؟',SET.target||'');if(v===null)return;SET.target=num(v);if(await putS('ph_opsset',SET))render()}
+async function addMach(){const n=prompt('اسم المكنة (فوري / أمان / مصاري / بي):');if(!n)return;const b=num(prompt('الرصيد الحالي؟','0'));CD.machines.push({n:n.trim(),b});if(await putS('ph_cards',CD))render()}
+async function topMach(i){const m=CD.machines[i],a=num(prompt('زوّد رصيد '+m.n+' بكام؟ (دلوقتي '+m.b+')'));if(!a)return;m.b=(+m.b||0)+a;if(await putS('ph_cards',CD))render()}
+function viewShot(id){const o=OPS.find(x=>x.id===id);if(o&&o.shot)openModal(`${head(H(o.svc))}<img src="${o.shot}" style="width:100%;border-radius:12px">`)}
+/* ---------- الصفحات ---------- */
+function ensure(){if(!$('phDay')){const ref=$('products');if(ref){const sec=document.createElement(ref.tagName.toLowerCase());sec.id='phDay';sec.className='page';ref.parentNode.appendChild(sec)}}
+ const nav=document.querySelector('aside .nav');if(nav&&!nav.querySelector('[data-page="phDay"]'))nav.insertAdjacentHTML('afterbegin',`<button data-page="phDay" onclick="showPage('phDay')"><span style="font-size:17px;width:20px;text-align:center">📒</span> <span>يومية الموبايلات</span></button>`);
+ document.querySelectorAll('[data-page="daybook"],[data-page="phCards"]').forEach(b=>{b.style.display='none'});
+ const a=document.querySelector('.ph-hero .ph-acts');if(a&&!a.querySelector('[data-dy]')){a.insertAdjacentHTML('afterbegin',`<button data-dy onclick="showPage('phDay')" style="grid-column:span 2;background:linear-gradient(135deg,#d4aa4f,#9c7020);border-color:#f3d48a"><b>📒</b>اليومية — عملية جديدة</button>`);a.querySelectorAll('button').forEach(b=>{if((b.getAttribute('onclick')||'').includes("showPage('phCards')"))b.style.display='none'})}}
+if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){if(id==='daybook'||id==='phCards')id='phDay';const r=_sp.call(this,id);if(id==='phDay')setTimeout(()=>{try{render()}catch(e){}},60);return r}}
+new MutationObserver(()=>{try{ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
+window.mkDY={start,grp:pickGrp,svc:pickSvc,upd,shot,day:v=>{DAY=v||todayISO();render()},tab:t=>{TAB=t;render()},flt:f=>{FLT=f;render()},again,del,close:closeDay,report,remWa,target,mach:addMach,top:topMach,view:viewShot};
 })();
 </script>
 
