@@ -57,7 +57,7 @@ function left(d){return Math.max(0,Math.ceil((new Date(d)-Date.now())/864e5))}
 function waNum(p){p=String(p||'').replace(/\D/g,'');if(p.startsWith('00'))p=p.slice(2);if(p.startsWith('0'))p='2'+p;return p}
 async function login(){$('er').textContent='';const r=await sb.auth.signInWithPassword({email:$('em').value.trim(),password:$('pw').value});
  if(r.error){$('er').textContent='الإيميل أو كلمة السر غلط';return}$('pw').value='';load()}
-async function load(){const r=await sb.rpc('app_admin_list');
+async function load(){const r=await sb.rpc('app_admin_list_p',{p:'phone'});
  if(r.error){if(/not_admin/.test(r.error.message||'')){$('er').textContent='الحساب ده مش مدير';await sb.auth.signOut()}else $('er').textContent='مشكلة اتصال: '+r.error.message;show(false);return}
  ALL=(r.data||[]).map(s=>Object.assign(s,{st:status(s)}));show(true);render()}
 function show(on){$('login').hidden=on;$('panel').hidden=!on;$('rf').hidden=$('out').hidden=!on}
