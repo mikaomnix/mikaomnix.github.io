@@ -111,6 +111,13 @@ body.dk #gate{background:linear-gradient(160deg,#0b1a17,#0b1422)}
 button:disabled{opacity:.45;cursor:not-allowed}
 @media(min-width:900px){.btiles{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:560px){.stl-f{grid-template-columns:1fr}.stiles a{font-size:11px}}
+.clsteps{display:flex;gap:6px;overflow-x:auto;margin:0 0 12px;padding-bottom:2px}.clsteps button{flex:1;min-width:78px;display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);color:var(--mut);border:1px solid var(--line);padding:8px 4px;font-size:12px;min-height:0;border-radius:14px}
+.clsteps i{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--bg);font-style:normal;font-weight:800}.clsteps i svg.i{width:16px;height:16px}.clsteps .on{border-color:var(--pri);color:var(--pri2);box-shadow:0 4px 12px #0f766e1f}.clsteps .on i{background:var(--pri);color:#fff}.clsteps .done i{background:var(--soft);color:var(--pri2)}
+.den{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 10px}.den label{background:var(--bg);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;margin:0;text-align:center}.den span{font-weight:800;color:var(--ink)}.den input{text-align:center;font-size:18px;font-weight:800;min-height:42px}.den small{color:var(--mut);font-size:11px}
+.clsum{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:center;background:var(--bg);border-radius:14px;padding:12px 14px;margin:12px 0;font-size:15px}.clsum b{font-size:21px;text-align:left}.clsum.ok{background:var(--soft)}.clsum.ok b{color:var(--pri2)}.clsum.dn{background:#fdecec}.clsum.dn b{color:var(--bad)}.clsum.up{background:#fff4e2}.clsum.up b{color:#a86500}
+.clw{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr;gap:8px;align-items:center;border-top:1px solid var(--line);padding:9px 0}.clw small{display:block;font-size:11.5px;color:var(--mut)}.clw input{min-height:38px}
+@media(max-width:560px){.den{grid-template-columns:repeat(2,1fr)}.clw{grid-template-columns:1fr 1fr}}
+@media print{.clsteps{display:none}}
 </style>
 </head>
 <body>

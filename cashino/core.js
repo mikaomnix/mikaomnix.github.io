@@ -189,7 +189,7 @@ function apply(state, ev) {
     case 'exp.reverse': if (state.exps[d.id]) state.exps[d.id].reversed = true; break;
     case 'move.add': if (!state.moves[d.id]) state.moves[d.id] = Object.assign({ createdAt: ev.t, reversed: false }, d); break;
     case 'move.reverse': if (state.moves[d.id]) state.moves[d.id].reversed = true; break;
-    case 'day.close': state.closes[d.date] = Object.assign({ closedAt: ev.t, by: ev.by, open: false }, d); break;
+    case 'day.close': state.closes[d.date] = Object.assign({ closedAt: ev.t, by: ev.by }, d, { open: false, openItems: d.openItems || (typeof d.open === 'number' && d.open ? [d.open + ' عملية مفتوحة'] : []) }); break;   // «open» = اتفتح تاني بس
     case 'day.reopen': if (state.closes[d.date]) { state.closes[d.date].open = true; state.closes[d.date].reopenReason = d.reason; state.closes[d.date].reopenedAt = ev.t; } break;
   }
   return state;
