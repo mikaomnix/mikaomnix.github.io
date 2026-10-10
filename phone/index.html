@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-p11';
+const APP_VER='2026-10-10-p12';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5916,13 +5916,20 @@ async function target(){const v=prompt('هدف الربح اليومي (ج)؟',S
 async function addMach(){const n=prompt('اسم المكنة (فوري / أمان / مصاري / بي):');if(!n)return;const b=num(prompt('الرصيد الحالي؟','0'));CD.machines.push({n:n.trim(),b});if(await putS('ph_cards',CD))render()}
 async function topMach(i){const m=CD.machines[i],a=num(prompt('زوّد رصيد '+m.n+' بكام؟ (دلوقتي '+m.b+')'));if(!a)return;m.b=(+m.b||0)+a;if(await putS('ph_cards',CD))render()}
 function viewShot(id){const o=OPS.find(x=>x.id===id);if(o&&o.shot)openModal(`${head(H(o.svc))}<img src="${o.shot}" style="width:100%;border-radius:12px">`)}
+
+/* ---------- طريقة الدفع في فاتورة البيع العادية ---------- */
+function payMethod(){const paid=$('txPaid'),note=$('txNote');if(!paid||!note||$('ph7Pm')||typeof TTYPE==='undefined'||TTYPE!=='sale')return;
+ const f=paid.closest('.field')||paid.parentElement;if(!f)return;
+ f.insertAdjacentHTML('afterend','<div class="field" id="ph7Pm"><label>طريقة الدفع</label><div>'+PM.map(([k,l],i)=>'<span class="dy-c'+(i?'':' on')+'" data-m="'+l.replace(/^\S+\s/,'')+'">'+l+'</span>').join('')+'</div></div>');
+ $('ph7Pm').addEventListener('click',e=>{const c=e.target.closest('.dy-c');if(!c)return;$('ph7Pm').querySelectorAll('.dy-c').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  let v=note.value.replace(/^\[الدفع: [^\]]*\]\s*/,'');note.value=(c.dataset.m==='نقدي'?'':'[الدفع: '+c.dataset.m+'] ')+v;note.dispatchEvent(new Event('input',{bubbles:true}))})}
 /* ---------- الصفحات ---------- */
 function ensure(){if(!$('phDay')){const ref=$('products');if(ref){const sec=document.createElement(ref.tagName.toLowerCase());sec.id='phDay';sec.className='page';ref.parentNode.appendChild(sec)}}
  const nav=document.querySelector('aside .nav');if(nav&&!nav.querySelector('[data-page="phDay"]'))nav.insertAdjacentHTML('afterbegin',`<button data-page="phDay" onclick="showPage('phDay')"><span style="font-size:17px;width:20px;text-align:center">📒</span> <span>يومية الموبايلات</span></button>`);
  document.querySelectorAll('[data-page="daybook"],[data-page="phCards"]').forEach(b=>{b.style.display='none'});
  const a=document.querySelector('.ph-hero .ph-acts');if(a&&!a.querySelector('[data-dy]')){a.insertAdjacentHTML('afterbegin',`<button data-dy onclick="showPage('phDay')" style="grid-column:span 2;background:linear-gradient(135deg,#d4aa4f,#9c7020);border-color:#f3d48a"><b>📒</b>اليومية — عملية جديدة</button><button data-dy onclick="location.href='cash/?m=1'" style="grid-column:span 2;background:linear-gradient(135deg,#0b6e99,#064a68);border-color:#7fc4e3"><b>💰</b>المحافظ والكاش<small style="display:block;font-weight:600">الليمت · التصفية · كسبت إيه</small></button>`);a.querySelectorAll('button').forEach(b=>{if(!b.hasAttribute('data-dy')&&(b.getAttribute('onclick')||'').includes('cash/'))b.style.display='none'});a.querySelectorAll('button').forEach(b=>{if((b.getAttribute('onclick')||'').includes("showPage('phCards')"))b.style.display='none'})}}
 if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){if(id==='daybook'||id==='phCards')id='phDay';const r=_sp.call(this,id);if(id==='phDay')setTimeout(()=>{try{render()}catch(e){}},60);return r}}
-new MutationObserver(()=>{try{ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(()=>{try{ensure();payMethod()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
 window.mkDY={start,grp:pickGrp,svc:pickSvc,upd,shot,day:v=>{DAY=v||todayISO();render()},tab:t=>{TAB=t;render()},flt:f=>{FLT=f;render()},again,del,close:closeDay,report,remWa,target,mach:addMach,top:topMach,view:viewShot};
 })();
 </script>
