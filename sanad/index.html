@@ -2019,8 +2019,17 @@ G.forEach(g=>g[2].forEach(n=>TT[n[0]]=n[2]));
 const ndg=s=>String(s==null?'':s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/٫/g,'.');
 function calcFlash(id){const o=document.getElementById(id);if(!o)return;o.classList.remove('calc-flash');void o.offsetWidth;o.classList.add('calc-flash');const b=document.getElementById(id+'Ok');if(b){b.textContent='✓ اتحسب';clearTimeout(b._t);b._t=setTimeout(()=>b.textContent='',1600)}}
 function calcGo(fn,id){fn();setTimeout(()=>{const o=document.getElementById(id);if(o)o.scrollIntoView({behavior:'smooth',block:'start'})},300)}
-const KT={walls:'300, 240',upper:'',corners:'',lowH:72,dep:56,upH:70,upD:32,tall:1,drawers:2,hood:true,sink:true,proj:''};
+const KT={walls:'300, 240',upper:'',corners:'',lowH:72,dep:56,upH:70,upD:32,tall:1,drawers:2,hood:true,sink:true,proj:'',blade:10,plinth:10,sheet:'244x122',sameUp:true};
 function ktSplit(len){const u=[];let r=Math.round(len);while(r>=60+30||r===60){u.push(60);r-=60}if(r>=30){const w=Math.floor(r/5)*5;u.push(w);r-=w}return {u,fill:r}}
+/* حاسبة المطبخ v2 — على أصول الصنعة: سلاح بدل اللوح الكامل، أدراج بجسمها، وزرة، رخامة، وتقطيع حقيقي على اللوح */
+function ktPack(pieces,SL,SW){ // pieces: [{l,w,q,rot}] → عدد الألواح بتقطيع Shelf (FFD) مع سُمك المنشار
+ const K=.4,items=[];pieces.forEach(p=>{for(let i=0;i<p.q;i++){let l=Math.max(p.l,p.w),w=Math.min(p.l,p.w);if(!p.rot&&p.l<p.w){l=p.w;w=p.l}items.push({l:Math.min(l,1e5),w})}});
+ items.sort((a,b)=>b.w-a.w||b.l-a.l);const sheets=[];let bad=0,used=0;
+ for(const it of items){if(it.l>SL+.01||it.w>SW+.01){bad++;continue}let placed=false;
+  for(const sh of sheets){for(const s of sh.shelves){if(it.w<=s.h+.01&&s.left>=it.l+K){s.left-=it.l+K;placed=true;break}}if(placed)break;
+   const usedH=sh.shelves.reduce((a,s)=>a+s.h+K,0);if(usedH+it.w<=SW+.01){sh.shelves.push({h:it.w,left:SL-it.l-K});placed=true;break}}
+  if(!placed)sheets.push({shelves:[{h:it.w,left:SL-it.l-K}]});used+=it.l*it.w}
+ const area=sheets.length*SL*SW;return {n:sheets.length,waste:area?Math.round((1-used/area)*100):0,bad}}
 function ktCalc(){const W=String(KT.walls).split(/[,،\s]+/).map(Number).filter(x=>x>0),UW=String(KT.upper||KT.walls).split(/[,،\s]+/).map(Number).filter(x=>x>0);
  const corners=KT.corners===''?Math.max(0,W.length-1):+KT.corners;let low=[],up=[],tall=[],walls=[];let tallLeft=+KT.tall||0,drLeft=+KT.drawers||0,sinkDone=!KT.sink,hoodDone=!KT.hood;
  W.forEach((len,i)=>{let L=len;const w={len,low:[],up:[],tall:[]};
@@ -2029,21 +2038,40 @@ function ktCalc(){const W=String(KT.walls).split(/[,،\s]+/).map(Number).filter(
   const s=ktSplit(L);s.u.forEach(x=>{let t='وحدة';if(!sinkDone&&x>=60){t='حوض';sinkDone=true}else if(drLeft>0&&x>=40){t='أدراج';drLeft--}w.low.push({w:x,t})});w.fill=s.fill;
   let UL=(UW[i]||len)-(i<corners?60:0)-w.tall.reduce((a,x)=>a+x.w,0);if(i<corners)w.up.push({w:60,t:'ركنة',corner:1});
   const su=ktSplit(UL);su.u.forEach(x=>{let t='علوي';if(!hoodDone&&x===60){t='شفاط';hoodDone=true}w.up.push({w:x,t})});walls.push(w);low=low.concat(w.low);up=up.concat(w.up);tall=tall.concat(w.tall)});
- const H=+KT.lowH,D=+KT.dep,UH=+KT.upH,UD=+KT.upD,doorsOf=u=>u.t==='أدراج'||u.t==='شفاط'?0:u.w>=80?2:1,hingeOf=h=>h<=95?2:h<=160?3:4;
- let doors=0,hinges=0,drawers=0,shelves=0,legs=0,carc=0,back=0,front=0,band=0;const P=[];const add=(unit,name,l,w,q,mat,th)=>P.push({unit,name,l:Math.round(l),w:Math.round(w),q,mat,th});
- low.forEach((u,i)=>{const n=doorsOf(u),tag='سفلي '+u.t+' '+u.w;doors+=n;hinges+=n*hingeOf(H);if(u.t==='أدراج')drawers+=3;const sh=u.t==='أدراج'||u.t==='حوض'?0:1;shelves+=sh;legs+=4;
-  carc+=2*H*D+2*u.w*D+sh*u.w*D;back+=u.w*H;front+=u.w*H;band+=2*H+2*u.w+sh*u.w+(n?n*2*(u.w/n+H):3*2*(u.w+H/3));
-  add(tag,'جنب',H,D,2,'خشب 18',18);add(tag,'أرضية',u.w-3.6,D,1,'خشب 18',18);add(tag,'مرابط فوق',u.w-3.6,10,2,'خشب 18',18);if(sh)add(tag,'رف',u.w-3.8,D-3,sh,'خشب 18',18);add(tag,'ضهر',u.w-1,H-1,1,'HDF',3);
-  if(u.t==='أدراج'){add(tag,'وش درج',u.w-.4,H/3-.4,3,'وش',18)}else if(n)add(tag,'ضلفة',u.w/n-.4,H-.4,n,'وش',18)});
- up.forEach(u=>{const n=doorsOf(u),tag='علوي '+u.t+' '+u.w;doors+=n;hinges+=n*hingeOf(UH);const sh=u.t==='شفاط'?0:UH>=85?2:1;shelves+=sh;
-  carc+=2*UH*UD+2*u.w*UD+sh*u.w*UD;back+=u.w*UH;front+=u.w*UH;band+=2*UH+2*u.w+sh*u.w+n*2*(u.w/Math.max(n,1)+UH);
-  add(tag,'جنب',UH,UD,2,'خشب 18',18);add(tag,'سقف وأرضية',u.w-3.6,UD,2,'خشب 18',18);if(sh)add(tag,'رف',u.w-3.8,UD-3,sh,'خشب 18',18);add(tag,'ضهر',u.w-1,UH-1,1,'HDF',3);if(n)add(tag,'ضلفة',u.w/n-.4,UH-.4,n,'وش',18)});
- tall.forEach(u=>{const TH=H+10+UH+60,tag='دولاب طويل '+u.w;doors+=2;hinges+=hingeOf(140)+hingeOf(TH-150);shelves+=4;legs+=4;carc+=2*TH*D+2*u.w*D+4*u.w*D;back+=u.w*TH;front+=u.w*TH;band+=2*TH+6*u.w+2*(u.w+TH)*1;
-  add(tag,'جنب',TH,D,2,'خشب 18',18);add(tag,'سقف وأرضية',u.w-3.6,D,2,'خشب 18',18);add(tag,'رف',u.w-3.8,D-3,4,'خشب 18',18);add(tag,'ضهر',u.w-1,TH-1,1,'HDF',3);add(tag,'ضلفة تحت',u.w-.4,140,1,'وش',18);add(tag,'ضلفة فوق',u.w-.4,TH-150,1,'وش',18)});
- const SA=244*122*.82,sheets=Math.ceil(carc/SA),fronts=Math.ceil(front/SA),hdf=Math.ceil(back/(244*122*.9)),bandM=Math.ceil(band/100*1.1),slideL=Math.max(25,Math.floor((D-6)/5)*5);
- const lowRun=low.reduce((a,u)=>a+u.w,0)/100,upRun=up.reduce((a,u)=>a+u.w,0)/100,c=S.cfg.kit,price=Math.round(lowRun*c.lowP+upRun*c.upP+tall.length*c.tallP);
- const matCost=Math.round(sheets*c.sheet+fronts*c.sheet*1.4+hdf*c.hdf+bandM*c.band);
- return {walls,low,up,tall,doors,hinges,drawers,slides:drawers,slideL,handles:doors+drawers,legs,shelves,pins:shelves*4,sheets,fronts,hdf,bandM,lowRun,upRun,top:Math.ceil(lowRun*10)/10,price,matCost,P}}
+ const H=+KT.lowH,D=+KT.dep,UH=+KT.upH,UD=+KT.upD,T=1.8,BL=+KT.blade||10,PL=+KT.plinth||10,SZ=String(KT.sheet||'244x122').split('x').map(Number),SL=SZ[0]||244,SWD=SZ[1]||122;
+ const doorsOf=u=>u.t==='أدراج'||u.t==='شفاط'?0:u.w>=80?2:1,hingeOf=h=>h<=95?2:h<=160?3:4;
+ let doors=0,hinges=0,drawers=0,shelves=0,legs=0,hangers=0,backA=0,bandCm=0;const P=[];
+ const add=(unit,name,l,w,q,mat,th,band)=>{if(q<=0||l<=0||w<=0)return;P.push({unit,name,l:Math.round(l*10)/10,w:Math.round(w*10)/10,q,mat,th});bandCm+=q*(band||0)};
+ low.forEach(u=>{const n=doorsOf(u),tag='سفلي '+u.t+' '+u.w,inner=u.w-2*T;doors+=n;hinges+=n*hingeOf(H);legs+=4;
+  const isDr=u.t==='أدراج',isSink=u.t==='حوض',sh=(isDr||isSink)?0:1;shelves+=sh;
+  add(tag,'جنب',H,D,2,'خشب 18',18,H);                                   // حرف الوش الأمامي
+  add(tag,'أرضية',inner,D-1,1,'خشب 18',18,inner);
+  add(tag,'سلاح (الرخامة بتتثبّت عليه)',inner,BL,2,'خشب 18',18,inner);   // قدّام وورا — بدل لوح كامل
+  if(sh)add(tag,'رف',inner-.2,D-3,sh,'خشب 18',18,inner);
+  add(tag,'ضهر',u.w-1,H-1,1,'HDF',3,0);backA+=(u.w-1)*(H-1);
+  if(isDr){const dh=(H-.4)/3,bw=inner-2.6;drawers+=3;
+   add(tag,'وش درج',u.w-.4,dh-.4,3,'وش',18,2*(u.w-.4+dh-.4));
+   add(tag,'جنب جسم الدرج',D-6,Math.max(10,dh-6),6,'خشب 18',18,0);
+   add(tag,'وش/ضهر جسم الدرج',bw-3.6,Math.max(10,dh-6),6,'خشب 18',18,0);
+   add(tag,'قاع الدرج',bw-1,D-7,3,'HDF',3,0);backA+=3*(bw-1)*(D-7)}
+  else if(n)add(tag,'ضلفة',u.w/n-.4,H-.4,n,'وش',18,n*2*(u.w/n-.4+H-.4))});
+ up.forEach(u=>{const n=doorsOf(u),tag='علوي '+u.t+' '+u.w,inner=u.w-2*T,sh=u.t==='شفاط'?0:UH>=85?2:1;doors+=n;hinges+=n*hingeOf(UH);shelves+=sh;hangers+=2;
+  add(tag,'جنب',UH,UD,2,'خشب 18',18,UH);add(tag,'سقف وأرضية',inner,UD,2,'خشب 18',18,inner);if(sh)add(tag,'رف',inner-.2,UD-3,sh,'خشب 18',18,inner);
+  add(tag,'ضهر',u.w-1,UH-1,1,'HDF',3,0);backA+=(u.w-1)*(UH-1);if(n)add(tag,'ضلفة',u.w/n-.4,UH-.4,n,'وش',18,n*2*(u.w/n-.4+UH-.4))});
+ tall.forEach(u=>{const TH=H+10+UH+60,tag='دولاب طويل '+u.w,inner=u.w-2*T;doors+=2;hinges+=hingeOf(140)+hingeOf(TH-150);shelves+=4;legs+=4;hangers+=0;
+  add(tag,'جنب',TH,D,2,'خشب 18',18,TH);add(tag,'سقف وأرضية',inner,D,2,'خشب 18',18,inner);add(tag,'رف',inner-.2,D-3,4,'خشب 18',18,inner);
+  add(tag,'ضهر',u.w-1,TH-1,1,'HDF',3,0);backA+=(u.w-1)*(TH-1);add(tag,'ضلفة تحت',u.w-.4,140,1,'وش',18,2*(u.w-.4+140));add(tag,'ضلفة فوق',u.w-.4,TH-150,1,'وش',18,2*(u.w-.4+TH-150))});
+ // وزرة: لوح واحد متصل بطول الصف السفلي (بدل ما تتحسب مع كل وحدة)
+ const lowRun=low.reduce((a,u)=>a+u.w,0)/100,upRun=up.reduce((a,u)=>a+u.w,0)/100,runCm=lowRun*100;
+ {const seg=Math.max(60,SL-4),n=Math.max(1,Math.ceil(runCm/seg)),each=runCm/n;add('كل السفلي','وزرة (قاعدة) — '+n+' قطعة متصلة',each,PL,n,'خشب 18',18,each)}
+ const body=P.filter(p=>p.mat==='خشب 18'),fr=P.filter(p=>p.mat==='وش');
+ const pb=ktPack(body.map(p=>({l:p.l,w:p.w,q:p.q,rot:true})),SL,SWD),pf=ktPack(fr.map(p=>({l:p.l,w:p.w,q:p.q,rot:false})),SL,SWD);
+ const hdf=Math.ceil(backA/(SL*SWD*.9)),bandM=Math.ceil(bandCm/100*1.1),slideL=Math.max(25,Math.floor((D-6)/5)*5);
+ const c=S.cfg.kit,price=Math.round(lowRun*c.lowP+upRun*c.upP+tall.length*c.tallP);
+ const sheets=pb.n,fronts=pf.n,matCost=Math.round(sheets*c.sheet+fronts*c.sheet*1.4+hdf*c.hdf+bandM*c.band);
+ const sinkN=low.filter(u=>u.t==='حوض').length,hobN=KT.hood&&up.some(u=>u.t==='شفاط')?1:0;
+ return {walls,low,up,tall,doors,hinges,drawers,slides:drawers,slideL,handles:doors+drawers,legs,shelves,pins:shelves*4,sheets,fronts,hdf,bandM,lowRun,upRun,top:Math.ceil(lowRun*10)/10,price,matCost,P,
+  waste:pb.waste,wasteF:pf.waste,badParts:pb.bad+pf.bad,blade:BL,plinthM:Math.ceil(lowRun*10)/10,hangers,topBackM:Math.ceil(lowRun*10)/10,cutouts:sinkN+hobN,sheetSize:SL+'×'+SWD}}
 function ktSVG(R){const H=+KT.lowH,UH=+KT.upH,gap=60,leg=10,TH=H+leg+UH+gap,sc=1.4;let x=0;const out=[];
  R.walls.forEach((w,wi)=>{const tot=Math.max(w.len,w.low.reduce((a,u)=>a+u.w,0)+w.tall.reduce((a,u)=>a+u.w,0));let lx=x;
   const box=(X,Y,Wd,Ht,u,kind)=>{let s=`<rect x="${X}" y="${Y}" width="${Wd}" height="${Ht}" rx="2" fill="${u.corner?'#eef5f6':'#fff'}" stroke="#087f8c" stroke-width="1.6"/>`;
@@ -2062,15 +2090,27 @@ function ktSVG(R){const H=+KT.lowH,UH=+KT.upH,gap=60,leg=10,TH=H+leg+UH+gap,sc=1
 V.kit=()=>{const R=ktCalc(),c=S.cfg.kit,inp=(k,l,t='number',st='')=>`<div><label>${l}</label><input id="kt_${k}" type="text" inputmode="${t==='text'?'text':'decimal'}" value="${esc(KT[k])}" ${st} oninput="KT['${k}']=ndg(this.value);ktRe()"></div>`;
  return `<h1><span>${ic('kitchen')} حاسبة المطبخ الذكية</span><span class="row" style="flex:0 0 auto"><button onclick="ktPrint()">${ic('print')}طباعة للعميل</button><button class="s" onclick="ktWa()">${ic('wa')}ابعت للعميل</button></span></h1>
  <div class="hero" style="padding:16px 20px"><b style="font-size:17px">اكتب أطوال الحيطان بس — والسيستم يقسّم الوحدات، يرسم المطبخ، ويطلّع قائمة التقطيع والإكسسوارات والتكلفة والسعر</b></div>
- <div class="card"><div class="row">${inp('walls','أطوال الحيطان سم (افصل بفاصلة)','text')}${inp('upper','العلوي لو مختلف (اختياري)','text')}${inp('corners','عدد الركن (فاضي = تلقائي)')}${inp('tall','دواليب طويلة')}${inp('drawers','وحدات أدراج')}</div>
+ <div class="card">${ktWallsUI()}<div class="row">${inp('corners','عدد الركن (فاضي = تلقائي)')}${inp('tall','دواليب طويلة')}${inp('drawers','وحدات أدراج')}<div><label>عرض السلاح سم</label><select oninput="KT.blade=+this.value;ktRe()">${[8,10,12].map(v=>`<option ${KT.blade==v?'selected':''}>${v}</option>`).join('')}</select></div><div><label>الوزرة سم</label><select oninput="KT.plinth=+this.value;ktRe()">${[8,10,12,15].map(v=>`<option ${KT.plinth==v?'selected':''}>${v}</option>`).join('')}</select></div><div><label>مقاس اللوح</label><select oninput="KT.sheet=this.value;ktRe()">${[['244x122','٢٤٤×١٢٢'],['280x207','٢٨٠×٢٠٧'],['366x183','٣٦٦×١٨٣'],['250x185','٢٥٠×١٨٥']].map(([v,l])=>`<option value="${v}" ${KT.sheet===v?'selected':''}>${l}</option>`).join('')}</select></div></div>
  <div class="row">${inp('lowH','ارتفاع السفلي')}${inp('dep','عمق السفلي')}<div><label>ارتفاع العلوي</label><select oninput="KT.upH=this.value;ktRe()"><option ${KT.upH==70?'selected':''}>70</option><option ${KT.upH==90?'selected':''}>90</option></select></div>${inp('upD','عمق العلوي')}
  <div><label>إضافات</label><div class="row" style="gap:10px"><label style="display:flex;gap:4px;align-items:center"><input type="checkbox" style="width:auto" ${KT.sink?'checked':''} onchange="KT.sink=this.checked;ktRe()">حوض</label><label style="display:flex;gap:4px;align-items:center"><input type="checkbox" style="width:auto" ${KT.hood?'checked':''} onchange="KT.hood=this.checked;ktRe()">شفاط</label></div></div></div>
  <div class="row" style="margin-top:10px;align-items:center"><button style="flex:0 0 auto" onclick="calcGo(()=>{clearTimeout(_ktT);const o=$('#ktOut');if(o)o.innerHTML=ktOut(ktCalc());calcFlash('ktOut')},'ktOut')">${ic('kitchen')}احسب وارسم ↓</button><b id="ktOutOk" style="color:#087f8c;flex:0 0 auto"></b><small style="color:var(--mut)">الرسم والحسابات بيتحدّثوا لوحدهم وانت بتكتب — الزرار بينزلك عليهم</small></div></div>
  <div id="ktOut">${ktOut(R)}</div>`};
+function ktWalls(){return String(KT.walls).split(/[,،\s]+/).filter(x=>x!=='')}
+function ktWallsUI(){const W=ktWalls();if(!W.length)W.push('');const U=String(KT.upper||'').split(/[,،\s]+/).filter(x=>x!=='');
+ return `<b>أطوال الحيطان (سم) — كل حيطة في خانة</b><div class="row" style="margin-top:6px;align-items:end">${W.map((v,i)=>`<div style="flex:0 0 130px"><label>حيطة ${i+1}</label><div style="display:flex;gap:4px"><input inputmode="decimal" value="${esc(v)}" oninput="ktWallSet(${i},this.value)">${W.length>1?`<button class="d" style="min-height:42px;padding:0 10px" onclick="ktWallDel(${i})">✕</button>`:''}</div></div>`).join('')}<button class="s" style="flex:0 0 auto;min-height:42px" onclick="ktWallAdd()">➕ حيطة</button></div>
+ <label style="display:flex;gap:6px;align-items:center;margin:8px 0"><input type="checkbox" style="width:auto" ${KT.upper?'':'checked'} onchange="if(this.checked){KT.upper=''}else{KT.upper=KT.walls}go()">العلوي بنفس أطوال السفلي</label>
+ ${KT.upper?`<div class="row">${U.map((v,i)=>`<div style="flex:0 0 130px"><label>علوي حيطة ${i+1}</label><input inputmode="decimal" value="${esc(v)}" oninput="ktUpSet(${i},this.value)"></div>`).join('')}</div>`:''}`}
+function ktWallSet(i,v){const W=ktWalls();W[i]=ndg(v);KT.walls=W.join(',');ktRe()}
+function ktWallAdd(){const W=ktWalls();W.push('240');KT.walls=W.join(',');go()}
+function ktWallDel(i){const W=ktWalls();W.splice(i,1);KT.walls=W.join(',');go()}
+function ktUpSet(i,v){const U=String(KT.upper).split(/[,،\s]+/).filter(x=>x!=='');U[i]=ndg(v);KT.upper=U.join(',');ktRe()}
 function ktOut(R){const c=S.cfg.kit,k=(i,l,v,col)=>`<div class="kpi" style="--c:${col||'#087f8c'}"><i>${ic(i)}</i><div><small>${l}</small><b>${v}</b></div></div>`;
  const projs=D('proj').filter(p=>p.stage<12);
  return `<div class="card" style="padding:10px">${ktSVG(R)}</div>
  <div class="grid">${k('layers','ألواح خشب 18 (جسم)',num(R.sheets)+' لوح')}${k('board','ألواح وش (ضلف وأدراج)',num(R.fronts)+' لوح','#c9971f')}${k('box','ألواح HDF (ضهر)',num(R.hdf)+' لوح','#5b6b73')}${k('ruler','شريط حرف',num(R.bandM)+' متر','#0b6e99')}${k('ruler','رخامة / سطح',num(R.top)+' متر طولي','#b5476b')}</div>
+ <div class="grid">${k('ruler','وزرة (قاعدة)',num(R.plinthM)+' متر','#5b6b73')}${k('ruler','ضهر الرخامة',num(R.topBackM)+' متر','#b5476b')}${k('box','فتحات رخامة (حوض/بوتاجاز)',num(R.cutouts),'#b5476b')}${k('cube','علّاقات حيطة',num(R.hangers),'#5b6b73')}${k('layers','هالك التقطيع',num(R.waste)+'٪','#c9971f')}</div>
+ ${R.badParts?`<div class="alert" style="margin:6px 0;padding:8px 10px;border-radius:10px;background:#FFE4E8;color:#9b1c31;font-weight:700">⚠️ ${R.badParts} قطعة أكبر من اللوح (${R.sheetSize}) — غيّر مقاس اللوح أو قسّمها</div>`:''}
+ <div class="card" style="background:var(--soft)"><small>الحساب على أصول الصنعة: السلاح ${R.blade} سم (قدّام وورا) بدل لوح كامل تحت الرخامة · الأدراج بجسمها وقاعها HDF · وزرة واحدة متصلة · تقطيع حقيقي على لوح ${R.sheetSize} بسُمك منشار ٤ مم · شريط الحرف على الأحرف الظاهرة بس.</small></div>
  <div class="grid">${k('wrench','مفصلات',num(R.hinges),'#c9971f')}${k('list','مجاري أدراج '+R.slideL+' سم',num(R.slides)+' جوز','#c9971f')}${k('star','مقابض',num(R.handles),'#c9971f')}${k('cube','رجول',num(R.legs),'#c9971f')}${k('layers','رفوف / كعوب رف',num(R.shelves)+' / '+num(R.pins),'#c9971f')}</div>
  <div class="card"><b>الوحدات</b><div style="margin-top:6px;line-height:2">سفلي: ${R.low.map(u=>`<span class="tag">${u.t} ${u.w}</span>`).join(' ')}<br>علوي: ${R.up.map(u=>`<span class="tag b">${u.t} ${u.w}</span>`).join(' ')}${R.tall.length?'<br>طويل: '+R.tall.map(u=>`<span class="tag y">${u.t} ${u.w}</span>`).join(' '):''}</div></div>
  <div class="card"><div class="row" style="justify-content:space-between"><b style="flex:0 0 auto">💰 السعر والتكلفة</b></div>
@@ -3328,7 +3368,7 @@ boot();
 </script>
 <!-- /WM-CLOUD -->
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<script id="upd-ver">const UPD_VER='202610101527';(function(){let last=0,shown=false;
+<script id="upd-ver">const UPD_VER='202610101912';(function(){let last=0,shown=false;
 async function check(){if(shown||Date.now()-last<60000)return;last=Date.now();
  try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text(),m=t.match(/const UPD_VER='([^']+)'/);
   if(m&&m[1]!==UPD_VER){shown=true;const b=document.createElement('button');b.textContent='🔄 في نسخة جديدة من البرنامج — اضغط هنا للتحديث';
