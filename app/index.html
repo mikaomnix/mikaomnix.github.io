@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-22';
+const APP_VER='2026-10-10-23';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5181,6 +5181,78 @@ if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const 
 new MutationObserver(()=>{try{if(adm())ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
 window.mkKT={n:num,edit,re:()=>drawEd(),addP,save,del,sell,reS,go};
 Object.defineProperty(window,'KT_ED',{get:()=>ED,configurable:true});Object.defineProperty(window,'KT_SALE',{get:()=>SALE,configurable:true});
+})();
+</script>
+
+<script>
+/* =====================================================================
+   🏷️ شروط العملاء — خصم % ثابت لكل عميل (جملة/صنايعي/VIP) + حد أقصى للدين
+   · في فاتورة البيع: أول ما تكتب اسم العميل يظهر شريط بخصمه وحد دينه وعليه كام
+   · كارت الصنف بيفتح بسعر العميل (بعد الخصم) من نفسه
+   · لو الفاتورة هتخلّي دينه يعدّي الحد: تحذير قبل الحفظ
+   البيانات: mk_settings key 'cust_terms' (من غير SQL)
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,$=id=>document.getElementById(id),adm=()=>!!(window.mkT_user&&window.mkT_user.role==='admin');
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ND=v=>String(v??'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));const num=v=>{const n=parseFloat(ND(v).replace(/[,٬\s]/g,''));return isNaN(n)?0:n};
+const M=n=>typeof money==='function'?money(n):(Math.round(+n||0)).toLocaleString('ar-EG')+' ج.م';
+const tst=m=>typeof toast==='function'?toast(m):alert(m);
+const DB=()=>typeof db!=='undefined'?db:{};
+const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const TIERS=[['جملة',5],['صنايعي',8],['معرض/وكيل',12],['VIP',15]];
+let T=null,Q='';
+async function load(){if(T)return T;try{const r=await SBc().from('mk_settings').select('value').eq('key','cust_terms').maybeSingle();T=(r.data&&r.data.value)||{}}catch(e){T={}}return T}
+async function persist(){const r=await SBc().from('mk_settings').upsert([{key:'cust_terms',value:T,updated_at:new Date().toISOString()}],{onConflict:'key'});if(r.error){tst('ماتحفظش: '+(r.error.message||''));return false}return true}
+const termsFor=n=>{if(!T||!n)return null;const k=norm(n);const hit=Object.keys(T).find(x=>norm(x)===k);return hit?T[hit]:null};
+const contactOf=n=>((DB().contacts)||[]).find(c=>norm(c.name)===norm(n)&&c.type==='عميل')||null;
+/* ---- شريط العميل في فاتورة البيع ---- */
+function bar(){if(!T){load().then(bar).catch(()=>{});return}const inp=$('txPerson');if(!inp||typeof TTYPE==='undefined'||TTYPE!=='sale'){const o=$('ctBar');if(o)o.remove();return}
+ const nm=inp.value.trim();let b=$('ctBar');if(!nm){if(b)b.remove();return}
+ const t=termsFor(nm),c=contactOf(nm),bal=c?+c.balance||0:0;
+ if(!t&&!bal){if(b)b.remove();return}
+ if(!b){b=document.createElement('div');b.id='ctBar';b.style.cssText='margin:6px 0;padding:8px 12px;border-radius:12px;font-size:14px;font-weight:700;line-height:1.8';inp.insertAdjacentElement('afterend',b)}
+ const over=t&&t.limit&&bal>=t.limit;
+ b.style.background=over?'#fdecec':'#fff7e0';b.style.color=over?'#b33':'#7a5200';
+ b.innerHTML=`👤 ${H(nm)}${t&&t.pct?` · خصمه <b>${t.pct}%</b>`:''}${t&&t.tier?` (${H(t.tier)})`:''}${bal?` · عليه دلوقتي <b>${M(bal)}</b>`:''}${t&&t.limit?` · حد الدين <b>${M(t.limit)}</b>${over?' ⛔ عدّى الحد':''}`:''}${t&&t.note?`<br><small>📝 ${H(t.note)}</small>`:''}`}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='txPerson')bar()},true);
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='txPerson')setTimeout(bar,50)},true);
+new MutationObserver(()=>{try{if($('txPerson')&&!$('ctBar'))bar();if(adm())ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
+/* ---- سعر العميل في كارت الصنف ---- */
+function wrapCard(){if(window.__ctWrapped||typeof window.openLineCard!=='function')return;window.__ctWrapped=true;const o=window.openLineCard;
+ window.openLineCard=function(pid,nm,line){const r=o.apply(this,arguments);
+  try{if(typeof TTYPE!=='undefined'&&TTYPE==='sale'&&!line&&pid&&pid!=='new'){const t=termsFor(($('txPerson')||{}).value);if(t&&t.pct>0){const p=(DB().products||[]).find(x=>x.id===pid),P=$('lcPr');
+    if(p&&P&&+p.price&&(!+P.value||+P.value===+p.price)){P.value=Math.round(p.price*(1-t.pct/100)*100)/100;P.dispatchEvent(new Event('input',{bubbles:true}));const lab=P.previousElementSibling;if(lab)lab.innerHTML+=` <small style="color:#a66a00">(سعر العميل: خصم ${t.pct}% من ${M(p.price)})</small>`}}}}catch(e){}
+  return r}}
+setTimeout(wrapCard,1500);setTimeout(wrapCard,5000);
+/* ---- تحذير حد الدين قبل الحفظ ---- */
+document.addEventListener('submit',e=>{try{const f=e.target;if(!f||!f.querySelector||typeof TTYPE==='undefined'||TTYPE!=='sale')return;const pe=f.querySelector('#txPerson');if(!pe)return;const nm=pe.value.trim(),t=termsFor(nm);if(!t||!t.limit)return;
+  let tot=0;f.querySelectorAll('.txl').forEach(l=>{tot+=(+(l.querySelector('.lq')||{}).value||0)*(+(l.querySelector('.lp')||{}).value||0)});
+  const pv=(f.querySelector('#txPaid')||{}).value,paid=pv===''||pv==null?tot:num(pv),rem=Math.max(0,tot-paid);if(rem<=0)return;
+  const c=contactOf(nm),bal=c?+c.balance||0:0;
+  if(bal+rem>t.limit&&!confirm(`⚠️ ${nm}\nعليه دلوقتي ${M(bal)} + الباقي في الفاتورة دي ${M(rem)} = ${M(bal+rem)}\nوحد دينه ${M(t.limit)}.\n\nتكمّل الفاتورة برضو؟`)){e.preventDefault();e.stopImmediatePropagation()}}catch(er){}},true);
+/* ---- شاشة «أسعار وحدود العملاء» ---- */
+function ensure(){if($('custTerms'))return;const ref=$('products');if(!ref)return;const sec=document.createElement(ref.tagName.toLowerCase());sec.id='custTerms';sec.className='page';ref.parentNode.appendChild(sec);
+ const nav=document.querySelector('aside .nav');if(nav&&!nav.querySelector('[data-page="custTerms"]'))nav.insertAdjacentHTML('beforeend',`<button data-page="custTerms" onclick="showPage('custTerms')"><span style="font-size:17px;width:20px;text-align:center">🏷️</span> <span>أسعار وحدود العملاء</span></button>`)}
+async function render(){const box=$('custTerms');if(!box)return;await load();const C=((DB().contacts)||[]).filter(c=>c.type==='عميل'),q=norm(Q);
+ let L=C.filter(c=>!q||norm(c.name).includes(q)||String(c.phone||'').includes(q));
+ const withT=L.filter(c=>termsFor(c.name)),rest=L.filter(c=>!termsFor(c.name));L=[...withT,...rest].slice(0,150);
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>🏷️ أسعار وحدود العملاء</h1><p>خصم ثابت لكل عميل بيتطبّق لوحده في الفاتورة، وحد أقصى للدين بيحذّرك قبل ما يعدّيه</p></div></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><input placeholder="🔎 دوّر على عميل" value="${H(Q)}" style="flex:1;min-width:160px" oninput="mkCT.q(this.value)"><span style="align-self:center;color:#7b8a90">${withT.length} عميل ليه شروط</span></div>
+ <div class="table-wrap"><table><thead><tr><th>العميل</th><th>الفئة</th><th>خصم %</th><th>حد الدين</th><th>عليه</th><th>ملاحظة</th></tr></thead><tbody>${L.map((c,i)=>{const t=termsFor(c.name)||{},bal=+c.balance||0,over=t.limit&&bal>=t.limit;return `<tr><td><b>${H(c.name)}</b><br><small style="color:#7b8a90">${H(c.phone||'')}</small></td>
+  <td><select onchange="mkCT.tier(${i},this.value)"><option value="">—</option>${TIERS.map(x=>`<option ${t.tier===x[0]?'selected':''}>${x[0]}</option>`).join('')}</select></td>
+  <td><input inputmode="decimal" style="width:64px" value="${t.pct||''}" onchange="mkCT.set(${i},'pct',this.value)"></td>
+  <td><input inputmode="decimal" style="width:100px" value="${t.limit||''}" onchange="mkCT.set(${i},'limit',this.value)"></td>
+  <td style="font-weight:800;color:${over?'#b33':'inherit'}">${bal?M(bal):'—'}${over?' ⛔':''}</td>
+  <td><input style="width:140px" value="${H(t.note||'')}" onchange="mkCT.set(${i},'note',this.value)"></td></tr>`}).join('')||'<tr><td colspan="6">مفيش عملاء</td></tr>'}</tbody></table></div>`;
+ render.list=L}
+const keyOf=i=>{const c=render.list[i];return c?c.name:null};
+async function set(i,f,v){const n=keyOf(i);if(!n)return;const hit=Object.keys(T).find(x=>norm(x)===norm(n))||n;const t=T[hit]=T[hit]||{};if(f==='note')t.note=String(v).trim();else t[f]=num(v)||0;
+ if(!t.pct&&!t.limit&&!t.note&&!t.tier)delete T[hit];if(await persist())tst('✔ اتحفظ')}
+async function tier(i,v){const n=keyOf(i);if(!n)return;const def=(TIERS.find(x=>x[0]===v)||[])[1];const hit=Object.keys(T).find(x=>norm(x)===norm(n))||n;const t=T[hit]=T[hit]||{};if(v){t.tier=v;if(!t.pct&&def)t.pct=def}else delete t.tier;if(await persist()){render()}}
+if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const r=_sp.apply(this,arguments);if(id==='custTerms')setTimeout(()=>{try{render()}catch(e){}},30);return r}}
+let _qt;window.mkCT={q:v=>{Q=v;clearTimeout(_qt);_qt=setTimeout(render,250)},set,tier};
+setTimeout(()=>{load().catch(()=>{})},3000);
 })();
 </script>
 
