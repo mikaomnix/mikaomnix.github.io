@@ -1599,7 +1599,7 @@ const _oim=openInvoiceModal;openInvoiceModal=function(id){_oim(id);let r=db.sale
 })();
 
 /* ===== تحديث تلقائي: أيقونة الآيفون بتحتفظ بالنسخة القديمة، فبنشيّك على السيرفر ===== */
-const APP_VER='2026-10-10-p10';
+const APP_VER='2026-10-10-p11';
 
 /* ===== من غير نت: الـ Service Worker بيحفظ نسخة من السيستم والمكتبات على الجهاز ===== */
 if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(e=>console.warn('sw',e))})}
@@ -5924,6 +5924,72 @@ function ensure(){if(!$('phDay')){const ref=$('products');if(ref){const sec=docu
 if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){if(id==='daybook'||id==='phCards')id='phDay';const r=_sp.call(this,id);if(id==='phDay')setTimeout(()=>{try{render()}catch(e){}},60);return r}}
 new MutationObserver(()=>{try{ensure()}catch(e){}}).observe(document.documentElement,{childList:true,subtree:true});
 window.mkDY={start,grp:pickGrp,svc:pickSvc,upd,shot,day:v=>{DAY=v||todayISO();render()},tab:t=>{TAB=t;render()},flt:f=>{FLT=f;render()},again,del,close:closeDay,report,remWa,target,mach:addMach,top:topMach,view:viewShot};
+})();
+</script>
+
+<script>
+/* =====================================================================
+   فون سيستم — 🛡️ الاسكرينات والجرابات v2: فصل الاسكرينة عن الجراب، ماركة + موديل،
+   موديلات بنفس المقاس (مجموعات) لو الموديل مش موجود، ليبل لكل موديل
+   البيانات: ph_compat (الموجود) · ph_scattr (نوع/تفاصيل الصنف) · ph_compgroups (مجموعات المقاس)
+   ===================================================================== */
+(function(){
+const SBc=()=>window.mkSB,$=id=>document.getElementById(id),adm=()=>!window.mkT_user||window.mkT_user.role==='admin';
+const H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const M=n=>typeof money==='function'?money(n):(Math.round(+n||0)).toLocaleString('ar-EG')+' ج.م';
+const tst=m=>typeof toast==='function'?toast(m):alert(m);
+const norm=s=>String(s||'').trim().toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ');
+const head=t=>`<div class="modal-head"><h2>${t}</h2><button class="close" onclick="closeModal()">✕</button></div>`;
+async function getS(k,d){try{const r=await SBc().from('mk_settings').select('value').eq('key',k).maybeSingle();return (r.data&&r.data.value)||d}catch(e){return d}}
+async function putS(k,v){const r=await SBc().from('mk_settings').upsert([{key:k,value:v,updated_at:new Date().toISOString()}],{onConflict:'key'});if(r.error){tst('ماتحفظش — جرّب تاني');return false}return true}
+const P=()=>(typeof db!=='undefined'&&db.products)||[];
+const KINDS=[['screen','🛡️ اسكرينة'],['case','📱 جراب'],['other','🔌 حاجة تانية']];
+const STYPE=['زجاج عادي','زجاج 9D / فل كفر','خصوصية (Privacy)','مطفي (Matte)','نانو / سيراميك','UV (للشاشات المنحنية)','هيدروجيل','حماية كاميرا','حماية ضهر'];
+const CTYPE=['سيليكون','شفاف','مضاد للصدمات','جلد / محفظة','ماجسيف','كاميرا مقفولة','بنطاط (Bumper)','بتصميم / كرتون','تلاجة (ديكور)'];
+const BR=['Apple (آيفون)','Samsung (سامسونج)','Xiaomi (شاومي)','Redmi (ريدمي)','POCO (بوكو)','Oppo (أوبو)','Realme (ريلمي)','Vivo (فيفو)','Huawei (هواوي)','Honor (هونر)','Infinix (إنفينكس)','Tecno (تكنو)','Itel (آيتل)','Nokia','Motorola','Lenovo','OnePlus','Google Pixel','Sony','Tab (تابلت)'];
+const SIMG=[['iPhone XR','iPhone 11'],['iPhone X','iPhone XS','iPhone 11 Pro'],['iPhone XS Max','iPhone 11 Pro Max'],['iPhone 12','iPhone 12 Pro','iPhone 13','iPhone 13 Pro','iPhone 14'],['iPhone 12 Pro Max','iPhone 13 Pro Max','iPhone 14 Plus'],['iPhone 6','iPhone 6s','iPhone 7','iPhone 8','iPhone SE 2020','iPhone SE 2022'],['iPhone 6 Plus','iPhone 6s Plus','iPhone 7 Plus','iPhone 8 Plus']];
+const SIM_NOTE='⚠️ تقريبي: نفس المقاس تقريباً — الأفضل تجرّب قبل التركيب، والفرق ممكن يكون في النوتش أو الحواف.';
+let COMP=null,ATT=null,GRP=null,Kf='',Bf='',Q='';
+async function load(){if(!COMP)COMP=await getS('ph_compat',{});if(!ATT)ATT=await getS('ph_scattr',{});if(!GRP)GRP=await getS('ph_compgroups',[])}
+const kindOf=p=>{const a=ATT[p.id];if(a&&a.kind)return a.kind;const t=String(p.name||'');if(/اسكرين|سكرين|glass|زجاج|screen|حماية شاشة|هيدروجيل/i.test(t))return 'screen';if(/جراب|كفر|case|cover|bumper/i.test(t))return 'case';return (/اسكرين|زجاج|شاشة/.test(p.cat||'')&&!/جراب/.test(p.cat||''))?'screen':'other'};
+const allGroups=()=>[...SIMG,...GRP];
+const siblings=m=>{const k=norm(m),out=new Set();allGroups().forEach(g=>{if(g.some(x=>norm(x)===k||k.includes(norm(x))||norm(x).includes(k)&&k.length>4))g.forEach(x=>{if(norm(x)!==k)out.add(x)})});return [...out]};
+function matches(p,q){const k=norm(q);if(!k)return false;return (COMP[p.id]||[]).some(m=>norm(m).includes(k)||k.includes(norm(m)))||norm(p.name).includes(k)}
+async function render(){const box=$('phScr');if(!box)return;await load();
+ const L=P().filter(p=>kindOf(p)!=='other'||(COMP[p.id]||[]).length||ATT[p.id]);
+ const q=Q.trim();let hit=[],sim=[];
+ const kfOk=p=>!Kf||kindOf(p)===Kf;
+ if(q){hit=L.filter(p=>kfOk(p)&&matches(p,q));const sb=siblings(q);if(sb.length)sim=P().filter(p=>kfOk(p)&&!hit.includes(p)&&sb.some(m=>matches(p,m))).map(p=>({p,via:sb.find(m=>matches(p,m))}))}
+ const cnt=k=>L.filter(p=>kindOf(p)===k).length;
+ box.innerHTML=`<div class="title-row"><div class="title"><h1>🛡️ الاسكرينات والجرابات</h1><p>اختار النوع والماركة والموديل — تشوف المتاح، والشبيه لو مش موجود، وتركّب وتطبع الليبل</p></div><div class="btnrow"><button class="secondary" onclick="mkSC.add()">➕ اربط صنف بموديلات</button><button class="secondary" onclick="mkSC.group()">🔗 موديلات بنفس المقاس</button><button class="secondary" onclick="mkPH2.labels()">🏷️ ليبلات الأدراج</button></div></div>
+ <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${[['','الكل'],['screen','🛡️ اسكرينات'],['case','📱 جرابات'],['other','🔌 حاجات تانية']].map(([k,l])=>`<button class="${Kf===k?'primary':'secondary'}" onclick="mkSC.kind('${k}')">${l}${k?' ('+cnt(k)+')':''}</button>`).join('')}</div>
+ <div class="ph-card"><div style="display:flex;gap:8px;flex-wrap:wrap"><select id="scB" style="flex:1;min-width:150px" onchange="mkSC.brand(this.value)"><option value="">كل الماركات</option>${BR.map(b=>`<option ${Bf===b?'selected':''}>${H(b)}</option>`).join('')}</select><input id="scQ2" list="scML" placeholder="🔎 الموديل: iPhone 13 / A54 / Note 12" value="${H(Q)}" style="flex:2;min-width:180px;font-size:17px" oninput="mkSC.q(this.value)"><datalist id="scML">${modelList().map(m=>`<option value="${H(m)}">`).join('')}</datalist></div></div>
+ ${q?`<div class="ph-card"><b>اللي يركب على «${H(q)}» (${hit.length})</b>${hit.map(p=>row(p)).join('')||'<div class="empty">مفيش صنف متسجّل للموديل ده بالظبط</div>'}</div>
+ ${sim.length?`<div class="ph-card" style="border:2px dashed #b08328"><b>🔁 مش موجود بالظبط — الأقرب (نفس المقاس تقريباً)</b><small style="display:block;color:var(--muted);margin:2px 0 6px">${SIM_NOTE}</small>${sim.map(({p,via})=>row(p,'بيركب على '+via)).join('')}</div>`:siblings(q).length&&!hit.length?`<div class="ph-card"><b>🔁 موديلات بنفس المقاس</b><div>${siblings(q).map(m=>`<span class="ph6-chip" onclick="mkSC.q(${JSON.stringify(m).replace(/"/g,'&quot;')},1)">${H(m)}</span>`).join('')}</div><small style="color:var(--muted)">مفيش عندك صنف مربوط بيهم لسه.</small></div>`:''}`:''}
+ <div class="ph-card"><b>كل الأصناف (${L.filter(kfOk).length})</b>${L.filter(kfOk).slice(0,60).map(p=>row(p)).join('')||'<div class="empty">اربط أصنافك بالموديلات من زرار «➕ اربط صنف بموديلات»</div>'}</div>`}
+function modelList(){const s=new Set();Object.values(COMP||{}).forEach(a=>a.forEach(m=>s.add(m)));allGroups().forEach(g=>g.forEach(m=>s.add(m)));return [...s].sort().slice(0,500)}
+function row(p,note){const a=ATT[p.id]||{},k=kindOf(p),ms=COMP[p.id]||[];
+ return `<div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--border,#eee);padding:8px 0"><div style="font-size:24px">${k==='screen'?'🛡️':k==='case'?'📱':'🔌'}</div><div style="flex:1;min-width:0"><b>${H(p.name)}</b>${a.sub?' <span class="ph6-chip">'+H(a.sub)+'</span>':''}${a.color?' <span class="ph6-chip">'+H(a.color)+'</span>':''}<br><small style="color:var(--muted)">متاح <b style="color:${(+p.qty||0)>0?'#159447':'#b42318'}">${+p.qty||0}</b> · ${M(p.price||0)}${ms.length?' · '+H(ms.slice(0,6).join('، '))+(ms.length>6?'…':''):''}${note?'<br><b style="color:#a66a00">'+H(note)+'</b>':''}</small></div><button class="primary" style="padding:6px 10px" onclick="mkPH2.install('${p.id}')">🧰 ركّب</button><button class="secondary" style="padding:6px 10px" onclick="mkSC.label('${p.id}')">🏷️</button><button class="secondary" style="padding:6px 10px" onclick="mkSC.edit('${p.id}')">✏️</button></div>`}
+function editItem(id){const p=P().find(x=>x.id===id);if(!p)return;const a=ATT[id]||{kind:kindOf(p)};ATT[id]=a;const ms=(COMP[id]||[]).join('، ');
+ openModal(`${head('✏️ '+H(p.name))}<div class="form"><div class="field"><label>النوع</label><div>${KINDS.map(([k,l])=>`<span class="ph6-chip ${a.kind===k?'on':''}" onclick="mkSC.setK('${id}','${k}')">${l}</span>`).join('')}</div></div>
+ <div class="field"><label>${a.kind==='case'?'نوع الجراب':'نوع الاسكرينة'}</label><input id="scT" list="scTL" value="${H(a.sub||'')}"><datalist id="scTL">${(a.kind==='case'?CTYPE:STYPE).map(x=>`<option value="${H(x)}">`).join('')}</datalist></div>
+ <div class="field"><label>اللون / التصميم</label><input id="scC" value="${H(a.color||'')}"></div>
+ <div class="field"><label>الموديلات اللي يركب عليها (مفصولة بفاصلة)</label><textarea id="scM2" rows="3" placeholder="iPhone 13, iPhone 13 Pro, iPhone 14">${H(ms)}</textarea></div>
+ <div class="modal-foot"><button class="primary" id="scSave">💾 حفظ</button></div></div>`);
+ $('scSave').onclick=async()=>{a.sub=$('scT').value.trim();a.color=$('scC').value.trim();COMP[id]=[...new Set($('scM2').value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean))];const ok=await putS('ph_scattr',ATT)&&await putS('ph_compat',COMP);if(ok){closeModal();render()}}}
+async function setKind(id,k){ATT[id]=ATT[id]||{};ATT[id].kind=k;await putS('ph_scattr',ATT);editItem(id)}
+function addLink(){const L=P().filter(p=>kindOf(p)!=='other').concat(P().filter(p=>kindOf(p)==='other').slice(0,400));
+ openModal(`${head('➕ اربط صنف بموديلات')}<div class="form"><div class="field"><label>الصنف</label><select id="alP">${L.map(p=>`<option value="${p.id}">${H(p.name)}</option>`).join('')}</select></div><button class="primary" onclick="mkSC.edit(document.getElementById('alP').value)">كمّل</button></div>`)}
+function groupForm(){openModal(`${head('🔗 موديلات بنفس المقاس')}<p style="margin-top:0;font-size:14px;color:var(--muted)">اكتب الموديلات اللي اسكرينتها تركب على بعض (مفصولة بفاصلة). لما موديل منهم مايكونش عندك، السيستم هيقترح الأصناف المربوطة بالباقيين.</p>
+ ${GRP.map((g,i)=>`<div style="display:flex;gap:6px;align-items:center;border-top:1px solid var(--border,#eee);padding:6px 0"><div style="flex:1">${H(g.join(' = '))}</div><button class="secondary danger" onclick="mkSC.delG(${i})">🗑️</button></div>`).join('')}
+ <div class="field" style="margin-top:8px"><textarea id="gpT" rows="2" placeholder="Galaxy A53, Galaxy A52, Galaxy A52s"></textarea></div><button class="primary" id="gpGo">➕ ضيف المجموعة</button><small style="display:block;margin-top:8px;color:var(--muted)">فيه مجموعات آيفون جاهزة (11 = XR، 12 = 13 = 14 …) ماتحتاجش تكتبها.</small>`);
+ $('gpGo').onclick=async()=>{const g=$('gpT').value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean);if(g.length<2)return tst('اكتب موديلين على الأقل');GRP.push(g);if(await putS('ph_compgroups',GRP)){groupForm();render()}}}
+async function delG(i){GRP.splice(i,1);if(await putS('ph_compgroups',GRP)){groupForm();render()}}
+function label(id){const p=P().find(x=>x.id===id);if(!p)return;const a=ATT[id]||{},ms=COMP[id]||[''],sh=(typeof db!=='undefined'&&db.settings&&db.settings.companyName)||'';
+ openModal(`${head('🏷️ ليبل '+H(p.name))}<div id="ph6Label" style="width:58mm;max-width:100%;margin:auto">${ms.map(m=>`<div style="border:1px dashed #999;padding:2.5mm;margin-bottom:2mm;font:9px/1.5 Cairo,Tahoma,sans-serif;page-break-inside:avoid;color:#000;background:#fff"><div style="font-weight:800;font-size:12px">${H(m||p.name)}</div><div>${a.kind==='case'?'جراب':a.kind==='screen'?'اسكرينة':''} ${H(a.sub||'')} ${H(a.color||'')}</div><div style="font-size:8px">${H(p.name)}</div><div style="display:flex;justify-content:space-between;font-weight:800"><span dir="ltr">${H(p.code||'')}</span><span>${M(p.price||0)}</span></div><div style="font-size:7px;color:#555">${H(sh)}</div></div>`).join('')}</div>
+ <div class="modal-foot"><button class="primary" onclick="document.body.classList.add('ph6-lbl');window.print();document.body.classList.remove('ph6-lbl')">🖨️ اطبع (${ms.length} ليبل)</button></div>`)}
+if(typeof showPage==='function'){const _sp=showPage;showPage=function(id){const r=_sp.apply(this,arguments);if(id==='phScr')setTimeout(()=>{try{render()}catch(e){}},140);return r}}
+let _t;window.mkSC={kind:k=>{Kf=k;render()},brand:b=>{Bf=b;const i=$('scQ2');if(i&&b){i.focus()}},q:(v,imm)=>{Q=v;clearTimeout(_t);_t=setTimeout(()=>{render();const i=$('scQ2');if(i){i.focus();i.setSelectionRange(Q.length,Q.length)}},imm?0:350)},add:addLink,edit:editItem,setK:setKind,group:groupForm,delG,label};
 })();
 </script>
 
