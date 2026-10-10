@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>رفع اسكرينات — فون سيستم</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--pri:#0f9d74;--ink:#11302b;--mut:#5f7a74;--line:#dfece8;--bad:#e5484d}
+*{box-sizing:border-box}body{margin:0;font-family:Cairo,Tahoma,sans-serif;background:linear-gradient(160deg,#ecfdf5,#e0f2fe);color:var(--ink);min-height:100vh;display:flex;justify-content:center;padding:24px 16px}
+.box{width:100%;max-width:440px;background:#fff;border-radius:24px;padding:22px 18px;box-shadow:0 24px 60px #0f766e22;align-self:flex-start}
+img.lg{width:64px;height:64px;display:block;margin:0 auto;border-radius:16px}h1{text-align:center;margin:8px 0 0;font-size:22px}.sub{text-align:center;color:var(--mut);margin:4px 0 16px;line-height:1.7}
+button,.pick{font:inherit;font-weight:800;border:0;border-radius:14px;padding:14px;width:100%;cursor:pointer;background:var(--pri);color:#fff;font-size:17px;display:block;text-align:center;margin-top:10px}
+.s{background:#e2f5ef;color:#0b5e4a}textarea{font:inherit;width:100%;min-height:110px;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:6px}
+.prog{height:10px;background:#e8f0ee;border-radius:9px;overflow:hidden;margin-top:12px}.prog i{display:block;height:100%;width:0;background:var(--pri);transition:width .2s}
+.msg{min-height:24px;font-weight:700;margin-top:10px;text-align:center;line-height:1.7}.ok{color:var(--pri)}.er{color:var(--bad)}.th{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.th img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+small{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="box" id="app"><img class="lg" src="icon-192.png" alt=""><h1>فون سيستم</h1><p class="sub">بيحمّل…</p></div>
+<script>
+const URL0='https://rzvncstjattlklpdtkfn.supabase.co/rest/v1/rpc/',KEY='sb_publishable_Molr1fCzsC-VbSgTFDXc5w_F1p0-Fcr';
+const tok=new URLSearchParams(location.search).get('k')||'',$=s=>document.querySelector(s),H=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rpc=async(f,b)=>{const r=await fetch(URL0+f,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>null);if(!r.ok)throw new Error((j&&j.message)||('خطأ '+r.status));return j};
+const shrink=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.78).split(',')[1])};im.onerror=no;im.src=u});
+async function start(){if(!tok)return fail('اللينك ناقص — اطلب لينك جديد من المكتب');
+ let info;try{info=await rpc('ph_src_info',{p_token:tok})}catch(e){return fail('مافيش اتصال — جرّب تاني')}
+ if(!info)return fail('اللينك ده مش شغال — اطلب لينك جديد من المكتب');if(!info.active)return fail('خدمة المكتب موقوفة دلوقتي');
+ $('#app').innerHTML=`<img class="lg" src="icon-192.png" alt=""><h1>رفع اسكرينات التحويل</h1><p class="sub">لـ <b>${H(info.office)}</b><br><small>المصدر: ${H(info.label)}</small></p>
+ <label class="pick">📷 اختار الاسكرينات (واحدة أو كتير)<input type="file" id="f" accept="image/*" multiple hidden></label><div class="th" id="th"></div><div class="prog"><i id="pg"></i></div><div class="msg" id="m"></div>
+ <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">أو الصق رسالة نصية</summary><textarea id="t" placeholder="الصق رسالة التحويل هنا"></textarea><button class="s" id="tb">ابعت الرسالة</button></details>
+ <p style="text-align:center;margin:16px 0 0"><small>الصور بتروح للمكتب بس، ومحدش غيره يقدر يشوفها.</small></p>`;
+ $('#f').onchange=async e=>{const F=[...e.target.files];if(!F.length)return;let ok=0,bad=0;$('#m').className='msg';$('#m').textContent='بيرفع 0 من '+F.length+'…';
+  for(let i=0;i<F.length;i++){try{const b=await shrink(F[i]);await rpc('ph_inbox_in',{p_token:tok,p_text:'',p_from:'',p_img:b,p_kind:null});ok++;$('#th').insertAdjacentHTML('beforeend','<img src="data:image/jpeg;base64,'+b+'">')}catch(er){bad++;console.warn(er)}
+   $('#pg').style.width=((i+1)/F.length*100)+'%';$('#m').textContent='بيرفع '+(i+1)+' من '+F.length+'…'}
+  $('#m').className='msg '+(bad?'er':'ok');$('#m').textContent=bad?('اترفع '+ok+' واتعطّل '+bad+' — جرّب تاني للباقي'):('اترفعوا كلهم ✓ ('+ok+')');e.target.value=''};
+ $('#tb').onclick=async()=>{const t=$('#t').value.trim();if(t.length<5)return;try{const r=await rpc('ph_inbox_in',{p_token:tok,p_text:t,p_from:'',p_img:null,p_kind:'text'});$('#m').className='msg ok';$('#m').textContent=r==='dup'?'الرسالة دي اتبعتت قبل كده':'اتبعتت ✓';$('#t').value=''}catch(er){$('#m').className='msg er';$('#m').textContent=er.message}}}
+function fail(m){$('#app').innerHTML=`<img class="lg" src="icon-192.png" alt=""><h1>فون سيستم</h1><p class="sub er" style="color:var(--bad)">${H(m)}</p>`}
+start();
+</script>
+</body>
+</html>
