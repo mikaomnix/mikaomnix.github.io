@@ -1145,5 +1145,73 @@ window.A = { closeM, toast, copy, newReq: id => quickForm({ customerId: id }), f
   execute, editTx, setStatus, confirm: confirmTx, attach: id => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.onchange = () => importImages([...i.files], id); i.click(); }, sendProof, collect, importImages, viewProof, pickTx,
   link: (p, t, s) => linkProof(p, t, s, s ? (S.proofs[p].cands || []).find(c => c.txId === t)?.why || [] : ['ربط يدوي']), unlink: id => ask('فك ربط الصورة بالعملية؟', 'فك الربط', () => dispatch('proof.unlink', { id })), editExt, reqFromProof, ignoreProof: id => ask('تجاهل الصورة دي؟ (بتفضل محفوظة في السجل)', 'تجاهل', () => dispatch('proof.update', { id, ignored: true })),
   agReq, splitTool, setBR, brForm, thm, look: () => { SETT = 'look'; paint(); }, clStep, clReason, importBatch, importBatchFor, pasteText, settle, settleAll, unsettle, psel, inf: k => { INF = k; paint(); }, ins: v => { INS = v; paint(); }, srcLink, srcTest, supForm, supPay, revSupPay, instaForm, drSet: v => { DR = v; paint(); }, back: () => { if (history.length > 1) history.back(); else location.hash = 'dash'; }, subRefresh, smsKey, smsTest, delAcc, passChange, pinReset, gateAct, syncLogin, syncNow: () => { SY.st = 'busy'; navs(); syncNow(); }, syncInvite, syncMembers, memberEdit, syncOut, syncCreate, syncJoin, custForm, revColl, walletForm, moveForm, expForm, revMove, revExp, walletLedger, lf, exportRows, exportReport, rp, reopen, sett, sset, ruleForm, userForm, lock: () => lockScreen(false), norm: s => C.normDigits(s) };
+/* ===== الليمت وكسبت إيه ===== */
+{
+  const mon = () => todayDay().slice(0, 7);
+  const monthRange = () => { const m = mon(), last = new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate(); return [m + '-01', m + '-' + String(last).padStart(2, '0')]; };
+  /* استخدام كل محفظة: إرسال وإيداع (يومي وشهري) */
+  function usage(w) {
+    const H2 = ST().dayStartHour, day = todayDay(), m = mon(); const o = { sendD: 0, sendM: 0, recvD: 0, recvM: 0 };
+    for (const t of Object.values(S.tx)) { if (!C.isEffective(t) || t.walletId !== w.id) continue; const td = C.dayOf(t.executedAt || t.createdAt, H2), recv = t.kind === 'receive';
+      if (td === day) o[recv ? 'recvD' : 'sendD'] += t.amount; if (td.slice(0, 7) === m) o[recv ? 'recvM' : 'sendM'] += t.amount; }
+    return o;
+  }
+  const lbar = (label, used, lim) => { if (!lim) return `<div class="lm-b"><small class="muted">${label}: ${M(used)} <i>(مفيش حد مسجّل)</i></small></div>`;
+    const left = lim - used, p = Math.min(100, Math.max(0, used / lim * 100)), c = left <= 0 ? 'var(--bad)' : p > 80 ? 'var(--warn)' : 'var(--ok)';
+    return `<div class="lm-b"><div style="display:flex;justify-content:space-between;gap:6px"><small class="muted">${label}</small><b style="color:${c}">${left <= 0 ? 'خلص' : 'فاضل ' + M(left)}</b></div><div class="prog"><i style="width:${p}%;background:${c}"></i></div><small class="muted">${M(used)} من ${M(lim)}</small></div>`; };
+  const extWallets = () => Object.values(S.suppliers || {}).filter(s => s.status !== 'stopped' && (s.wallets || '').trim());
+  V.limits = () => {
+    const B = BL(), W = Object.values(S.wallets).filter(w => w.status !== 'archived' && w.status !== 'stopped');
+    const rows = W.map(w => ({ w, u: usage(w), bal: B.wallets[w.id] || 0 }));
+    const sendLeft = rows.reduce((a, r) => a + (r.w.monthlyLimit ? Math.max(0, r.w.monthlyLimit - r.u.sendM) : 0), 0), noLim = rows.filter(r => !r.w.monthlyLimit).length;
+    const ext = extWallets();
+    return `<h1>${ic('shield')} الليمت — المتاح من كل محفظة <span class="sp"></span><button class="s" onclick="A.limHelp()">${ic('alert')}إزاي أضبطه؟</button></h1>
+    <div class="grid">${kpi('up', 'متاح للتحويل الشهر ده', M(sendLeft), 'var(--ok)', '', noLim ? noLim + ' محفظة من غير حد مسجّل' : 'من كل المحافظ')}${kpi('wallet', 'عدد المحافظ', N(rows.length), 'var(--sky)')}${kpi('users', 'وكلاء خارجيين', N(ext.length), '#7c5cc4', '#suppliers')}</div>
+    <div class="card" style="border:2px solid var(--pri)"><b>${ic('bolt')} العميل عايز مبلغ — أحوّله منين؟</b>
+      <div class="row" style="margin-top:8px"><input id="lmAm" inputmode="decimal" placeholder="المبلغ (مثلاً 50000)" style="font-size:20px;font-weight:800;flex:1"><button onclick="A.limFind()">${ic('bolt')}قولّي</button></div><div id="lmOut" style="margin-top:10px"></div></div>
+    ${rows.map(({ w, u, bal }) => `<div class="tx" style="--c:${w.monthlyLimit && w.monthlyLimit - u.sendM <= 0 ? 'var(--bad)' : 'var(--sky)'}">
+      <div class="h"><b style="font-size:17px">${H(w.name)}</b><span class="tag b">${H(provName(w.provider))}</span><span style="flex:1"></span><span class="amt ${bal < 0 ? 'neg' : ''}">${M(bal)}</span></div>
+      <div class="meta">${H(w.holder || '')} · <span dir="ltr">${H(w.number || '')}</span></div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:8px">${lbar('تحويل — الشهر', u.sendM, w.monthlyLimit)}${lbar('تحويل — اليوم', u.sendD, w.dailyLimit)}${lbar('إيداع / استلام — الشهر', u.recvM, w.recvMonthly)}${lbar('إيداع — اليوم', u.recvD, w.recvDaily)}</div>
+      <div class="acts"><button class="s" onclick="A.limSet('${w.id}')">${ic('edit')}عدّل الحدود</button><button class="g" onclick="A.walletLedger('${w.id}')">${ic('ledger')}الحركات</button></div></div>`).join('') || '<div class="card empty">ضيف محافظك الأول من «المحافظ والخزنة»</div>'}
+    <div class="card"><b>${ic('users')} محافظ خارجية (مش بتاعتي — بستعين بيها لما الليمت يخلص)</b>
+      ${ext.map(s => `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="f"><b>${H(s.name)}</b><br><small class="muted" dir="ltr" style="white-space:pre-line">${H(s.wallets)}</small></div><button onclick="A.agReq('${s.id}',{})">${ic('wa')}اطلب تحويل</button></div>`).join('') || '<div class="muted" style="margin-top:6px">مفيش لسه. ضيفهم من «الموردين» — اكتب اسم صاحب المحفظة، ورقم موبايله، وأرقام محافظه. مش بيتحسبوا من محافظك ولا من رصيدك.</div>'}
+      <div class="row" style="margin-top:8px"><button class="s" onclick="location.hash='suppliers'">${ic('plus')}ضيف وكيل / محفظة خارجية</button></div></div>`;
+  };
+  A.limSet = id => { const w = S.wallets[id]; if (!w) return;
+    modal(`<h3>${ic('shield')} حدود ${H(w.name)}</h3><p class="muted" style="margin-top:0">اكتب الحدود اللي الشركة حاطاها على المحفظة دي — السيستم هيحسب الباقي لوحده من عملياتك.</p>
+      <div class="fg"><div><label>تحويل — الحد اليومي</label><input id="lsDL" inputmode="decimal" value="${w.dailyLimit ? C.fromP(w.dailyLimit) : ''}"></div><div><label>تحويل — الحد الشهري</label><input id="lsML" inputmode="decimal" value="${w.monthlyLimit ? C.fromP(w.monthlyLimit) : ''}"></div>
+      <div><label>إيداع / استلام — اليومي</label><input id="lsRD" inputmode="decimal" value="${w.recvDaily ? C.fromP(w.recvDaily) : ''}"></div><div><label>إيداع / استلام — الشهري</label><input id="lsRM" inputmode="decimal" value="${w.recvMonthly ? C.fromP(w.recvMonthly) : ''}"></div></div>
+      <div class="row" style="margin-top:12px"><button id="lsGo">${ic('check')}حفظ</button><button class="g" onclick="A.closeM()">رجوع</button></div>`);
+    $('#lsGo').onclick = async () => { const p = k => val(k) ? C.toP(val(k)) : null; await dispatch('wallet.upsert', { id, dailyLimit: p('lsDL'), monthlyLimit: p('lsML'), recvDaily: p('lsRD'), recvMonthly: p('lsRM') }); closeM(); toast('اتحفظت الحدود', 'g'); }; };
+  A.limHelp = () => modal(`<h3>${ic('alert')} إزاي أظبط الليمت؟</h3><ol style="line-height:2.1;padding-inline-start:20px"><li>افتح كل محفظة واضغط «عدّل الحدود».</li><li>اكتب حد التحويل والإيداع (يومي وشهري) زي ما الشركة محددة لخطك.</li><li>السيستم بيحسب لوحده كل ما تسجّل عملية، وبيقولك فاضل كام ولوّن الشريط أحمر لما يخلص.</li><li>الوكلاء الخارجيين مش بياخدوا رصيد من محافظك: بتبعتلهم طلب واتساب، وهم بيحوّلوا للعميل ويبعتولك السكرينة.</li></ol><div class="row"><button class="g" onclick="A.closeM()">تمام</button></div>`);
+  /* العميل عايز مبلغ: يوزّع على المحافظ بالمتاح، والباقي على الوكلاء — بلغة بسيطة */
+  A.limFind = () => { const amt = C.toP(val('lmAm')); if (!amt) return toast('اكتب المبلغ', 'r'); const B = BL();
+    const rows = Object.values(S.wallets).filter(w => w.status !== 'archived' && w.status !== 'stopped' && w.provider !== 'instapay').map(w => { const u = usage(w), bal = B.wallets[w.id] || 0;
+      const lim = Math.min(w.dailyLimit ? w.dailyLimit - u.sendD : Infinity, w.monthlyLimit ? w.monthlyLimit - u.sendM : Infinity); return { w, can: Math.max(0, Math.min(bal, lim)) }; }).filter(r => r.can > 0).sort((a, b) => b.can - a.can);
+    let rest = amt; const use = []; for (const r of rows) { if (rest <= 0) break; const take = Math.min(rest, r.can); use.push({ w: r.w, take }); rest -= take; }
+    const ext = extWallets();
+    $('#lmOut').innerHTML = (use.length ? `<div class="alert b">${ic('check')}<span><b>من محافظك:</b><br>${use.map(x => `• ${H(x.w.name)}: <b>${M(x.take)}</b>`).join('<br>')}</span></div>` : '<div class="alert w">' + ic('alert') + '<span>مفيش محفظة عندك متاحة للمبلغ ده دلوقتي</span></div>')
+      + (rest > 0 ? `<div class="alert r">${ic('alert')}<span><b>الباقي ${M(rest)}</b> هيتحوّل من وكيل خارجي:</span></div>${ext.map(s => `<div class="row" style="padding:6px 0"><div class="f"><b>${H(s.name)}</b></div><button onclick="A.agReq('${s.id}',{amount:${rest}})">${ic('wa')}اطلب منه ${M(rest)}</button></div>`).join('') || '<div class="muted">ضيف وكيل من «الموردين» عشان يظهر هنا</div>'}` : `<div class="alert b">${ic('check')}<span>المبلغ كله ينفع من محافظك</span></div>`); };
+  /* كسبت إيه؟ */
+  V.earn = () => { const t = todayDay(), [m0, m1] = monthRange(), d7 = C.dayOf(new Date(Date.now() - 6 * 864e5).toISOString(), ST().dayStartHour);
+    const R = { 'النهارده': C.report(S, t), 'آخر ٧ أيام': C.report(S, d7, t), 'الشهر ده': C.report(S, m0, m1) };
+    const mo = R['الشهر ده'], byW = Object.entries(mo.byWallet || {}).map(([k, v]) => ({ k, ...v })).sort((a, b) => b.amount - a.amount);
+    return `<h1>${ic('cash')} كسبت إيه؟</h1>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${Object.entries(R).map(([l, r]) => `<div class="card"><b>${l}</b><div style="font-size:30px;font-weight:900;color:var(--ok);margin:6px 0">${M(r.net)}</div><small class="muted">صافي ربح العمليات</small>
+      <div class="kv" style="margin-top:8px"><span>تحويلات</span><b>${M(r.amount)}</b><span>عمولتك من العملاء</span><b class="pos">+ ${M(r.commission)}</b><span>رسوم المحافظ عليك</span><b class="neg">− ${M(r.fees)}</b>${r.supFees ? `<span>حساب الوكلاء</span><b class="neg">− ${M(r.supFees)}</b>` : ''}<span>مصروفات</span><b class="neg">− ${M(r.expenses)}</b><span><b>الربح بعد المصروفات</b></span><b>${M(r.profit)}</b></div></div>`).join('')}</div>
+    <div class="card"><b>الشهر ده لكل محفظة</b><div class="sc"><table style="margin-top:8px"><tr><th>المحفظة</th><th>عمليات</th><th>المبلغ</th><th>رسوم عليك</th></tr>${byW.map(x => `<tr><td>${x.k === '-' ? 'من غير محفظة' : H(wName(x.k))}</td><td>${N(x.count)}</td><td>${M(x.amount)}</td><td>${M(x.fees)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">مفيش عمليات</td></tr>'}</table></div></div>
+    <div class="card"><b>إزاي بتتحسب؟</b><p class="muted" style="line-height:1.9;margin:6px 0 0">العمولة = اللي بتاخده من العميل حسب «قواعد العمولة» (نسبة أو ثابت). رسوم المحفظة = اللي الشركة بتخصمه عليك. الصافي = العمولة − الرسوم − حساب الوكيل. وبعدها بنطرح المصروفات.</p></div>`; };
+  /* قايمة الجنب + بلاط كبير في الرئيسية */
+  try { NAV.splice(1, 0, ['limits', 'shield', 'الليمت'], ['earn', 'cash', 'كسبت إيه؟']); } catch (e) { }
+  const _dash = V.dash;
+  V.dash = function (p) { const html = _dash(p), tiles = `<div class="lm-tiles"><a class="lm-t" href="#wallets" style="--g:#0b6e99"><i>${ic('wallet', 34)}</i><b>المحافظ والخزنة</b><small>الأرصدة والحركات</small></a><a class="lm-t" href="#limits" style="--g:#7c5cc4"><i>${ic('shield', 34)}</i><b>الليمت</b><small>فاضل كام في كل محفظة</small></a><a class="lm-t" href="#earn" style="--g:#0b6b45"><i>${ic('cash', 34)}</i><b>كسبت إيه؟</b><small>الربح والعمولات</small></a><a class="lm-t" href="#inbox" style="--g:#b08328"><i>${ic('image', 34)}</i><b>استيراد سكرينات</b><small>صفّي دفعة واحدة</small></a><a class="lm-t" href="#customers" style="--g:#c0392b"><i>${ic('users', 34)}</i><b>العملاء</b><small>الحسابات والتحصيل</small></a><a class="lm-t" href="#ops" style="--g:#087f8c"><i>${ic('bolt', 34)}</i><b>عملية جديدة</b><small>تحويل / سحب</small></a></div>`;
+    return html.replace('</h1>', '</h1>' + tiles); };
+  V.dash.after = _dash.after;
+  const st = document.createElement('style'); st.textContent = `.lm-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:12px 0}.lm-t{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:20px 8px;border-radius:20px;background:linear-gradient(135deg,var(--g),color-mix(in srgb,var(--g) 60%,#000));color:#fff;text-decoration:none;box-shadow:0 10px 24px #0003}.lm-t i{display:grid;place-items:center}.lm-t b{font-size:17px}.lm-t small{opacity:.9;font-size:12.5px}.lm-t:active{transform:scale(.97)}.lm-b{min-width:0}`; document.head.appendChild(st);
+  paint();
+
+}
+
 boot().catch(e => { $('#app').innerHTML = `<div class="card"><b>التخزين على الجهاز مش شغال</b><p class="muted">${H(e.message || e)} — افتح التطبيق من متصفح عادي (مش وضع التصفح الخفي).</p></div>`; });
 })();

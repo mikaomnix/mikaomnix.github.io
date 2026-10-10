@@ -136,7 +136,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <script src="core.js"></script>
 <script src="tests.js"></script>
 <script src="app.js"></script>
-<script id="upd-ver">const UPD_VER='202610101354';(function(){let last=0,shown=false;
+<script id="upd-ver">const UPD_VER='202610101812';(function(){let last=0,shown=false;
 async function check(){if(shown||Date.now()-last<60000)return;last=Date.now();
  try{const t=await (await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'})).text(),m=t.match(/const UPD_VER='([^']+)'/);
   if(m&&m[1]!==UPD_VER){shown=true;const b=document.createElement('button');b.textContent='🔄 في نسخة جديدة من البرنامج — اضغط هنا للتحديث';
